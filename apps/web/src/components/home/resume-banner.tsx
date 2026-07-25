@@ -17,7 +17,7 @@ export function ResumeBanner({ game }: ResumeBannerProps) {
     <div className="card flex flex-col gap-3">
       <div className="flex items-center justify-between gap-2">
         <Pill variant="wait">
-          {game.status === 'lobby' ? 'Lobby en attente' : 'Partie en cours'}
+          {game.status === 'lobby' ? 'Camp en attente' : 'Partie en cours'}
         </Pill>
         <Pill variant="ffa">{formatLabel(game.format)}</Pill>
       </div>

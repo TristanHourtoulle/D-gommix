@@ -7,11 +7,11 @@ interface TopDegommeurTileProps {
   top: TopDegommeur
 }
 
-/** Highlighted "Plus grand dégommeur" spotlight card. */
+/** Highlighted « Fléau des Gaules » spotlight card. */
 export function TopDegommeurTile({ top }: TopDegommeurTileProps) {
   return (
     <Card className="flex flex-col gap-2 px-4 py-3">
-      <p className="sec-label">Plus grand dégommeur</p>
+      <p className="sec-label">Fléau des Gaules</p>
       <div className="flex items-center gap-3">
         <PlayerAvatar username={top.username} size={40} avatarId={top.avatarId ?? null} />
         <div className="min-w-0 flex-1">

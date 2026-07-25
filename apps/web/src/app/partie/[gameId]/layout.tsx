@@ -8,7 +8,7 @@ import { requireOnboardedSession } from '@/lib/session'
  * socket provider since the tabs layout does not apply here. The query
  * provider hands back the same browser-singleton client as the tabs, so the
  * end-of-game invalidation reaches the Accueil and Classement caches. Toasts
- * come from the root layout, which is what keeps them alive when « Rejouer »
+ * come from the root layout, which is what keeps them alive when « Revanche ! »
  * leaves this route for /lobby.
  */
 export default async function PartieLayout({ children }: Readonly<{ children: ReactNode }>) {

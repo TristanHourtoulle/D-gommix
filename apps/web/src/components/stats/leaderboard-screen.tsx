@@ -26,10 +26,10 @@ export function LeaderboardScreen({ viewerId, initialData }: LeaderboardScreenPr
   if (leaderboard.friendCount === 0) {
     return (
       <main className="tab-page">
-        <SectionTitle sub="Le cercle d'amis au grand complet">Classement</SectionTitle>
+        <SectionTitle sub="Toute la tribu, du premier au dernier">Lauriers</SectionTitle>
         <EmptyState
           icon="trophy"
-          title="Pas encore de cercle"
+          title="Pas encore de tribu"
           description="Ajoute des amis pour comparer victoires, winrate et dégommages."
         />
         <Link href="/amis" className="cta text-center no-underline">
@@ -41,7 +41,7 @@ export function LeaderboardScreen({ viewerId, initialData }: LeaderboardScreenPr
 
   return (
     <main className="tab-page">
-      <SectionTitle sub="Le cercle d'amis au grand complet">Classement</SectionTitle>
+      <SectionTitle sub="Toute la tribu, du premier au dernier">Lauriers</SectionTitle>
 
       {leaderboard.topDegommeur ? <TopDegommeurTile top={leaderboard.topDegommeur} /> : null}
 

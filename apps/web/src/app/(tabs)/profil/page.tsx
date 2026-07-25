@@ -24,7 +24,7 @@ export default async function ProfilePage() {
         style={{ color: 'var(--ink-faint)' }}
       >
         <Icon name="chevron-right" size={12} className="rotate-180" />
-        Accueil
+        Village
       </Link>
 
       <header className="flex items-center gap-3">

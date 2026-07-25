@@ -123,11 +123,11 @@ test('two-player 1v1 happy path (design §7.3)', async ({ browser }) => {
     await hostModal.getByRole('button', { name: 'Valider' }).click()
 
     // — Step 8a: summary on both screens, J2 winner, correct counters —
-    await expect(p2.getByText('Résumé de partie')).toBeVisible()
+    await expect(p2.getByText('Le banquet')).toBeVisible()
     await expect(p2.getByText('Victoire')).toBeVisible()
     await expect(p2.getByTestId(`summary-row-${J2.username}`)).toContainText('vainqueur')
     await expect(p2.getByTestId(`summary-row-${J1.username}`)).toContainText('1')
-    await expect(p1.getByText('Résumé de partie')).toBeVisible()
+    await expect(p1.getByText('Le banquet')).toBeVisible()
     await shot(p2, '13-resume')
 
     // — Step 8b: J1's leaderboard shows J2 ranked with 1 win —
