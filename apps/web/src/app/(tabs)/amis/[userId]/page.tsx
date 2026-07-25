@@ -3,9 +3,11 @@ import { notFound } from 'next/navigation'
 import { requireOnboardedSession } from '@/lib/session'
 import { areFriends, getPlayerStats, getPublicUser } from '@/lib/queries/friends'
 import { getHeadToHead } from '@/lib/queries/rivalries'
+import { getSharedGames } from '@/lib/queries/shared-games'
 import { CHARACTER_META } from '@/lib/characters'
 import { CharacterBadge } from '@/components/ui/character-badge'
 import { EmptyState } from '@/components/ui/empty-state'
+import { GameHistoryItem } from '@/components/home/game-history-item'
 import { HeadToHeadCard } from '@/components/stats/head-to-head-card'
 import { PlayerAvatar } from '@/components/ui/player-avatar'
 import { SectionTitle } from '@/components/ui/section-title'
@@ -39,9 +41,10 @@ export default async function FriendProfilePage({ params }: FriendProfilePagePro
     )
   }
 
-  const [stats, headToHead] = await Promise.all([
+  const [stats, headToHead, sharedGames] = await Promise.all([
     getPlayerStats(userId),
     isSelf ? Promise.resolve(null) : getHeadToHead(me.id, userId),
+    isSelf ? Promise.resolve([]) : getSharedGames(me.id, userId),
   ])
   const winrateLabel =
     stats.winrate === null ? '—' : `${Math.round(stats.winrate * 100)} %`
@@ -91,6 +94,21 @@ export default async function FriendProfilePage({ params }: FriendProfilePagePro
           </p>
         )}
       </section>
+
+      {isSelf ? null : (
+        <section className="flex flex-col gap-2">
+          <p className="sec-label">Vos parties ensemble</p>
+          {sharedGames.length === 0 ? (
+            <EmptyState
+              icon="flag"
+              title="Aucune partie ensemble"
+              description="Invite-le dans un salon pour lancer la première."
+            />
+          ) : (
+            sharedGames.map((game) => <GameHistoryItem key={game.id} game={game} />)
+          )}
+        </section>
+      )}
 
       <Link href="/amis" className="helper-text">
         Retour aux amis
