@@ -53,19 +53,24 @@ export function InviteBanner({ initialData }: InviteBannerProps) {
       {invites.map((invite) => (
         <div
           key={invite.gameId}
-          className="card flex items-center gap-3"
+          className="card flex flex-wrap items-center gap-x-3 gap-y-2"
           style={{ borderColor: 'var(--bronze)' }}
         >
           <span className="flex shrink-0" style={{ color: 'var(--bronze-strong)' }} aria-hidden>
             <Icon name="bell" size={20} />
           </span>
-          <p className="m-0 min-w-0 flex-1 text-sm">
+          {/*
+           * `basis-40` reserves a readable column for the host name: a long name no
+           * longer squeezes the text under the actions, the row wraps instead. The
+           * actions keep their intrinsic size and stay right-aligned on either row.
+           */}
+          <p className="m-0 min-w-0 flex-1 basis-40 break-words text-sm">
             <b>{invite.hostUsername} t’invite</b>
             <span className="block text-xs" style={{ color: 'var(--ink-faint)' }}>
               {formatLabel(invite.format)}
             </span>
           </p>
-          <div className="flex shrink-0 gap-2">
+          <div className="ml-auto flex shrink-0 gap-2">
             <Button
               fullWidth={false}
               disabled={pendingGameId === invite.gameId}
