@@ -12,6 +12,7 @@ import {
 } from '@degommix/db'
 import type { CharacterId, GameFormat, GameOutcome } from '@degommix/game-core'
 import { db } from '@/lib/db'
+import { deName } from '@/lib/elision'
 
 export interface LeaderboardRow {
   rank: number
@@ -252,7 +253,7 @@ function journalText(event: RawEvent, events: RawEvent[], name: (id: string | nu
       const targetSeq = payloadNumber(event.payload, 'targetSeq')
       const target = events.find((candidate) => candidate.seq === targetSeq)
       if (!target) return `${name(event.actorId)} a annulé un dégommage`
-      return `${name(event.actorId)} a annulé le dégommage de ${name(target.actorId)} sur ${name(target.targetId)}`
+      return `${name(event.actorId)} a annulé le dégommage ${deName(name(target.actorId))} sur ${name(target.targetId)}`
     }
     case 'PLAYER_QUIT':
       return `${name(event.actorId)} a quitté la partie`

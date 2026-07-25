@@ -3,6 +3,8 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import type { GameEvent, GameState } from '@degommix/game-core'
 import { useSocket } from '@/components/socket-provider'
+import { renderDegommageJournal, type DegommageRef } from '@/lib/degommage-messages'
+import { deName } from '@/lib/elision'
 import type { GameStateSnapshotPayload } from '@/lib/realtime-types'
 import { displayName, type NameMap } from './types'
 
@@ -26,16 +28,24 @@ function requesterOf(events: GameEvent[], requestSeq: number): string | null {
   return request?.actorId ?? null
 }
 
-function describeEvent(event: GameEvent, events: GameEvent[], names: NameMap): string | null {
+function describeEvent(
+  event: GameEvent,
+  events: GameEvent[],
+  names: NameMap,
+  degommageLabels: Map<number, string>
+): string | null {
   switch (event.type) {
     case 'DEGOMMAGE':
-      return `${displayName(names, event.actorId)} a dégommé un pion de ${displayName(names, event.targetId)}`
+      return (
+        degommageLabels.get(event.seq) ??
+        `${displayName(names, event.actorId)} a dégommé un pion ${deName(displayName(names, event.targetId))}`
+      )
     case 'UNDO': {
       const undone = events.find((e) => e.seq === event.payload.targetSeq && e.type === 'DEGOMMAGE')
       if (!undone || undone.type !== 'DEGOMMAGE') {
         return `${displayName(names, event.actorId)} a annulé la dernière action`
       }
-      return `${displayName(names, event.actorId)} a annulé le dégommage de ${displayName(names, undone.actorId)} sur ${displayName(names, undone.targetId)}`
+      return `${displayName(names, event.actorId)} a annulé le dégommage ${deName(displayName(names, undone.actorId))} sur ${displayName(names, undone.targetId)}`
     }
     case 'PLAYER_QUIT':
       return `${displayName(names, event.actorId)} a quitté la partie`
@@ -100,9 +110,20 @@ export function useLiveJournal(
   return useMemo(() => {
     void version
     const events = [...eventsRef.current.values()].sort((a, b) => a.seq - b.seq)
+    const eventRefs: DegommageRef[] = []
+    for (const event of events) {
+      if (event.type === 'DEGOMMAGE') {
+        eventRefs.push({ seq: event.seq, actorId: event.actorId, targetId: event.targetId })
+      }
+    }
+    const fallbackRefs: DegommageRef[] = state ? state.degommageLog : []
+    const degommageLabels = renderDegommageJournal(
+      eventRefs.length > 0 ? eventRefs : fallbackRefs,
+      (userId) => displayName(names, userId)
+    )
     const entries: JournalEntry[] = []
     for (const event of events) {
-      const label = describeEvent(event, events, names)
+      const label = describeEvent(event, events, names, degommageLabels)
       if (label) entries.push({ seq: event.seq, actorId: event.actorId, label })
     }
     if (entries.length === 0 && state) {
@@ -111,7 +132,9 @@ export function useLiveJournal(
         entries.push({
           seq: entry.seq,
           actorId: entry.actorId,
-          label: `${displayName(names, entry.actorId)} a dégommé un pion de ${displayName(names, entry.targetId)}`,
+          label:
+            degommageLabels.get(entry.seq) ??
+            `${displayName(names, entry.actorId)} a dégommé un pion ${deName(displayName(names, entry.targetId))}`,
         })
       }
     }
