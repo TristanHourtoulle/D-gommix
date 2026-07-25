@@ -149,6 +149,28 @@ describe('resync, host transfer, zombie job and replay', () => {
     expect(rows.some((r) => r.type === 'GAME_AUTO_CLOSED')).toBe(true)
   })
 
+  it('the zombie sweep dissolves a stale lobby without ever starting it', async () => {
+    const s1 = await ts.connectAs('u1')
+    const created = expectOk(
+      await emitAck<{ gameId: string; code: string }>(s1, 'lobby:create', { format: 2 })
+    )
+
+    await ts.db
+      .update(games)
+      .set({ lastActivityAt: sql`now() - interval '25 hours'` })
+      .where(eq(games.id, created.gameId))
+
+    expect(await ts.server.zombie.tick()).toBe(1)
+
+    // Same phantom shape as a lobby left by its last player: the code is burned
+    // but no game was ever played, so history and stats must ignore the row
+    // (apps/web/src/lib/queries/game-filters.ts).
+    const [game] = await ts.db.select().from(games).where(eq(games.id, created.gameId))
+    expect(game?.status).toBe('finished')
+    expect(game?.outcome).toBe('aborted')
+    expect(game?.startedAt).toBeNull()
+  })
+
   it('replay:create opens a new lobby and re-invites the former players', async () => {
     const { gameId, code, sockets } = await startGameWith(ts, ['u1', 'u2'])
     const s1 = sockets.get('u1')

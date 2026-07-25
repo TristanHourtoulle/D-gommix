@@ -13,6 +13,7 @@ import {
 import type { CharacterId, GameFormat, GameOutcome } from '@degommix/game-core'
 import { db } from '@/lib/db'
 import { deName } from '@/lib/elision'
+import { gameStarted, isPhantomLobbyGame } from './game-filters'
 
 export interface LeaderboardRow {
   rank: number
@@ -74,7 +75,7 @@ export async function getLeaderboard(userId: string): Promise<Leaderboard> {
   const finishedStarted = and(
     inList(gamePlayers.userId, memberIds),
     eq(games.status, 'finished'),
-    sql`${games.startedAt} is not null`,
+    gameStarted,
     sql`${gamePlayers.status} in ('joined', 'left')`
   )
 
@@ -122,6 +123,7 @@ export async function getLeaderboard(userId: string): Promise<Leaderboard> {
           inList(gamePlayers.userId, memberIds),
           eq(games.status, 'finished'),
           eq(games.outcome, 'village_reached'),
+          gameStarted,
           sql`${gamePlayers.status} in ('joined', 'left')`,
           sql`${gamePlayers.character} is not null`
         )
@@ -294,8 +296,9 @@ function journalText(event: RawEvent, events: RawEvent[], name: (id: string | nu
 
 /**
  * Full detail of a finished game, full timestamped journal included.
- * Returns null when the game does not exist or the viewer is neither a
- * participant nor a friend of a participant.
+ * Returns null when the game does not exist, when it is a lobby dissolved
+ * before the start (nothing to show, and no clean surface links to it), or
+ * when the viewer is neither a participant nor a friend of a participant.
  */
 export async function getGameDetail(gameId: string, viewerId: string): Promise<GameDetail | null> {
   const gameRows = await db
@@ -311,7 +314,7 @@ export async function getGameDetail(gameId: string, viewerId: string): Promise<G
     .from(games)
     .where(eq(games.id, gameId))
   const game = gameRows[0]
-  if (!game) return null
+  if (!game || isPhantomLobbyGame(game)) return null
 
   const playerRows = await db
     .select({

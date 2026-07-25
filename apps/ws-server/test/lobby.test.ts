@@ -1,4 +1,4 @@
-import { friendships } from '@degommix/db'
+import { eq, friendships, games } from '@degommix/db'
 import { migrateTestDb } from '@degommix/db/test-utils'
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest'
 import type { LobbyState } from '../src/lobby-state'
@@ -125,6 +125,14 @@ describe('lobby flow', () => {
 
     const ack = await emitAck(s2, 'lobby:join_by_code', { code: created.code })
     expect(ack).toMatchObject({ ok: false, code: 'INVALID_CODE' })
+
+    // The row stays as the burned-code registry, but it never started: this is
+    // the exact shape the web history/stats queries must filter out
+    // (apps/web/src/lib/queries/game-filters.ts).
+    const [game] = await ts.db.select().from(games).where(eq(games.id, created.gameId))
+    expect(game?.status).toBe('finished')
+    expect(game?.outcome).toBe('aborted')
+    expect(game?.startedAt).toBeNull()
   })
 
   it('invite + accept seats the friend as joined', async () => {
