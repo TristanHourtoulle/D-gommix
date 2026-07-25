@@ -19,6 +19,7 @@ export const searchResponseSchema = z.object({
     z.object({
       id: z.string(),
       username: z.string(),
+      avatarId: z.string().nullable().optional(),
       isFriend: z.boolean(),
       hasPending: z.boolean(),
     })

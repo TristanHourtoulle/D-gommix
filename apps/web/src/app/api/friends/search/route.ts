@@ -17,7 +17,8 @@ function escapeLikePattern(input: string): string {
 /**
  * Partial username search for the Amis screen: session-gated, min 2 chars,
  * case-insensitive contains, excludes self, 10 results max. Each hit carries
- * the relation flags the UI needs to pick its action button.
+ * the avatar shown by the row plus the relation flags the UI needs to pick its
+ * action button.
  */
 export async function GET(request: Request) {
   const session = await auth.api.getSession({ headers: await headers() })
@@ -33,7 +34,7 @@ export async function GET(request: Request) {
   const pattern = `%${escapeLikePattern(parsed.data.q)}%`
 
   const candidates = await db
-    .select({ id: user.id, username: user.username })
+    .select({ id: user.id, username: user.username, avatarId: user.avatarId })
     .from(user)
     .where(and(sql`${user.username} ilike ${pattern}`, sql`${user.id} <> ${me}`))
     .orderBy(sql`lower(${user.username}) asc`)
@@ -69,6 +70,7 @@ export async function GET(request: Request) {
   const users = candidates.map((candidate) => ({
     id: candidate.id,
     username: candidate.username ?? '',
+    avatarId: candidate.avatarId,
     isFriend: friendIds.has(candidate.id),
     hasPending: pendingIds.has(candidate.id),
   }))
