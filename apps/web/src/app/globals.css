@@ -1059,6 +1059,7 @@ a {
   animation: none !important;
 }
 [data-motion='reduced'] .eg-confetti { display: none; }
+
 /* ---------- Opening sequence « Le déroulé » (splash) ---------- */
 
 /**
