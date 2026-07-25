@@ -95,14 +95,24 @@ body {
   padding: 0;
 }
 
+/*
+ * Flat canvas colour, and nothing else. This is what the engine paints in the
+ * areas no box ever reaches: the rubber-band overscroll, and — in the installed
+ * PWA, which draws edge-to-edge under a `black-translucent` status bar — the
+ * strip above the document. It matches the `theme-color` of `layout.tsx`
+ * (#ece0c4 / #1c150d) so the two can never disagree.
+ *
+ * Declaring it on `html` also takes background propagation out of the picture:
+ * with the root painted, `body`'s background is no longer promoted to the
+ * canvas, and the textured layer below stays the single source of the grain.
+ */
+html {
+  background-color: var(--parchment);
+}
+
 body {
   font-family: var(--font-body);
   color: var(--ink);
-  background:
-    radial-gradient(circle at 15% 8%, rgba(140, 90, 43, 0.10), transparent 40%),
-    radial-gradient(circle at 85% 92%, rgba(140, 90, 43, 0.10), transparent 40%),
-    repeating-linear-gradient(115deg, rgba(140, 90, 43, 0.035) 0 2px, transparent 2px 6px),
-    var(--parchment);
   /*
    * Kill sideways scroll without creating a scroll container: `hidden` makes
    * the body scrollable, a documented iOS Safari trigger for `position: fixed`
@@ -112,6 +122,33 @@ body {
   overflow-x: hidden;
   overflow-x: clip;
   -webkit-font-smoothing: antialiased;
+}
+
+/*
+ * The parchment itself — colour, diagonal grain and the two corner vignettes —
+ * painted on a fixed full-viewport layer rather than on the document box.
+ *
+ * `position: fixed` resolves against the viewport, which `viewport-fit=cover`
+ * stretches under the iOS status bar, so the texture reaches the very top edge
+ * and stays put while the page scrolls. Painted on `body` instead, the image
+ * layers only covered the document box: the status-bar strip fell back to the
+ * propagated background *colour*, which read as a flat, grainless band above
+ * the content (every shell pads itself down by `env(safe-area-inset-top)`).
+ *
+ * It sits behind everything the app draws (`z-index: -1`) and swallows no
+ * touch, so no screen has to know it exists.
+ */
+body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  background:
+    radial-gradient(circle at 15% 8%, rgba(140, 90, 43, 0.10), transparent 40%),
+    radial-gradient(circle at 85% 92%, rgba(140, 90, 43, 0.10), transparent 40%),
+    repeating-linear-gradient(115deg, rgba(140, 90, 43, 0.035) 0 2px, transparent 2px 6px),
+    var(--parchment);
 }
 
 a {
