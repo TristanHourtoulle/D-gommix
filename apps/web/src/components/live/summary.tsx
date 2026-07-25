@@ -116,7 +116,7 @@ export function Summary({ gameId, state, names, viewerId, startedAt, endedAt }: 
       {variant === 'loser' ? <EndgameVeil /> : null}
       {variant === 'winner' ? <EndgameConfetti pieces={confetti} /> : null}
 
-      <h1 className="s-title relative">Résumé de partie</h1>
+      <h1 className="s-title relative">Le banquet</h1>
 
       {winner ? (
         <section className="card eg-hero relative overflow-hidden p-4">
