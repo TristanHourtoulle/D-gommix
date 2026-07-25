@@ -104,6 +104,24 @@ describe('durable invitations', () => {
     await expectNoEvent(s2, 'invite:received', 300)
   })
 
+  it('dissolving a lobby cancels the pending invitation live', async () => {
+    const s2 = await ts.connectAs('u2')
+    const { s1, gameId } = await openLobby()
+
+    const received = waitForEvent<InviteReceived>(s2, 'invite:received')
+    expectOk(await emitAck(s1, 'lobby:invite', { gameId, friendId: 'u2' }))
+    expect((await received).gameId).toBe(gameId)
+
+    // Attach before the leave: the cancel is synchronous with the ack.
+    const canceled = waitForEvent<{ gameId: string }>(s2, 'invite:canceled')
+    expectOk(await emitAck(s1, 'lobby:leave', { gameId }))
+    expect(await canceled).toEqual({ gameId })
+
+    const [game] = await ts.db.select().from(games).where(eq(games.id, gameId))
+    expect(game?.status).toBe('finished')
+    expect(game?.outcome).toBe('aborted')
+  })
+
   it('a pending invitation no longer blocks lobby:create', async () => {
     const { gameId } = await inviteU2()
 

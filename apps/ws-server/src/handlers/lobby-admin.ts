@@ -103,6 +103,13 @@ export function registerLobbyAdminHandlers(socket: AppSocket, ctx: AppContext): 
             .update(games)
             .set({ status: 'finished', outcome: 'aborted', endedAt: new Date() })
             .where(eq(games.id, gameId))
+          // Pending invitees keep their seat row, but the finished game is
+          // already excluded from findActiveMemberships: only the live push
+          // was missing to retire their banner.
+          for (const pending of remaining) {
+            if (pending.status !== 'invited') continue
+            io.to(`user:${pending.userId}`).emit('invite:canceled', { gameId })
+          }
           return OK
         }
         await transferHost(db, io, gameId, userId, (id) => presence.isOnline(id))
