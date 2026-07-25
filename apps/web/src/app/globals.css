@@ -998,3 +998,64 @@ a {
   }
   .eg-confetti { display: none; }
 }
+
+/* ---------- Dev animations playground (/dev/animations) ---------- */
+
+/**
+ * The gesture surface on /profil: a 1.5 s hold must not trigger iOS's text
+ * selection or its link/image callout, which would eat the gesture.
+ */
+.dev-longpress {
+  -webkit-touch-callout: none;
+  -webkit-user-select: none;
+  user-select: none;
+  touch-action: manipulation;
+}
+
+/** Fullscreen stage for a demo sequence, above the playground list. */
+.dev-stage {
+  position: fixed;
+  inset: 0;
+  z-index: 60;
+  overflow-y: auto;
+  background: var(--parchment);
+}
+
+.dev-stage-close {
+  position: fixed;
+  z-index: 61;
+  top: calc(0.75rem + env(safe-area-inset-top));
+  right: 0.9rem;
+  display: flex;
+  gap: 0.5rem;
+}
+
+/**
+ * « Mouvement réduit » switch of the playground. It re-applies — under a data
+ * attribute instead of a media query — exactly the declarations of the two
+ * `prefers-reduced-motion` blocks above, so a demo can be previewed in reduced
+ * form without changing the phone's accessibility settings. No keyframe is
+ * duplicated: both paths reference the same `hit-tally-fade-*` animations.
+ *
+ * The switch can only ADD reduction — a media query cannot be un-applied — so
+ * a user whose OS asks for reduced motion still gets it here and everywhere
+ * else, whatever the toggle says. Nothing outside `[data-motion='reduced']`
+ * changes, so no real screen is affected.
+ *
+ * Not covered, deliberately: the 900 ms dégommage counter roll in `summary.tsx`
+ * reads `window.matchMedia('(prefers-reduced-motion: reduce)')` in an effect,
+ * so it follows the OS only. Making it overridable would mean changing a live
+ * screen for the sake of a dev tool.
+ */
+[data-motion='reduced'] .player-card[data-hit] { animation: none; }
+[data-motion='reduced'] .hit-fx { display: none; }
+[data-motion='reduced'] .player-card[data-hit='a'] .hit-tally { animation: hit-tally-fade-a 420ms ease both; }
+[data-motion='reduced'] .player-card[data-hit='b'] .hit-tally { animation: hit-tally-fade-b 420ms ease both; }
+
+[data-motion='reduced'] .eg-play,
+[data-motion='reduced'] .eg-play *,
+[data-motion='reduced'] .eg-play *::before,
+[data-motion='reduced'] .eg-play *::after {
+  animation: none !important;
+}
+[data-motion='reduced'] .eg-confetti { display: none; }
