@@ -17,9 +17,10 @@ export function PlayerCard({ player, username, isHost }: PlayerCardProps) {
   return (
     <div
       className="card flex items-center gap-3 p-3"
+      data-testid={`player-card-${username}`}
       style={player.inGame ? undefined : { opacity: 0.55, filter: 'grayscale(0.7)' }}
     >
-      <CharacterBadge character={player.character} size="lg" />
+      <CharacterBadge character={player.character} size="md" />
       <div className="min-w-0">
         <p className="m-0 flex items-center gap-1 truncate text-sm font-bold">
           <span className="truncate">{username}</span>
@@ -32,7 +33,7 @@ export function PlayerCard({ player, username, isHost }: PlayerCardProps) {
         </p>
         <p className="m-0 mt-1 flex items-center gap-1 text-sm font-bold">
           <Icon name="sword" size={14} title="Pions dégommés" />
-          {player.degommages}
+          <span data-testid="degommage-count">{player.degommages}</span>
         </p>
         {player.inGame ? null : (
           <p className="m-0 text-xs italic" style={{ color: 'var(--ink-faint)' }}>

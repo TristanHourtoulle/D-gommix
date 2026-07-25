@@ -99,6 +99,7 @@ export function Summary({ gameId, state, names, startedAt, endedAt }: SummaryPro
             <div
               key={userId}
               className="card flex items-center gap-3 p-3"
+              data-testid={`summary-row-${displayName(names, userId)}`}
               style={isWinner ? { borderColor: 'var(--bronze)' } : undefined}
             >
               <CharacterBadge character={player.character} size="sm" />

@@ -21,7 +21,7 @@ export function TapZone({ opponents, names, onTap }: TapZoneProps) {
   if (opponents.length === 0) return null
 
   return (
-    <section className="relative z-10 flex flex-col gap-2">
+    <section className="relative z-10 flex flex-col gap-2" data-testid="tap-zone">
       <p className="m-0 text-center text-sm font-bold">Tu viens de dégommer qui ?</p>
       <div className="flex flex-wrap justify-center gap-2">
         {opponents.map((opponent) => {

@@ -16,6 +16,7 @@ export function RankingTable({ rows, viewerId }: RankingTableProps) {
       {rows.map((row, index) => (
         <div
           key={row.userId}
+          data-testid={`ranking-row-${row.username}`}
           className={`flex items-center gap-2.5 py-2.5 ${index > 0 ? 'border-t border-parchment-line/60' : ''}`}
         >
           <span className="w-5 shrink-0 text-center font-mono text-sm font-bold text-bronze">
