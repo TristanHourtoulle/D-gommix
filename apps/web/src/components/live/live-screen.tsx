@@ -87,7 +87,7 @@ export function LiveScreen({
 
   if (!state) {
     return (
-      <main className="relative mx-auto flex min-h-dvh w-full max-w-md flex-col items-center justify-center gap-3 px-4">
+      <main className="relative mx-auto flex min-h-dvh w-full max-w-md flex-col items-center justify-center gap-3 px-4 pt-[env(safe-area-inset-top)]">
         <PawnField />
         <p className="relative z-10 m-0 text-sm font-semibold" style={{ color: 'var(--ink-soft)' }}>
           Synchronisation de la partie…
@@ -122,7 +122,7 @@ export function LiveScreen({
   }
 
   return (
-    <main className="relative mx-auto flex min-h-dvh w-full max-w-md flex-col gap-4 px-4 py-5">
+    <main className="relative mx-auto flex min-h-dvh w-full max-w-md flex-col gap-4 px-4 py-5 pt-[calc(1.25rem_+_env(safe-area-inset-top))]">
       <PawnField />
       <GameClock
         format={state.format}

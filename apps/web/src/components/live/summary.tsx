@@ -39,7 +39,7 @@ export function Summary({ gameId, state, names, startedAt, endedAt }: SummaryPro
   const totalDegommages = Object.values(state.players).reduce((sum, p) => sum + p.degommages, 0)
 
   return (
-    <main className="mx-auto flex min-h-dvh w-full max-w-md flex-col gap-4 px-4 py-6">
+    <main className="mx-auto flex min-h-dvh w-full max-w-md flex-col gap-4 px-4 py-6 pt-[calc(1.5rem_+_env(safe-area-inset-top))]">
       <h1 className="s-title">Résumé de partie</h1>
 
       {winner ? (
