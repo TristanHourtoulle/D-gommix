@@ -8,6 +8,7 @@ import { SignOutButton } from '@/components/sign-out-button'
 import { UsernameForm } from '@/components/profile/username-form'
 import { AvatarPicker } from '@/components/profile/avatar-picker'
 import { ThemeSegmented } from '@/components/theme/theme-segmented'
+import { DevMenuGesture } from '@/components/dev/dev-menu-gesture'
 import { getAvatarId } from '@/lib/queries/profile'
 
 export default async function ProfilePage() {
@@ -27,14 +28,16 @@ export default async function ProfilePage() {
         Village
       </Link>
 
-      <header className="flex items-center gap-3">
-        <PlayerAvatar username={username} size={56} avatarId={avatarId} />
-        <div>
-          <h1 className="s-title m-0" style={{ fontSize: '1.05rem' }}>
-            {username}
-          </h1>
-          <p className="s-sub">Ton profil de dégommeur</p>
-        </div>
+      <header>
+        <DevMenuGesture>
+          <PlayerAvatar username={username} size={56} avatarId={avatarId} />
+          <div>
+            <h1 className="s-title m-0" style={{ fontSize: '1.05rem' }}>
+              {username}
+            </h1>
+            <p className="s-sub">Ton profil de dégommeur</p>
+          </div>
+        </DevMenuGesture>
       </header>
 
       <section className="flex flex-col gap-2">
