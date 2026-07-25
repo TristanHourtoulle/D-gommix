@@ -1,5 +1,6 @@
 import type { Metadata, Viewport } from 'next'
 import { Cinzel } from 'next/font/google'
+import { ThemeScript } from '@/components/theme/theme-script'
 import './globals.css'
 
 const cinzel = Cinzel({
@@ -35,7 +36,10 @@ export default function RootLayout({
   children,
 }: Readonly<{ children: React.ReactNode }>) {
   return (
-    <html lang="fr">
+    <html lang="fr" suppressHydrationWarning>
+      <head>
+        <ThemeScript />
+      </head>
       <body className={`${cinzel.variable} antialiased`}>{children}</body>
     </html>
   )

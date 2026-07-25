@@ -24,16 +24,23 @@ export default async function HomePage() {
 
   return (
     <main className="tab-page">
-      <header className="flex items-center gap-3">
-        <PlayerAvatar username={user.username} size={44} />
-        <div>
-          <h1 className="s-title m-0" style={{ fontSize: '0.95rem' }}>
-            Salut {user.username}
-          </h1>
-          <p className="s-sub">
-            {plural(stats.wins, 'victoire')} · {plural(stats.degommages, 'dégommage')}
-          </p>
-        </div>
+      <header>
+        <Link
+          href="/profil"
+          className="flex items-center gap-3 no-underline"
+          aria-label="Ouvrir mon profil"
+        >
+          <PlayerAvatar username={user.username} size={44} />
+          <div>
+            <h1 className="s-title m-0" style={{ fontSize: '0.95rem' }}>
+              Salut {user.username}
+            </h1>
+            <p className="s-sub">
+              {plural(stats.wins, 'victoire')} · {plural(stats.degommages, 'dégommage')}
+            </p>
+          </div>
+          <Icon name="settings" size={18} className="ml-auto" />
+        </Link>
       </header>
 
       <InviteBanner />
