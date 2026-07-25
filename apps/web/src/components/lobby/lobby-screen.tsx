@@ -143,7 +143,7 @@ export function LobbyScreen({ gameId, meId, friends }: LobbyScreenProps) {
   if (!lobby) {
     return (
       <main className="tab-page">
-        <SectionTitle sub="Connexion au lobby…">Lobby</SectionTitle>
+        <SectionTitle sub="Connexion au camp…">Le camp</SectionTitle>
         <p className="helper-text">Un instant, on rassemble le village…</p>
       </main>
     )
@@ -156,7 +156,7 @@ export function LobbyScreen({ gameId, meId, friends }: LobbyScreenProps) {
   return (
     <main className="tab-page">
       <div className="flex items-center justify-between">
-        <SectionTitle sub="Partage le code ou invite tes amis">Lobby</SectionTitle>
+        <SectionTitle sub="Partage le code ou invite tes amis">Le camp</SectionTitle>
         <Pill variant="ffa">FFA · {lobby.format} joueurs</Pill>
       </div>
 
@@ -214,7 +214,7 @@ export function LobbyScreen({ gameId, meId, friends }: LobbyScreenProps) {
       )}
 
       <Button variant="ghost" onClick={() => void handleLeave()} disabled={busy}>
-        Quitter le lobby
+        Lever le camp
       </Button>
     </main>
   )
