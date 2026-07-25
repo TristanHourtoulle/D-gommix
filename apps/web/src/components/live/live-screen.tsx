@@ -13,6 +13,7 @@ import { takenByTarget } from '@/lib/rivalries'
 import { EndRequestSheet } from './end-request-sheet'
 import { shouldInvalidateOnFinish } from './finish-guard'
 import { GameClock } from './game-clock'
+import { hitByTarget } from './hit-fx'
 import { describeEndRequest, HostDecisionModal } from './host-decision-modal'
 import { LiveJournal } from './live-journal'
 import { PawnField } from './pawn-field'
@@ -115,6 +116,10 @@ export function LiveScreen({
   const canUndo = canAct && validateCommand(state, viewerId, { type: 'undo' }, { isHost }).ok
   const pending = state.pendingEndRequest
   const taken = takenByTarget(state)
+  // Append-only per-target hit count: what drives the card animation. Distinct
+  // from `taken`, which excludes undone dégommages and would therefore replay
+  // the whole animation every time somebody presses « Annuler ».
+  const hits = hitByTarget(state.degommageLog)
 
   const submitEnd = (kind: EndKind, winnerId?: string): void => {
     setEndSheetOpen(false)
@@ -142,6 +147,7 @@ export function LiveScreen({
               username={displayName(names, userId)}
               isHost={userId === hostId}
               taken={taken[userId] ?? 0}
+              hit={hits[userId]}
             />
           )
         })}
