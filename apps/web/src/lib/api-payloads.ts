@@ -31,12 +31,17 @@ const serializedHomeGameSchema = z.object({
   id: z.string(),
   myResult: z.enum(['won', 'lost', 'aborted']),
   winnerUsername: z.string().nullable(),
+  winnerAvatarId: z.string().nullable().optional(),
   format: formatSchema,
   durationSec: z.number().nullable(),
   /** ISO 8601, null when the game never ended. */
   endedAt: z.string().nullable(),
   participants: z.array(
-    z.object({ username: z.string(), character: characterSchema.nullable() })
+    z.object({
+      username: z.string(),
+      avatarId: z.string().nullable().optional(),
+      character: characterSchema.nullable(),
+    })
   ),
 })
 
@@ -51,6 +56,7 @@ export const invitesPayloadSchema = z.object({
     z.object({
       gameId: z.string(),
       hostUsername: z.string(),
+      hostAvatarId: z.string().nullable().optional(),
       format: formatSchema,
     })
   ),
@@ -62,6 +68,7 @@ export const friendsPayloadSchema = z.object({
       requestId: z.string(),
       senderId: z.string(),
       senderUsername: z.string(),
+      senderAvatarId: z.string().nullable().optional(),
     })
   ),
   sent: z.array(
@@ -69,12 +76,14 @@ export const friendsPayloadSchema = z.object({
       requestId: z.string(),
       receiverId: z.string(),
       receiverUsername: z.string(),
+      receiverAvatarId: z.string().nullable().optional(),
     })
   ),
   friends: z.array(
     z.object({
       id: z.string(),
       username: z.string(),
+      avatarId: z.string().nullable().optional(),
       initialPresence: presenceSchema,
     })
   ),
@@ -84,6 +93,7 @@ export const friendsPayloadSchema = z.object({
 const rivalryPeerSchema = z.object({
   userId: z.string(),
   username: z.string(),
+  avatarId: z.string().nullable().optional(),
   count: z.number(),
 })
 
@@ -93,6 +103,7 @@ export const leaderboardPayloadSchema = z.object({
       rank: z.number(),
       userId: z.string(),
       username: z.string(),
+      avatarId: z.string().nullable().optional(),
       wins: z.number(),
       winrate: z.number(),
       villageGames: z.number(),
@@ -102,7 +113,12 @@ export const leaderboardPayloadSchema = z.object({
   ),
   friendCount: z.number(),
   topDegommeur: z
-    .object({ userId: z.string(), username: z.string(), degommages: z.number() })
+    .object({
+      userId: z.string(),
+      username: z.string(),
+      avatarId: z.string().nullable().optional(),
+      degommages: z.number(),
+    })
     .nullable(),
   rivalry: z.object({
     nemesis: rivalryPeerSchema.nullable(),

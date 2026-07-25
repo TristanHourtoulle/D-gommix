@@ -6,6 +6,7 @@ export type HomeGameResult = 'won' | 'lost' | 'aborted'
 
 export interface HomeGameParticipant {
   username: string
+  avatarId?: string | null
   character: CharacterId | null
 }
 
@@ -13,6 +14,7 @@ export interface HomeGame {
   id: string
   myResult: HomeGameResult
   winnerUsername: string | null
+  winnerAvatarId?: string | null
   format: GameFormat
   durationSec: number | null
   endedAt: Date | null
@@ -122,6 +124,7 @@ export async function getLastGames(userId: string): Promise<HomeGame[]> {
       outcome: games.outcome,
       winnerId: games.winnerId,
       winnerUsername: user.username,
+      winnerAvatarId: user.avatarId,
       format: games.format,
       startedAt: games.startedAt,
       endedAt: games.endedAt,
@@ -149,6 +152,7 @@ export async function getLastGames(userId: string): Promise<HomeGame[]> {
     .select({
       gameId: gamePlayers.gameId,
       username: user.username,
+      avatarId: user.avatarId,
       character: gamePlayers.character,
     })
     .from(gamePlayers)
@@ -164,7 +168,7 @@ export async function getLastGames(userId: string): Promise<HomeGame[]> {
   const participantsByGame = new Map<string, HomeGameParticipant[]>()
   for (const row of participantRows) {
     const list = participantsByGame.get(row.gameId) ?? []
-    list.push({ username: row.username ?? '?', character: row.character })
+    list.push({ username: row.username ?? '?', avatarId: row.avatarId, character: row.character })
     participantsByGame.set(row.gameId, list)
   }
 
@@ -179,6 +183,7 @@ export async function getLastGames(userId: string): Promise<HomeGame[]> {
       id: row.id,
       myResult: row.outcome === 'aborted' ? 'aborted' : wonOrLost,
       winnerUsername: row.winnerUsername,
+      winnerAvatarId: row.winnerAvatarId,
       format: toGameFormat(row.format),
       durationSec,
       endedAt: row.endedAt,

@@ -6,6 +6,7 @@ import { RoundIconButton } from './round-icon-button'
 interface ReceivedRequestRowProps {
   variant: 'received'
   username: string
+  avatarId: string | null
   busy: boolean
   onAccept: () => void
   onDecline: () => void
@@ -14,6 +15,7 @@ interface ReceivedRequestRowProps {
 interface SentRequestRowProps {
   variant: 'sent'
   username: string
+  avatarId: string | null
   busy: boolean
   onCancel: () => void
 }
@@ -22,11 +24,11 @@ type RequestRowProps = ReceivedRequestRowProps | SentRequestRowProps
 
 /** One pending friend request: accept/decline when received, cancel when sent. */
 export function RequestRow(props: RequestRowProps) {
-  const { username, busy } = props
+  const { username, avatarId, busy } = props
 
   return (
     <div className="flex items-center gap-3 py-2">
-      <PlayerAvatar username={username} size={32} />
+      <PlayerAvatar username={username} size={32} avatarId={avatarId} />
       <div className="min-w-0 flex-1">
         <p className="m-0 truncate text-sm font-bold">{username}</p>
         <p className="m-0 text-xs" style={{ color: 'var(--ink-faint)' }}>

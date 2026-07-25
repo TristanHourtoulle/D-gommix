@@ -19,6 +19,7 @@ export interface HeadToHead {
 export interface RivalryPeer {
   userId: string
   username: string
+  avatarId?: string | null
   count: number
 }
 
@@ -107,26 +108,35 @@ export async function getHeadToHead(viewerId: string, opponentId: string): Promi
   return { dealt: found?.dealt ?? 0, taken: found?.taken ?? 0 }
 }
 
-/** Usernames of the one or two spotlighted opponents, in a single query. */
-async function loadUsernames(ids: string[]): Promise<Map<string, string>> {
+interface SpotlightIdentity {
+  username: string
+  avatarId: string | null
+}
+
+/** Identities of the one or two spotlighted opponents, in a single query. */
+async function loadUsernames(ids: string[]): Promise<Map<string, SpotlightIdentity>> {
   if (ids.length === 0) return new Map()
   const rows = await db
-    .select({ id: user.id, username: user.username })
+    .select({ id: user.id, username: user.username, avatarId: user.avatarId })
     .from(user)
     .where(inList(user.id, ids))
 
-  return new Map(rows.map((row) => [row.id, row.username ?? 'Inconnu']))
+  return new Map(
+    rows.map((row) => [row.id, { username: row.username ?? 'Inconnu', avatarId: row.avatarId }])
+  )
 }
 
 function toPeer(
   pair: PairCount | null,
   counter: 'dealt' | 'taken',
-  usernames: Map<string, string>
+  usernames: Map<string, SpotlightIdentity>
 ): RivalryPeer | null {
   if (pair === null) return null
+  const identity = usernames.get(pair.opponentId)
   return {
     userId: pair.opponentId,
-    username: usernames.get(pair.opponentId) ?? 'Inconnu',
+    username: identity?.username ?? 'Inconnu',
+    avatarId: identity?.avatarId ?? null,
     count: pair[counter],
   }
 }

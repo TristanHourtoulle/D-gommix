@@ -93,7 +93,7 @@ export function SearchBar({ onRequest }: SearchBarProps) {
 
       {results.map((entry) => (
         <div key={entry.id} className="flex items-center gap-3 py-1">
-          <PlayerAvatar username={entry.username} size={32} />
+          <PlayerAvatar username={entry.username} size={32} avatarId={entry.avatarId ?? null} />
           <p className="m-0 min-w-0 flex-1 truncate text-sm font-bold">{entry.username}</p>
           {entry.isFriend ? (
             <span className="text-xs font-semibold" style={{ color: 'var(--good)' }}>
