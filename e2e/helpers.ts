@@ -1,9 +1,33 @@
 import { mkdir } from 'node:fs/promises'
 import { fileURLToPath } from 'node:url'
-import { expect, type Page } from '@playwright/test'
+import { expect, type Browser, type BrowserContext, type Page } from '@playwright/test'
 
 const SCREENSHOT_DIR =
   process.env.E2E_SCREENSHOT_DIR ?? fileURLToPath(new URL('./screenshots', import.meta.url))
+
+/**
+ * A browser context with the opening sequence already marked as seen. The
+ * splash covers the whole viewport for up to 4.6 s on a fresh session, which
+ * would swallow the first clicks of every spec. Setting the flag from the test
+ * side (rather than adding a `navigator.webdriver` escape hatch to the app)
+ * keeps production code free of test-only branches. `storageState` cannot do
+ * this: it persists `localStorage` only, never `sessionStorage`.
+ */
+export async function newAppContext(browser: Browser): Promise<BrowserContext> {
+  const context = await browser.newContext()
+  await context.addInitScript(() => {
+    try {
+      // The key is duplicated on purpose: `addInitScript` serialises this
+      // function to the browser, so it cannot close over an import, and `e2e/`
+      // does not depend on `@degommix/web`. Source of truth:
+      // apps/web/src/components/splash/splash-gate.ts (SPLASH_SEEN_KEY).
+      window.sessionStorage.setItem('degommix.splash.seen', '1')
+    } catch {
+      /* storage blocked: the splash is harmless anyway */
+    }
+  })
+  return context
+}
 
 /** Saves a named viewport screenshot into the QA directory. */
 export async function shot(page: Page, name: string, fullPage = false): Promise<void> {
