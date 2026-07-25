@@ -10,12 +10,25 @@ const cinzel = Cinzel({
 export const metadata: Metadata = {
   title: 'Dégommix',
   description: 'Marque les dégommages de tes parties entre amis',
+  applicationName: 'Dégommix',
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: 'default',
+    title: 'Dégommix',
+  },
+  icons: {
+    apple: '/icons-pwa/apple-touch-icon.png',
+  },
 }
 
 export const viewport: Viewport = {
   width: 'device-width',
   initialScale: 1,
   viewportFit: 'cover',
+  themeColor: [
+    { media: '(prefers-color-scheme: light)', color: '#ece0c4' },
+    { media: '(prefers-color-scheme: dark)', color: '#1c150d' },
+  ],
 }
 
 export default function RootLayout({
