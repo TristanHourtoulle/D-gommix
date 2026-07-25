@@ -32,6 +32,7 @@ Playwright happy path. No plan asks you to add test infrastructure.
 | 014  | Hidden dev animations menu (long-press on /profil) | — | — | 010–013 | TODO |
 | 015  | Lexique gaulois — owner-validated UI lexicon | — | — | — | TODO |
 | 016  | Splash « Le déroulé » — once-per-session opening sequence | P2 | M | — | TODO |
+| 017  | Logo « Le pion couronné » — vector sources + regenerated PWA icon set | P2 | M | — (step 6 optional, needs 016) | TODO |
 
 Status values: TODO | IN PROGRESS | DONE | BLOCKED (with one-line reason) | REJECTED (with one-line rationale — finding fixed independently or approach abandoned)
 
@@ -55,6 +56,12 @@ Status values: TODO | IN PROGRESS | DONE | BLOCKED (with one-line reason) | REJE
   the app — before its row may be set to DONE; a green test suite is explicitly
   not sufficient evidence, because the behaviour it changes was derived from a
   physical playtest.
+
+- **017's step 6 is the only part that needs 016.** Everything else in 017
+  (vector sources, regenerated icon set, README swap) is independent and
+  shippable now; step 6 — the monochrome emblem fading in above the engraved
+  wordmark — is explicitly marked skippable and must be skipped while 016 is
+  still TODO. Order does not matter otherwise.
 
 ## Findings considered and rejected
 
