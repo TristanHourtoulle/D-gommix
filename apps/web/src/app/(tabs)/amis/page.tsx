@@ -1,14 +1,20 @@
+import { requireOnboardedSession } from '@/lib/session'
+import { getFriendsPageData } from '@/lib/queries/friends'
 import { SectionTitle } from '@/components/ui/section-title'
-import { EmptyState } from '@/components/ui/empty-state'
+import { FriendsScreen } from '@/components/friends/friends-screen'
 
-export default function FriendsPage() {
+export default async function FriendsPage() {
+  const { user } = await requireOnboardedSession()
+  const data = await getFriendsPageData(user.id)
+
   return (
     <main className="tab-page">
       <SectionTitle sub="Ton cercle de dégommeurs">Amis</SectionTitle>
-      <EmptyState
-        icon="users"
-        title="Bientôt disponible"
-        description="Les demandes d'amis et la recherche de pseudos arrivent ici."
+      <FriendsScreen
+        received={data.received}
+        sent={data.sent}
+        friends={data.friends}
+        myLobbyId={data.myLobbyId}
       />
     </main>
   )
