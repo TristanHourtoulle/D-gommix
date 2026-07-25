@@ -11,6 +11,7 @@ import { CharacterBadge } from '@/components/ui/character-badge'
 import { Pill } from '@/components/ui/pill'
 import { StatTile } from '@/components/ui/stat-tile'
 import { useToast } from '@/components/ui/toast'
+import { useInvalidateTabData } from '@/hooks/use-tab-data'
 import { CHARACTER_META } from '@/lib/characters'
 import { formatChrono } from '@/lib/chrono'
 import { emitWithAck } from '@/lib/socket'
@@ -36,6 +37,7 @@ export function Summary({ gameId, state, names, startedAt, endedAt }: SummaryPro
   const router = useRouter()
   const { socket } = useSocket()
   const { toast } = useToast()
+  const invalidate = useInvalidateTabData()
   const [replaying, setReplaying] = useState(false)
 
   const winner = state.winnerId ? state.players[state.winnerId] : undefined
@@ -50,6 +52,9 @@ export function Summary({ gameId, state, names, startedAt, endedAt }: SummaryPro
     setReplaying(true)
     const ack = await emitWithAck(socket, 'replay:create', { finishedGameId: gameId })
     if (ack.ok) {
+      // The rematch lobby becomes the resume banner on Accueil and the lobby
+      // the Amis screen can invite into.
+      invalidate('home', 'friends')
       router.push(`/lobby/${ack.gameId}`)
       return
     }

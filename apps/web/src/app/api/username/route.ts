@@ -23,13 +23,11 @@ function isUniqueViolation(error: unknown): boolean {
   return false
 }
 
+/** Sets the username at onboarding and updates it later from the profile screen. */
 export async function POST(request: Request) {
   const session = await auth.api.getSession({ headers: await headers() })
   if (!session) {
     return NextResponse.json({ error: 'UNAUTHORIZED' }, { status: 401 })
-  }
-  if (session.user.username) {
-    return NextResponse.json({ error: 'USERNAME_ALREADY_SET' }, { status: 400 })
   }
   const body: unknown = await request.json().catch(() => null)
   const parsed = bodySchema.safeParse(body)
@@ -47,5 +45,5 @@ export async function POST(request: Request) {
     }
     throw error
   }
-  return NextResponse.json({ ok: true })
+  return NextResponse.json({ ok: true, username: parsed.data.username })
 }

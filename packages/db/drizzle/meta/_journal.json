@@ -15,6 +15,13 @@
       "when": 1784971526898,
       "tag": "0001_funny_ted_forrester",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1784984385282,
+      "tag": "0002_bored_the_executioner",
+      "breakpoints": true
     }
   ]
 }

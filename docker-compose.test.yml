@@ -1,9 +1,15 @@
 services:
   postgres-test:
-    image: postgres:16-alpine
+    # glibc-based on purpose: the alpine variant uses musl, which ignores locales and makes
+    # every collation behave like "C". That hid a production bug where a linguistic
+    # collation ordered a friendship pair differently from JS. Keep this image (and the
+    # en_US.UTF-8 locale below) aligned with the Railway database.
+    image: postgres:16
     environment:
       POSTGRES_USER: degommix
       POSTGRES_PASSWORD: degommix
       POSTGRES_DB: degommix_test
+      LANG: en_US.utf8
+      POSTGRES_INITDB_ARGS: "--locale=en_US.UTF-8"
     ports:
       - "54329:5432"

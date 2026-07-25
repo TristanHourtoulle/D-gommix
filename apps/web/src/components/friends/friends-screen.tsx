@@ -1,14 +1,14 @@
 'use client'
 
 import { useCallback, useMemo, useState } from 'react'
-import { useRouter } from 'next/navigation'
 import { useSocket } from '@/components/socket-provider'
 import { useFriendsEvents } from '@/hooks/use-friends-events'
 import { usePresence } from '@/hooks/use-presence'
+import { useFriendsData, useInvalidateTabData } from '@/hooks/use-tab-data'
 import { emitWithAck } from '@/lib/socket'
 import { ackErrorMessage, DELIVERY_FAILED_MESSAGE } from '@/lib/ws-errors'
-import type { CommandMap, CommandName } from '@/lib/realtime-types'
-import type { FriendEntry, ReceivedRequest, SentRequest } from '@/lib/queries/friends'
+import type { CommandMap, CommandName, FriendsEventPayload } from '@/lib/realtime-types'
+import type { FriendsPayload } from '@/lib/api-payloads'
 import { EmptyState } from '@/components/ui/empty-state'
 import { useToast } from '@/components/ui/toast'
 import { FriendRow } from './friend-row'
@@ -16,23 +16,35 @@ import { RequestRow } from './request-row'
 import { SearchBar } from './search-bar'
 
 interface FriendsScreenProps {
-  received: ReceivedRequest[]
-  sent: SentRequest[]
-  friends: FriendEntry[]
-  myLobbyId: string | null
+  /** SSR payload, so the first paint needs no client round-trip. */
+  initialData: FriendsPayload
 }
 
 /**
- * Client shell of the Amis screen: SSR lists as props, live presence via
- * `presence:update`, list refresh on `friends:event`, ws commands with acks.
+ * Client shell of the Amis screen: lists owned by the `friends` query, live
+ * presence via `presence:update`, and ws commands with acks. Every mutation
+ * invalidates the affected query keys instead of refetching the whole page.
  */
-export function FriendsScreen({ received, sent, friends, myLobbyId }: FriendsScreenProps) {
-  const router = useRouter()
+export function FriendsScreen({ initialData }: FriendsScreenProps) {
   const { socket } = useSocket()
   const { toast } = useToast()
+  const invalidate = useInvalidateTabData()
   const [busyKey, setBusyKey] = useState<string | null>(null)
 
-  useFriendsEvents(() => router.refresh())
+  const { data } = useFriendsData(initialData)
+  const { received, sent, friends, myLobbyId } = data
+
+  // A friend request lands, is accepted or is canceled: only the Amis lists
+  // change, and the circle behind the Classement when it was an acceptance.
+  useFriendsEvents(
+    useCallback(
+      (event: FriendsEventPayload) => {
+        if (event.kind === 'request_accepted') invalidate('friends', 'leaderboard')
+        else invalidate('friends')
+      },
+      [invalidate]
+    )
+  )
 
   const initialPresence = useMemo(
     () => Object.fromEntries(friends.map((friend) => [friend.id, friend.initialPresence])),
@@ -59,10 +71,16 @@ export function FriendsScreen({ received, sent, friends, myLobbyId }: FriendsScr
         return false
       }
       if (successMessage) toast(successMessage)
-      router.refresh()
+      // Accepting or removing reshapes the friends circle, which is what the
+      // ranking is built from; the other commands only touch the Amis lists.
+      if (event === 'friends:respond' || event === 'friends:remove') {
+        invalidate('friends', 'leaderboard')
+      } else if (event !== 'lobby:invite') {
+        invalidate('friends')
+      }
       return true
     },
-    [socket, toast, router]
+    [socket, toast, invalidate]
   )
 
   const requestFriend = useCallback(

@@ -1,6 +1,6 @@
 import { and, eq } from 'drizzle-orm'
 import { z } from 'zod'
-import { friendships, gamePlayers, games, user } from '@degommix/db'
+import { canonicalPair, friendships, gamePlayers, games, user } from '@degommix/db'
 import { CommandError, isUniqueViolation, OK, withAck } from '../ack'
 import type { AppContext } from '../context'
 import { generateGameCode } from '../game-code'
@@ -93,7 +93,7 @@ export function registerLobbyHandlers(socket: AppSocket, ctx: AppContext): void 
       assertLobby(game)
       const seat = await getSeat(db, gameId, userId)
       if (seat?.status !== 'joined') throw new CommandError('NOT_MEMBER')
-      const [low, high] = userId < friendId ? [userId, friendId] : [friendId, userId]
+      const [low, high] = canonicalPair(userId, friendId)
       const [friendship] = await db
         .select()
         .from(friendships)

@@ -1,6 +1,7 @@
 import type { CharacterId, Presence } from '@degommix/game-core'
 import {
   and,
+  canonicalPair,
   eq,
   or,
   sql,
@@ -50,7 +51,7 @@ export interface PlayerStats {
 
 /** True when a friendship row exists for the canonical (low, high) pair. */
 export async function areFriends(a: string, b: string): Promise<boolean> {
-  const [low, high] = a < b ? [a, b] : [b, a]
+  const [low, high] = canonicalPair(a, b)
   const rows = await db
     .select({ userLow: friendships.userLow })
     .from(friendships)

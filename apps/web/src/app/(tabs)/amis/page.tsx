@@ -10,12 +10,7 @@ export default async function FriendsPage() {
   return (
     <main className="tab-page">
       <SectionTitle sub="Ton cercle de dégommeurs">Amis</SectionTitle>
-      <FriendsScreen
-        received={data.received}
-        sent={data.sent}
-        friends={data.friends}
-        myLobbyId={data.myLobbyId}
-      />
+      <FriendsScreen initialData={data} />
     </main>
   )
 }

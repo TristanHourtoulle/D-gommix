@@ -11,13 +11,22 @@ interface TapZoneProps {
   opponents: PlayerState[]
   names: NameMap
   onTap: (targetId: string) => void
+  /** Chip whose degommage is being confirmed by the server, `null` when idle. */
+  pendingTargetId: string | null
+  /** True while the anti double-tap lock holds every chip (see `tap-lock.ts`). */
+  isLocked: boolean
 }
+
+const CHIP_BASE =
+  'flex items-center gap-2 rounded-full py-1.5 pr-3 pl-1.5 text-sm font-bold transition-[transform,opacity] duration-150 motion-reduce:transition-none'
 
 /**
  * « Tu viens de dégommer qui ? » — no confirmation dialog, the counter only
  * moves when the confirmed `game:event` comes back (light press feedback).
+ * Every chip locks for the duration of a tap so a bounce tap cannot register a
+ * second degommage.
  */
-export function TapZone({ opponents, names, onTap }: TapZoneProps) {
+export function TapZone({ opponents, names, onTap, pendingTargetId, isLocked }: TapZoneProps) {
   if (opponents.length === 0) return null
 
   return (
@@ -26,14 +35,27 @@ export function TapZone({ opponents, names, onTap }: TapZoneProps) {
       <div className="flex flex-wrap justify-center gap-2">
         {opponents.map((opponent) => {
           const meta = CHARACTER_META[opponent.character]
+          const isPending = opponent.userId === pendingTargetId
           return (
             <button
               key={opponent.userId}
               type="button"
+              disabled={isLocked}
+              aria-busy={isPending}
+              data-state={isPending ? 'confirming' : isLocked ? 'locked' : 'idle'}
               onClick={() => {
                 onTap(opponent.userId)
               }}
-              className="flex cursor-pointer items-center gap-2 rounded-full py-1.5 pr-3 pl-1.5 text-sm font-bold transition-transform active:scale-90"
+              className={[
+                CHIP_BASE,
+                isLocked
+                  ? 'cursor-default'
+                  : 'cursor-pointer active:scale-90 motion-reduce:active:scale-100',
+                isPending ? 'scale-95 opacity-80 motion-reduce:scale-100' : '',
+                isLocked && !isPending ? 'opacity-40' : '',
+              ]
+                .filter(Boolean)
+                .join(' ')}
               style={
                 {
                   border: '2px solid',
