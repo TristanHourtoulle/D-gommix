@@ -9,7 +9,7 @@ export default async function FriendsPage() {
 
   return (
     <main className="tab-page">
-      <SectionTitle sub="Ton cercle de dégommeurs">Amis</SectionTitle>
+      <SectionTitle sub="Ceux qui vident les gourdes avec toi">Tribu</SectionTitle>
       <FriendsScreen initialData={data} />
     </main>
   )

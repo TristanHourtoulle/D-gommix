@@ -134,7 +134,7 @@ export function FriendsScreen({ initialData }: FriendsScreenProps) {
       if (invited.ok) toast('Invitation envoyée !')
       else toast(ackErrorMessage(invited), 'error')
       // Land in the lobby either way: the user owns a real lobby now, and
-      // « Quitter le lobby » is the way back out.
+      // « Lever le camp » is the way back out.
       router.push(`/lobby/${created.gameId}`)
     },
     [myLobbyId, run, socket, toast, invalidate, router]
@@ -194,11 +194,11 @@ export function FriendsScreen({ initialData }: FriendsScreenProps) {
       ) : null}
 
       <section>
-        <p className="sec-label">Tes amis</p>
+        <p className="sec-label">Ta tribu</p>
         {friends.length === 0 ? (
           <EmptyState
             icon="users"
-            title="Aucun ami pour l'instant"
+            title="Tribu déserte"
             description="Cherche un pseudo ci-dessus pour envoyer ta première demande."
           />
         ) : (

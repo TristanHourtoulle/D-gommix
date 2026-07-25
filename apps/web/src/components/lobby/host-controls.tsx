@@ -92,7 +92,7 @@ export function HostControls({
           ))
         )}
         {lobbyFull && invitable.length > 0 ? (
-          <p className="helper-text">Lobby complet — passe en format supérieur pour inviter.</p>
+          <p className="helper-text">Camp complet — passe en format supérieur pour inviter.</p>
         ) : null}
       </div>
 
