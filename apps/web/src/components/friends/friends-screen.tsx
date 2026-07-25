@@ -1,6 +1,7 @@
 'use client'
 
 import { useCallback, useMemo, useState } from 'react'
+import { useRouter } from 'next/navigation'
 import { useSocket } from '@/components/socket-provider'
 import { useFriendsEvents } from '@/hooks/use-friends-events'
 import { usePresence } from '@/hooks/use-presence'
@@ -21,12 +22,19 @@ interface FriendsScreenProps {
 }
 
 /**
+ * Smallest format, so a one-tap invite from the Amis tab never over-books
+ * seats. The host raises it from the lobby screen (`lobby:set_format`).
+ */
+const DEFAULT_INVITE_FORMAT = 2 as const
+
+/**
  * Client shell of the Amis screen: lists owned by the `friends` query, live
  * presence via `presence:update`, and ws commands with acks. Every mutation
  * invalidates the affected query keys instead of refetching the whole page.
  */
 export function FriendsScreen({ initialData }: FriendsScreenProps) {
   const { socket } = useSocket()
+  const router = useRouter()
   const { toast } = useToast()
   const invalidate = useInvalidateTabData()
   const [busyKey, setBusyKey] = useState<string | null>(null)
@@ -89,7 +97,48 @@ export function FriendsScreen({ initialData }: FriendsScreenProps) {
     [run]
   )
 
-  const hasInvitableFriend = friends.some((friend) => presenceOf(friend.id) !== 'in_game')
+  /**
+   * One-tap invite: reuses the open lobby when there is one, otherwise creates
+   * a lobby on demand and chains the invitation into it. The chain is not
+   * atomic — a failed invite still leaves a real lobby the user owns, which is
+   * why the navigation happens on both outcomes.
+   */
+  const inviteFriend = useCallback(
+    async (friendId: string): Promise<void> => {
+      if (myLobbyId) {
+        await run(friendId, 'lobby:invite', { gameId: myLobbyId, friendId }, 'Invitation envoyée !')
+        return
+      }
+      if (!socket) {
+        toast(DELIVERY_FAILED_MESSAGE, 'error')
+        return
+      }
+      setBusyKey(friendId)
+      const created = await emitWithAck(socket, 'lobby:create', {
+        format: DEFAULT_INVITE_FORMAT,
+      })
+      if (!created.ok) {
+        setBusyKey(null)
+        toast(ackErrorMessage(created), 'error')
+        return
+      }
+      const invited = await emitWithAck(socket, 'lobby:invite', {
+        gameId: created.gameId,
+        friendId,
+      })
+      setBusyKey(null)
+      // The fresh lobby is the Accueil resume banner and the `myLobbyId` the
+      // Amis screen invites into; creating it may also auto-decline the user's
+      // own pending invitations, so all three payloads are stale now.
+      invalidate('home', 'friends', 'invites')
+      if (invited.ok) toast('Invitation envoyée !')
+      else toast(ackErrorMessage(invited), 'error')
+      // Land in the lobby either way: the user owns a real lobby now, and
+      // « Quitter le lobby » is the way back out.
+      router.push(`/lobby/${created.gameId}`)
+    },
+    [myLobbyId, run, socket, toast, invalidate, router]
+  )
 
   return (
     <div className="flex flex-col gap-5">
@@ -158,25 +207,11 @@ export function FriendsScreen({ initialData }: FriendsScreenProps) {
                 friendId={friend.id}
                 username={friend.username}
                 presence={presenceOf(friend.id)}
-                canInvite={myLobbyId !== null}
                 busy={busyKey === friend.id}
-                onInvite={() => {
-                  if (!myLobbyId) return
-                  void run(
-                    friend.id,
-                    'lobby:invite',
-                    { gameId: myLobbyId, friendId: friend.id },
-                    'Invitation envoyée !'
-                  )
-                }}
+                onInvite={() => void inviteFriend(friend.id)}
                 onRemove={() => void run(friend.id, 'friends:remove', { friendId: friend.id })}
               />
             ))}
-            {!myLobbyId && hasInvitableFriend ? (
-              <p className="helper-text">
-                Crée un salon depuis l&apos;onglet Jouer pour inviter tes amis.
-              </p>
-            ) : null}
           </>
         )}
       </section>

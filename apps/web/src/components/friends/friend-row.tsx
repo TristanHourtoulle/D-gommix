@@ -11,8 +11,6 @@ interface FriendRowProps {
   friendId: string
   username: string
   presence: Presence
-  /** True when the current user has an open lobby to invite into. */
-  canInvite: boolean
   busy: boolean
   onInvite: () => void
   onRemove: () => void
@@ -26,7 +24,6 @@ export function FriendRow({
   friendId,
   username,
   presence,
-  canInvite,
   busy,
   onInvite,
   onRemove,
@@ -76,13 +73,9 @@ export function FriendRow({
           {isFree ? (
             <RoundIconButton
               icon="user-add"
-              label={
-                canInvite
-                  ? `Inviter ${username} dans ton salon`
-                  : 'Crée d’abord un salon dans l’onglet Jouer'
-              }
+              label={`Inviter ${username}`}
               tone="accent"
-              disabled={busy || !canInvite}
+              disabled={busy}
               onClick={onInvite}
             />
           ) : null}
