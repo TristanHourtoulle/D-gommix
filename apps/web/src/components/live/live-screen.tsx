@@ -18,6 +18,7 @@ import { Summary } from './summary'
 import { TapZone } from './tap-zone'
 import { displayName, type LivePlayer, type NameMap } from './types'
 import { useLiveJournal } from './use-live-journal'
+import { useTapLock } from './use-tap-lock'
 
 interface LiveScreenProps {
   gameId: string
@@ -43,6 +44,7 @@ export function LiveScreen({
   const { state, startedAt, serverOffset, connected } = game
   const { toast } = useToast()
   const [endSheetOpen, setEndSheetOpen] = useState(false)
+  const tapLock = useTapLock()
   useWakeLock()
 
   const names = useMemo<NameMap>(
@@ -55,6 +57,14 @@ export function LiveScreen({
 
   const run = async (command: Promise<Ack<{ seq: number }>>): Promise<void> => {
     const ack = await command
+    if (!ack.ok) toast(ackErrorMessage(ack), 'error')
+  }
+
+  /** Anti double-tap: a tap locks every chip until the ack and the cooldown. */
+  const handleTap = async (targetId: string): Promise<void> => {
+    if (!tapLock.begin(targetId)) return
+    const ack = await game.degommage(targetId)
+    tapLock.settle(ack.ok)
     if (!ack.ok) toast(ackErrorMessage(ack), 'error')
   }
 
@@ -122,8 +132,10 @@ export function LiveScreen({
         <TapZone
           opponents={opponents}
           names={names}
+          pendingTargetId={tapLock.pendingTargetId}
+          isLocked={tapLock.isLocked}
           onTap={(targetId) => {
-            void run(game.degommage(targetId))
+            void handleTap(targetId)
           }}
         />
       ) : null}
