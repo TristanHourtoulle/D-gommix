@@ -6,6 +6,7 @@ import {
   emitAck,
   expectNoEvent,
   expectOk,
+  sleep,
   startTestServer,
   waitForEvent,
   type TestServer,
@@ -15,6 +16,11 @@ interface FriendsEvent {
   kind: string
   requestId: string
   from: { id: string; username: string }
+}
+
+interface PresenceUpdate {
+  userId: string
+  presence: string
 }
 
 describe('friends commands', () => {
@@ -55,6 +61,53 @@ describe('friends commands', () => {
     const rows = await ts.db.select().from(friendships)
     expect(rows).toHaveLength(1)
     expect(rows[0]).toMatchObject({ userLow: 'u1', userHigh: 'u2' })
+  })
+
+  // Regression: presence is broadcast only on transitions, so a friendship created
+  // between two already-connected users left both screens showing « hors ligne ».
+  it('pushes the presence of both sides when a request is accepted', async () => {
+    const s1 = await ts.connectAs('u1')
+    const s2 = await ts.connectAs('u2')
+    const requestAck = expectOk(
+      await emitAck<{ requestId: string }>(s1, 'friends:request', { receiverId: 'u2' })
+    )
+
+    const senderSees = waitForEvent<PresenceUpdate>(s1, 'presence:update')
+    const receiverSees = waitForEvent<PresenceUpdate>(s2, 'presence:update')
+    expectOk(
+      await emitAck(s2, 'friends:respond', { requestId: requestAck.requestId, accept: true })
+    )
+
+    expect(await senderSees).toEqual({ userId: 'u2', presence: 'online' })
+    expect(await receiverSees).toEqual({ userId: 'u1', presence: 'online' })
+  })
+
+  it('reports an offline requester as offline to the acceptor', async () => {
+    const s1 = await ts.connectAs('u1')
+    const requestAck = expectOk(
+      await emitAck<{ requestId: string }>(s1, 'friends:request', { receiverId: 'u2' })
+    )
+    s1.disconnect()
+    await sleep(100)
+
+    const s2 = await ts.connectAs('u2')
+    const receiverSees = waitForEvent<PresenceUpdate>(s2, 'presence:update')
+    expectOk(
+      await emitAck(s2, 'friends:respond', { requestId: requestAck.requestId, accept: true })
+    )
+    expect(await receiverSees).toEqual({ userId: 'u1', presence: 'offline' })
+  })
+
+  it('pushes no presence when the request is declined', async () => {
+    const s1 = await ts.connectAs('u1')
+    const s2 = await ts.connectAs('u2')
+    const requestAck = expectOk(
+      await emitAck<{ requestId: string }>(s1, 'friends:request', { receiverId: 'u2' })
+    )
+    expectOk(
+      await emitAck(s2, 'friends:respond', { requestId: requestAck.requestId, accept: false })
+    )
+    await expectNoEvent(s1, 'presence:update', 250)
   })
 
   it('rejects a duplicate pending request', async () => {

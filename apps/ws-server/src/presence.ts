@@ -59,6 +59,17 @@ export class PresenceTracker {
     if (changed && this.isOnline(userId)) await this.broadcast(userId)
   }
 
+  /**
+   * Pushes the current presence of two users to each other, right after their
+   * friendship is created. Presence is otherwise only emitted on transitions,
+   * so a brand-new friend stays « hors ligne » on both screens until one of
+   * them happens to connect, disconnect or enter a game.
+   */
+  notifyNewFriendship(a: string, b: string): void {
+    this.io.to(`user:${a}`).emit('presence:update', { userId: b, presence: this.getPresence(b) })
+    this.io.to(`user:${b}`).emit('presence:update', { userId: a, presence: this.getPresence(a) })
+  }
+
   async broadcast(userId: string): Promise<void> {
     const rows = await this.db
       .select()
