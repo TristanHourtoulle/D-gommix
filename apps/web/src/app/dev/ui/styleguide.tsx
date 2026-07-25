@@ -59,6 +59,18 @@ export function Styleguide() {
           <Icon name="undo" size={15} />
           Annuler
         </Button>
+        <p className="sec-label">Mécanique arcade — repos / enfoncé</p>
+        <div className="flex items-start gap-2">
+          <Button fullWidth={false}>Au repos</Button>
+          {/* Static mirror of the :active state so the press depth is reviewable in a screenshot. */}
+          <button
+            className="cta auto"
+            type="button"
+            style={{ transform: 'translateY(var(--key-depth))', boxShadow: '0 0 0 var(--key-lip)' }}
+          >
+            Enfoncé
+          </button>
+        </div>
       </section>
 
       <section className="flex flex-col gap-2">

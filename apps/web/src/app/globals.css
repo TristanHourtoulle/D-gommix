@@ -20,6 +20,10 @@
   --surface-2: #fbf6e9;
   --pawn-opacity: 0.10;
   --shadow: 0 18px 40px -20px rgba(37, 26, 16, 0.55);
+  /* Arcade key mechanics: solid lip under the button face, swallowed on press. */
+  --key-depth: 5px;
+  --key-lip: #251a10;
+  --key-lip-ghost: #b9a075;
   --font-display: var(--font-cinzel, 'Cinzel'), 'Times New Roman', Georgia, serif;
   --font-body: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial,
     sans-serif;
@@ -35,6 +39,7 @@
     --good: #5fae74; --bad: #e2564a; --surface: #241b11; --surface-2: #2b2115;
     --pawn-opacity: 0.14;
     --shadow: 0 18px 40px -18px rgba(0, 0, 0, 0.7);
+    --key-depth: 5px; --key-lip: #8a5719; --key-lip-ghost: #7a6039;
   }
 }
 
@@ -46,6 +51,7 @@
   --good: #5fae74; --bad: #e2564a; --surface: #241b11; --surface-2: #2b2115;
   --pawn-opacity: 0.14;
   --shadow: 0 18px 40px -18px rgba(0, 0, 0, 0.7);
+  --key-depth: 5px; --key-lip: #8a5719; --key-lip-ghost: #7a6039;
 }
 
 :root[data-theme="light"] {
@@ -56,6 +62,7 @@
   --good: #3c7a4d; --bad: #a4372a; --surface: #f6eed7; --surface-2: #fbf6e9;
   --pawn-opacity: 0.10;
   --shadow: 0 18px 40px -20px rgba(37, 26, 16, 0.55);
+  --key-depth: 5px; --key-lip: #251a10; --key-lip-ghost: #b9a075;
 }
 
 @theme inline {
@@ -130,6 +137,13 @@ a {
   padding: 0.85rem 0.95rem;
 }
 
+/**
+ * Arcade key. The button face sits on a solid lip of `--key-depth` px rendered as a
+ * hard (zero-blur) offset shadow. Pressing translates the face down by exactly that
+ * depth so it lands flush on the lip, which visually disappears — the tactile
+ * "physical key pushed down" mechanic. `margin-bottom` reserves the lip so the
+ * resting button owns a stable box and neighbours never shift on press.
+ */
 .cta {
   display: flex;
   align-items: center;
@@ -144,21 +158,53 @@ a {
   background: var(--bronze);
   color: var(--surface-2);
   border: 2px solid var(--ink);
-  border-radius: 12px;
-  padding: 0.75rem;
+  border-radius: 14px;
+  padding: 0.8rem 0.75rem;
   cursor: pointer;
   width: 100%;
+  user-select: none;
+  -webkit-tap-highlight-color: transparent;
+  margin-bottom: var(--key-depth);
+  box-shadow: 0 var(--key-depth) 0 var(--key-lip);
+  transition:
+    transform 90ms cubic-bezier(0.2, 0.8, 0.3, 1),
+    box-shadow 90ms cubic-bezier(0.2, 0.8, 0.3, 1);
+}
+
+.cta:active:not([disabled]):not([aria-disabled='true']) {
+  transform: translateY(var(--key-depth));
+  box-shadow: 0 0 0 var(--key-lip);
+}
+
+/* Shrink-to-content key (inline actions such as "Annuler"). */
+.cta.auto {
+  width: auto;
+  align-self: flex-start;
+  padding-left: 0.9rem;
+  padding-right: 0.9rem;
 }
 
 .cta.ghost {
   background: transparent;
   color: var(--ink);
   border-color: var(--parchment-line);
+  box-shadow: 0 var(--key-depth) 0 var(--key-lip-ghost);
 }
 
-.cta[disabled] {
+.cta.ghost:active:not([disabled]):not([aria-disabled='true']) {
+  box-shadow: 0 0 0 var(--key-lip-ghost);
+}
+
+.cta[disabled],
+.cta[aria-disabled='true'] {
   opacity: 0.5;
   cursor: not-allowed;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .cta {
+    transition: none;
+  }
 }
 
 .avatar-ring {
@@ -286,13 +332,20 @@ a {
 .stat-num { font-family: var(--font-mono); font-variant-numeric: tabular-nums; font-size: 1.15rem; font-weight: 700; }
 .stat-lbl { font-size: 0.63rem; color: var(--ink-faint); text-transform: uppercase; letter-spacing: 0.04em; }
 
-.code-boxes { display: flex; gap: 0.4rem; justify-content: center; position: relative; }
+.code-boxes {
+  display: flex;
+  gap: 0.4rem;
+  justify-content: center;
+  position: relative;
+  margin-bottom: 3px;
+}
 
+/* Same arcade plate language as `.cta`, on a shallower 3px lip so the tiles stay light. */
 .code-box {
   width: 38px;
   height: 46px;
   border: 1.5px solid var(--parchment-line);
-  border-radius: 9px;
+  border-radius: 11px;
   background: var(--surface-2);
   display: flex;
   align-items: center;
@@ -300,9 +353,14 @@ a {
   font-family: var(--font-mono);
   font-size: 1.05rem;
   font-weight: 700;
+  box-shadow: 0 3px 0 var(--key-lip-ghost);
 }
 
-.code-box.filled { border-color: var(--bronze); color: var(--bronze-strong); }
+.code-box.filled {
+  border-color: var(--bronze);
+  color: var(--bronze-strong);
+  box-shadow: 0 3px 0 var(--bronze);
+}
 
 .code-input {
   position: absolute;
