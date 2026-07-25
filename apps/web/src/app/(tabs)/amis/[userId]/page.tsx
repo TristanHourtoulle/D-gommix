@@ -2,9 +2,11 @@ import Link from 'next/link'
 import { notFound } from 'next/navigation'
 import { requireOnboardedSession } from '@/lib/session'
 import { areFriends, getPlayerStats, getPublicUser } from '@/lib/queries/friends'
+import { getHeadToHead } from '@/lib/queries/rivalries'
 import { CHARACTER_META } from '@/lib/characters'
 import { CharacterBadge } from '@/components/ui/character-badge'
 import { EmptyState } from '@/components/ui/empty-state'
+import { HeadToHeadCard } from '@/components/stats/head-to-head-card'
 import { PlayerAvatar } from '@/components/ui/player-avatar'
 import { SectionTitle } from '@/components/ui/section-title'
 import { StatTile } from '@/components/ui/stat-tile'
@@ -37,7 +39,10 @@ export default async function FriendProfilePage({ params }: FriendProfilePagePro
     )
   }
 
-  const stats = await getPlayerStats(userId)
+  const [stats, headToHead] = await Promise.all([
+    getPlayerStats(userId),
+    isSelf ? Promise.resolve(null) : getHeadToHead(me.id, userId),
+  ])
   const winrateLabel =
     stats.winrate === null ? '—' : `${Math.round(stats.winrate * 100)} %`
   const favorite = stats.favoriteCharacter
@@ -64,6 +69,10 @@ export default async function FriendProfilePage({ params }: FriendProfilePagePro
         <StatTile icon="flag" label="Winrate" value={winrateLabel} />
         <StatTile icon="sword" label="Dégommages" value={stats.degommages} />
       </div>
+
+      {headToHead ? (
+        <HeadToHeadCard username={profile.username} headToHead={headToHead} />
+      ) : null}
 
       <section className="card flex items-center gap-3 p-5">
         {favorite ? (
