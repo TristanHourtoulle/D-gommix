@@ -1,6 +1,6 @@
 import { and, eq, or } from 'drizzle-orm'
 import { z } from 'zod'
-import { friendRequests, friendships, user } from '@degommix/db'
+import { canonicalPair, friendRequests, friendships, user } from '@degommix/db'
 import { CommandError, isUniqueViolation, OK, withAck } from '../ack'
 import type { AppContext } from '../context'
 import type { AppSocket } from '../socket-types'
@@ -12,10 +12,6 @@ const removeSchema = z.object({ friendId: z.string().min(1) })
 
 const FRIENDS_RATE_LIMIT = 10
 const FRIENDS_RATE_WINDOW_MS = 60_000
-
-function canonicalPair(a: string, b: string): [string, string] {
-  return a < b ? [a, b] : [b, a]
-}
 
 export function registerFriendsHandlers(socket: AppSocket, ctx: AppContext): void {
   const { db, io, limiter } = ctx

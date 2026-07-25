@@ -1,5 +1,5 @@
-import { eq, and } from 'drizzle-orm'
-import { friendRequests, friendships } from '@degommix/db'
+import { eq, and, or } from 'drizzle-orm'
+import { canonicalPair, friendRequests, friendships } from '@degommix/db'
 import { migrateTestDb } from '@degommix/db/test-utils'
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest'
 import {
@@ -106,6 +106,70 @@ describe('friends commands', () => {
       .where(and(eq(friendships.userLow, 'u1'), eq(friendships.userHigh, 'u2')))
     expect(rows).toHaveLength(0)
     await expectNoEvent(s2, 'friends:event', 200)
+  })
+
+  // Regression: these two ids come from the production failure. JS orders 'W' before 'm',
+  // a linguistic database collation orders them the other way, which used to make the
+  // `friendships_canonical` CHECK reject the insert and roll the accept transaction back.
+  it('accepts a request whose ids order differently under a linguistic collation', async () => {
+    const sender = 'WRjAXqlHVwriMViJ29gwKrnv4xvkpD4q'
+    const receiver = 'mdxq1pDqI7iB6m0fFb8Y6zEqtEFQocnT'
+    await ts.reset([sender, receiver])
+
+    const senderSocket = await ts.connectAs(sender)
+    const receiverSocket = await ts.connectAs(receiver)
+
+    const requestAck = expectOk(
+      await emitAck<{ requestId: string }>(senderSocket, 'friends:request', {
+        receiverId: receiver,
+      })
+    )
+    const accepted = waitForEvent<FriendsEvent>(senderSocket, 'friends:event')
+    expectOk(
+      await emitAck(receiverSocket, 'friends:respond', {
+        requestId: requestAck.requestId,
+        accept: true,
+      })
+    )
+    expect((await accepted).kind).toBe('request_accepted')
+
+    const [low, high] = canonicalPair(sender, receiver)
+    expect([low, high]).toEqual([sender, receiver])
+
+    const rows = await ts.db.select().from(friendships)
+    expect(rows).toHaveLength(1)
+    expect(rows[0]).toMatchObject({ userLow: low, userHigh: high })
+
+    // The request must be marked accepted, i.e. the transaction committed.
+    const [request] = await ts.db
+      .select()
+      .from(friendRequests)
+      .where(eq(friendRequests.id, requestAck.requestId))
+    expect(request?.status).toBe('accepted')
+
+    // `areFriends`-style probe: canonical lookup finds the pair from either direction.
+    const probes: [string, string][] = [
+      [sender, receiver],
+      [receiver, sender],
+    ]
+    for (const [a, b] of probes) {
+      const [probeLow, probeHigh] = canonicalPair(a, b)
+      const found = await ts.db
+        .select({ userLow: friendships.userLow })
+        .from(friendships)
+        .where(and(eq(friendships.userLow, probeLow), eq(friendships.userHigh, probeHigh)))
+        .limit(1)
+      expect(found).toHaveLength(1)
+    }
+
+    // Symmetric read path (presence / friends list) sees the row for both users.
+    for (const id of [sender, receiver]) {
+      const listed = await ts.db
+        .select()
+        .from(friendships)
+        .where(or(eq(friendships.userLow, id), eq(friendships.userHigh, id)))
+      expect(listed).toHaveLength(1)
+    }
   })
 
   it('rate limits the 11th friends:request within a minute', async () => {

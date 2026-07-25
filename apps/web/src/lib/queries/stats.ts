@@ -1,4 +1,15 @@
-import { and, eq, or, sql, friendships, gameEvents, gamePlayers, games, user } from '@degommix/db'
+import {
+  and,
+  canonicalPair,
+  eq,
+  or,
+  sql,
+  friendships,
+  gameEvents,
+  gamePlayers,
+  games,
+  user,
+} from '@degommix/db'
 import type { CharacterId, GameFormat, GameOutcome } from '@degommix/game-core'
 import { db } from '@/lib/db'
 
@@ -304,7 +315,7 @@ export async function getGameDetail(gameId: string, viewerId: string): Promise<G
   const isParticipant = playerRows.some((row) => row.userId === viewerId)
   if (!isParticipant) {
     const pairChecks = playerRows.map((row) => {
-      const [low, high] = row.userId < viewerId ? [row.userId, viewerId] : [viewerId, row.userId]
+      const [low, high] = canonicalPair(row.userId, viewerId)
       return and(eq(friendships.userLow, low), eq(friendships.userHigh, high))
     })
     if (pairChecks.length === 0) return null
