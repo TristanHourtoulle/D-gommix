@@ -141,8 +141,9 @@ test('two-player 1v1 happy path (design §7.3)', async ({ browser }) => {
     await expect(
       p1.getByText(`${J1.username} a dégommé ${J2.username}`, { exact: true })
     ).toHaveCount(2)
+    // « de Asterix » is elided to « d’Asterix » (see apps/web/src/lib/elision.ts).
     await expect(
-      p1.getByText(`${J2.username} a annulé le dégommage de ${J1.username} sur ${J2.username}`)
+      p1.getByText(`${J2.username} a annulé le dégommage d’${J1.username} sur ${J2.username}`)
     ).toBeVisible()
     await expect(p1.getByText(new RegExp(`village atteint par ${J2.username}`))).toBeVisible()
     await shot(p1, '15-detail', true)
