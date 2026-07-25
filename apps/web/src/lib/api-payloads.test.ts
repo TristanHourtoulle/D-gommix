@@ -317,4 +317,18 @@ describe('avatar ids on the wire', () => {
     }
     expect(homePayloadSchema.safeParse(legacy).success).toBe(true)
   })
+
+  it('carries the participant avatar ids of a history row over the wire', () => {
+    const payload = serializeHomePayload(stats, null, [
+      game({
+        participants: [
+          { username: 'Asterix', avatarId: 'b-menhir', character: 'asterix' },
+          { username: 'Obelix', avatarId: null, character: 'obelix' },
+        ],
+      }),
+    ])
+    const parsed = homePayloadSchema.parse(JSON.parse(JSON.stringify(payload)))
+    expect(parsed.lastGames[0]?.participants[0]?.avatarId).toBe('b-menhir')
+    expect(parsed.lastGames[0]?.participants[1]?.avatarId).toBeNull()
+  })
 })

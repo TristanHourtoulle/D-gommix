@@ -1,8 +1,8 @@
 import Link from 'next/link'
 import { Icon } from '@/components/icons'
-import { CharacterBadge } from '@/components/ui/character-badge'
+import { PlayerAvatar } from '@/components/ui/player-avatar'
 import { Pill } from '@/components/ui/pill'
-import type { HomeGame, HomeGameParticipant } from '@/lib/queries/home'
+import type { HomeGame } from '@/lib/queries/home'
 import { formatDuration, formatLabel, formatWhen } from './format'
 
 const RESULT_PILL = {
@@ -11,20 +11,8 @@ const RESULT_PILL = {
   aborted: { variant: 'wait', label: 'Abandonnée' },
 } as const
 
-function ParticipantBadge({ participant }: { participant: HomeGameParticipant }) {
-  if (participant.character) {
-    return <CharacterBadge character={participant.character} size="sm" />
-  }
-  return (
-    <span
-      className="avatar-ring"
-      style={{ width: 26, height: 26, fontSize: '0.65rem', borderWidth: 1.5 }}
-      title={participant.username}
-    >
-      {participant.username.charAt(0).toUpperCase()}
-    </span>
-  )
-}
+/** Smallest ring the app uses, so the row keeps its one-line density. */
+const PARTICIPANT_AVATAR_SIZE = 32
 
 interface GameHistoryItemProps {
   game: HomeGame
@@ -52,8 +40,16 @@ export function GameHistoryItem({ game }: GameHistoryItemProps) {
         aria-label={game.participants.map((participant) => participant.username).join(', ')}
       >
         {game.participants.map((participant, index) => (
-          <span key={participant.username} className={index > 0 ? '-ml-2' : undefined}>
-            <ParticipantBadge participant={participant} />
+          <span
+            key={participant.username}
+            className={index > 0 ? '-ml-2' : undefined}
+            title={participant.username}
+          >
+            <PlayerAvatar
+              username={participant.username}
+              avatarId={participant.avatarId}
+              size={PARTICIPANT_AVATAR_SIZE}
+            />
           </span>
         ))}
       </span>
