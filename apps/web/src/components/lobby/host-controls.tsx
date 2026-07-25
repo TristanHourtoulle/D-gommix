@@ -1,17 +1,21 @@
 'use client'
 
-import type { GameFormat } from '@degommix/game-core'
+import type { GameFormat, Presence } from '@degommix/game-core'
 import { Icon } from '@/components/icons'
 import { Button } from '@/components/ui/button'
 import { PlayerAvatar } from '@/components/ui/player-avatar'
+import { PresenceDot } from '@/components/ui/presence-dot'
 import type { InvitableFriend } from '@/lib/queries/lobby'
 import type { LobbyPlayer } from '@/lib/realtime-types'
 import { FormatSegmented } from './format-segmented'
+import { sortByAvailability } from './invitable-order'
 
 interface HostControlsProps {
   format: GameFormat
   players: LobbyPlayer[]
   friends: InvitableFriend[]
+  /** Live presence of a friend, socket-fed; unknown ids read as 'offline'. */
+  presenceOf: (userId: string) => Presence
   canStart: boolean
   /** Explains why the start button is disabled; null when it is enabled. */
   startHelper: string | null
@@ -26,6 +30,7 @@ export function HostControls({
   format,
   players,
   friends,
+  presenceOf,
   canStart,
   startHelper,
   busy,
@@ -34,7 +39,10 @@ export function HostControls({
   onStart,
 }: HostControlsProps) {
   const seatedIds = new Set(players.map((player) => player.userId))
-  const invitable = friends.filter((friend) => !seatedIds.has(friend.id))
+  const invitable = sortByAvailability(
+    friends.filter((friend) => !seatedIds.has(friend.id)),
+    presenceOf
+  )
   const lobbyFull = players.length >= format
 
   return (
@@ -58,17 +66,24 @@ export function HostControls({
             <div
               key={friend.id}
               className="flex items-center gap-2.5 rounded-xl px-3 py-2"
-              style={{ background: 'var(--surface-2)', border: '1.5px solid var(--parchment-line)' }}
+              style={{
+                background: 'var(--surface-2)',
+                border: '1.5px solid var(--parchment-line)',
+                // An unreachable friend stays invitable (the invitation waits for
+                // them), but reads as secondary against the ones who can answer.
+                opacity: presenceOf(friend.id) === 'online' ? 1 : 0.62,
+              }}
             >
               <PlayerAvatar username={friend.username} size={32} />
-              <span className="flex-1 truncate text-[0.82rem] font-semibold">
-                {friend.username}
+              <span className="flex min-w-0 flex-1 flex-col">
+                <span className="truncate text-[0.82rem] font-semibold">{friend.username}</span>
+                <PresenceDot presence={presenceOf(friend.id)} />
               </span>
               <button
                 type="button"
                 className="cta"
                 style={{ width: 'auto', padding: '0.4rem 0.6rem', fontSize: '0.65rem' }}
-                disabled={lobbyFull || busy}
+                disabled={lobbyFull || busy || presenceOf(friend.id) === 'in_game'}
                 onClick={() => onInvite(friend.id)}
               >
                 <Icon name="user-add" size={12} /> Inviter

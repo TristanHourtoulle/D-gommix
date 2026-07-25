@@ -10,6 +10,7 @@ import { Pill } from '@/components/ui/pill'
 import { SectionTitle } from '@/components/ui/section-title'
 import { useToast } from '@/components/ui/toast'
 import { useLobby } from '@/hooks/use-lobby'
+import { usePresence } from '@/hooks/use-presence'
 import { CHARACTER_META } from '@/lib/characters'
 import type { InvitableFriend } from '@/lib/queries/lobby'
 import type {
@@ -55,6 +56,8 @@ export function LobbyScreen({ gameId, meId, friends }: LobbyScreenProps) {
   const { toast } = useToast()
   const { lobby, pickCharacter, invite, cancelInvite, kick, setFormat, start, leave } =
     useLobby(gameId)
+  // No seed: the ws-server pushes a friends presence snapshot right after connect.
+  const { presenceOf } = usePresence()
   const [busy, setBusy] = useState(false)
 
   const lobbyRef = useRef<LobbyState | null>(lobby)
@@ -194,6 +197,7 @@ export function LobbyScreen({ gameId, meId, friends }: LobbyScreenProps) {
           format={lobby.format}
           players={lobby.players}
           friends={friends}
+          presenceOf={presenceOf}
           canStart={startHelper === null}
           startHelper={startHelper}
           busy={busy}
