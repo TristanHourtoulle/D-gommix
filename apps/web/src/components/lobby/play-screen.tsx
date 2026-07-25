@@ -144,7 +144,7 @@ export function PlayScreen({ initialInvites }: PlayScreenProps) {
 
   return (
     <main className="tab-page">
-      <SectionTitle sub="Créer ou rejoindre une partie">Jouer</SectionTitle>
+      <SectionTitle sub="Ouvre l'arène ou rejoins la mêlée">Arène</SectionTitle>
       <ModeTabs mode={mode} onChange={setMode} />
 
       {mode === 'create' ? (
