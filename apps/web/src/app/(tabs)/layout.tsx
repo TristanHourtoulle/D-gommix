@@ -1,5 +1,8 @@
 import { requireOnboardedSession } from '@/lib/session'
+import { ConnectionBanner } from '@/components/connection-banner'
+import { SocketProvider } from '@/components/socket-provider'
 import { TabBar } from '@/components/tab-bar'
+import { ToastProvider } from '@/components/ui/toast'
 
 export default async function TabsLayout({
   children,
@@ -7,9 +10,12 @@ export default async function TabsLayout({
   await requireOnboardedSession()
 
   return (
-    <>
-      <div className="tabs-content">{children}</div>
-      <TabBar />
-    </>
+    <SocketProvider>
+      <ToastProvider>
+        <ConnectionBanner />
+        <div className="tabs-content">{children}</div>
+        <TabBar />
+      </ToastProvider>
+    </SocketProvider>
   )
 }
