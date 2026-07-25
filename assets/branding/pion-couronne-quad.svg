@@ -1,0 +1,21 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120" width="120" height="120" role="img" aria-label="Dégommix, quatre camps">
+  <rect x="0" y="0" width="60" height="60" fill="#b23a2e"/>
+  <rect x="60" y="0" width="60" height="60" fill="#2c5b82"/>
+  <rect x="0" y="60" width="60" height="60" fill="#b9861f"/>
+  <rect x="60" y="60" width="60" height="60" fill="#3f6b3c"/>
+  <g transform="translate(60 60) scale(0.86) translate(-60 -60)">
+    <g fill="#ece0c4" stroke="#251a10" stroke-width="4">
+      <circle cx="60" cy="38" r="15"/>
+      <path d="M47 51 C47 65 42 78 35 93 L85 93 C78 78 73 65 73 51 Z"/>
+      <rect x="29" y="93" width="62" height="13" rx="4"/>
+    </g>
+    <g fill="#b9861f" stroke="#251a10" stroke-width="1.6">
+      <ellipse cx="41" cy="31" rx="7" ry="3" transform="rotate(-46 41 31)"/>
+      <ellipse cx="48" cy="25" rx="7" ry="3" transform="rotate(-30 48 25)"/>
+      <ellipse cx="56" cy="21" rx="7" ry="3" transform="rotate(-12 56 21)"/>
+      <ellipse cx="64" cy="21" rx="7" ry="3" transform="rotate(12 64 21)"/>
+      <ellipse cx="72" cy="25" rx="7" ry="3" transform="rotate(30 72 25)"/>
+      <ellipse cx="79" cy="31" rx="7" ry="3" transform="rotate(46 79 31)"/>
+    </g>
+  </g>
+</svg>
