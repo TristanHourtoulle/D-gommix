@@ -6,6 +6,7 @@ import { Icon } from '@/components/icons'
 import { Button } from '@/components/ui/button'
 import { useToast } from '@/components/ui/toast'
 import { useInvites } from '@/hooks/use-invites'
+import { useInvalidateTabData } from '@/hooks/use-tab-data'
 import { ackErrorMessage } from '@/lib/ws-errors'
 import { formatLabel } from './format'
 
@@ -17,6 +18,7 @@ export function InviteBanner() {
   const { invites, accept, decline } = useInvites()
   const router = useRouter()
   const { toast } = useToast()
+  const invalidate = useInvalidateTabData()
   const [pendingGameId, setPendingGameId] = useState<string | null>(null)
 
   if (invites.length === 0) return null
@@ -29,7 +31,12 @@ export function InviteBanner() {
         toast(ackErrorMessage(ack), 'error')
         return
       }
-      if (accepted) router.push(`/lobby/${gameId}`)
+      if (accepted) {
+        // Joining a lobby gives the Accueil its resume banner and the Amis
+        // screen the lobby id it needs to forward invitations.
+        invalidate('home', 'friends')
+        router.push(`/lobby/${gameId}`)
+      }
     } finally {
       setPendingGameId(null)
     }

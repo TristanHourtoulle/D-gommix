@@ -1,4 +1,5 @@
 import { requireOnboardedSession } from '@/lib/session'
+import { QueryProvider } from '@/lib/query-client'
 import { ConnectionBanner } from '@/components/connection-banner'
 import { SocketProvider } from '@/components/socket-provider'
 import { TabBar } from '@/components/tab-bar'
@@ -10,12 +11,14 @@ export default async function TabsLayout({
   await requireOnboardedSession()
 
   return (
-    <SocketProvider>
-      <ToastProvider>
-        <ConnectionBanner />
-        <div className="tabs-content">{children}</div>
-        <TabBar />
-      </ToastProvider>
-    </SocketProvider>
+    <QueryProvider>
+      <SocketProvider>
+        <ToastProvider>
+          <ConnectionBanner />
+          <div className="tabs-content">{children}</div>
+          <TabBar />
+        </ToastProvider>
+      </SocketProvider>
+    </QueryProvider>
   )
 }
