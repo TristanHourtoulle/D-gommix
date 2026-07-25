@@ -194,11 +194,11 @@ export function FriendsScreen({ initialData }: FriendsScreenProps) {
       ) : null}
 
       <section>
-        <p className="sec-label">Tes amis</p>
+        <p className="sec-label">Ta tribu</p>
         {friends.length === 0 ? (
           <EmptyState
             icon="users"
-            title="Aucun ami pour l'instant"
+            title="Tribu déserte"
             description="Cherche un pseudo ci-dessus pour envoyer ta première demande."
           />
         ) : (

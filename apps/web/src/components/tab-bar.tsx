@@ -13,10 +13,10 @@ interface Tab {
 }
 
 const TABS: Tab[] = [
-  { href: '/', label: 'Accueil', icon: 'home', aliases: [] },
-  { href: '/amis', label: 'Amis', icon: 'users', aliases: [] },
-  { href: '/jouer', label: 'Jouer', icon: 'play', aliases: ['/lobby'] },
-  { href: '/classement', label: 'Classement', icon: 'trophy', aliases: ['/parties'] },
+  { href: '/', label: 'Village', icon: 'home', aliases: [] },
+  { href: '/amis', label: 'Tribu', icon: 'users', aliases: [] },
+  { href: '/jouer', label: 'Arène', icon: 'play', aliases: ['/lobby'] },
+  { href: '/classement', label: 'Lauriers', icon: 'trophy', aliases: ['/parties'] },
 ]
 
 function matchesPrefix(pathname: string, prefix: string): boolean {
