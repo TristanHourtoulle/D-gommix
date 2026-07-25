@@ -4,6 +4,8 @@
  * no database and no env vars.
  */
 
+import type { GameState } from '@degommix/game-core'
+
 /** One `game_events` row, narrowed to what the aggregation needs. */
 export interface RivalryEventRow {
   gameId: string
@@ -120,4 +122,16 @@ export function pickNemesis(pairs: readonly PairCount[]): PairCount | null {
 /** Opponent the viewer dégommed the most; null when the viewer never did. */
 export function pickFavoriteVictim(pairs: readonly PairCount[]): PairCount | null {
   return pickBest(pairs, 'dealt', 'taken')
+}
+
+/** Degommages suffered per player in the current game (undone ones excluded). */
+export function takenByTarget(
+  state: Pick<GameState, 'degommageLog' | 'undoneSeqs'>
+): Record<string, number> {
+  const taken: Record<string, number> = {}
+  for (const entry of state.degommageLog) {
+    if (state.undoneSeqs.has(entry.seq)) continue
+    taken[entry.targetId] = (taken[entry.targetId] ?? 0) + 1
+  }
+  return taken
 }

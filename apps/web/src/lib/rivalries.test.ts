@@ -3,6 +3,7 @@ import {
   aggregatePairCounts,
   pickFavoriteVictim,
   pickNemesis,
+  takenByTarget,
   type PairCount,
   type RivalryEventRow,
 } from './rivalries'
@@ -130,5 +131,36 @@ describe('pickFavoriteVictim', () => {
     expect(pickFavoriteVictim([pair('obelix', 3, 2), pair('asterix', 3, 2)])).toEqual(
       pair('asterix', 3, 2)
     )
+  })
+})
+
+describe('takenByTarget', () => {
+  it('counts the degommages suffered per player', () => {
+    const state = {
+      degommageLog: [
+        { seq: 1, actorId: ME, targetId: 'obelix' },
+        { seq: 2, actorId: 'asterix', targetId: 'obelix' },
+        { seq: 3, actorId: 'obelix', targetId: ME },
+      ],
+      undoneSeqs: new Set<number>(),
+    }
+
+    expect(takenByTarget(state)).toEqual({ obelix: 2, [ME]: 1 })
+  })
+
+  it('excludes an undone entry', () => {
+    const state = {
+      degommageLog: [
+        { seq: 1, actorId: ME, targetId: 'obelix' },
+        { seq: 2, actorId: ME, targetId: 'obelix' },
+      ],
+      undoneSeqs: new Set<number>([2]),
+    }
+
+    expect(takenByTarget(state)).toEqual({ obelix: 1 })
+  })
+
+  it('returns an empty record for an empty log', () => {
+    expect(takenByTarget({ degommageLog: [], undoneSeqs: new Set<number>() })).toEqual({})
   })
 })
