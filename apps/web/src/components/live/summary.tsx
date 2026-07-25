@@ -256,14 +256,14 @@ export function Summary({ gameId, state, names, viewerId, startedAt, endedAt }: 
             </span>
             <span className="eg-action" style={{ '--i': 1 } as CSSProperties}>
               <Button variant="ghost" onClick={() => router.push('/classement')}>
-                Voir le classement
+                Voir les lauriers
               </Button>
             </span>
           </>
         ) : (
           <>
             <span className="eg-action" style={{ '--i': 0 } as CSSProperties}>
-              <Button onClick={() => router.push('/classement')}>Voir le classement</Button>
+              <Button onClick={() => router.push('/classement')}>Voir les lauriers</Button>
             </span>
             <span className="eg-action" style={{ '--i': 1 } as CSSProperties}>
               <RematchButton finishedGameId={gameId} variant="ghost" />
