@@ -11,10 +11,10 @@ interface TapZoneProps {
   opponents: PlayerState[]
   names: NameMap
   onTap: (targetId: string) => void
-  /** Chip whose degommage is being confirmed by the server, `null` when idle. */
-  pendingTargetId: string | null
-  /** True while the anti double-tap lock holds every chip (see `tap-lock.ts`). */
-  isLocked: boolean
+  /** Targets whose chip is locked by the anti double-tap lock (`tap-lock.ts`). */
+  lockedTargetIds: readonly string[]
+  /** Targets whose degommage is still awaiting the server ack. */
+  pendingTargetIds: readonly string[]
 }
 
 const CHIP_BASE =
@@ -23,10 +23,17 @@ const CHIP_BASE =
 /**
  * « Tu viens de dégommer qui ? » — no confirmation dialog, the counter only
  * moves when the confirmed `game:event` comes back (light press feedback).
- * Every chip locks for the duration of a tap so a bounce tap cannot register a
- * second degommage.
+ * Only the tapped chip locks for the duration of a tap so a bounce tap cannot
+ * register a second degommage on the same victim; the other opponents stay
+ * tappable.
  */
-export function TapZone({ opponents, names, onTap, pendingTargetId, isLocked }: TapZoneProps) {
+export function TapZone({
+  opponents,
+  names,
+  onTap,
+  lockedTargetIds,
+  pendingTargetIds,
+}: TapZoneProps) {
   if (opponents.length === 0) return null
 
   return (
@@ -35,7 +42,8 @@ export function TapZone({ opponents, names, onTap, pendingTargetId, isLocked }: 
       <div className="flex flex-wrap justify-center gap-2">
         {opponents.map((opponent) => {
           const meta = CHARACTER_META[opponent.character]
-          const isPending = opponent.userId === pendingTargetId
+          const isLocked = lockedTargetIds.includes(opponent.userId)
+          const isPending = pendingTargetIds.includes(opponent.userId)
           return (
             <button
               key={opponent.userId}
@@ -51,8 +59,7 @@ export function TapZone({ opponents, names, onTap, pendingTargetId, isLocked }: 
                 isLocked
                   ? 'cursor-default'
                   : 'cursor-pointer active:scale-90 motion-reduce:active:scale-100',
-                isPending ? 'scale-95 opacity-80 motion-reduce:scale-100' : '',
-                isLocked && !isPending ? 'opacity-40' : '',
+                isLocked ? 'scale-95 opacity-80 motion-reduce:scale-100' : '',
               ]
                 .filter(Boolean)
                 .join(' ')}
