@@ -1,6 +1,5 @@
 'use client'
 
-import type { CSSProperties } from 'react'
 import type { GameFormat } from '@degommix/game-core'
 
 const FORMATS: readonly GameFormat[] = [2, 3, 4]
@@ -13,16 +12,7 @@ interface FormatSegmentedProps {
   disabled?: boolean
 }
 
-function segmentStyle(selected: boolean): CSSProperties {
-  return {
-    fontFamily: 'var(--font-mono)',
-    background: selected ? 'var(--ink)' : 'var(--surface-2)',
-    color: selected ? 'var(--parchment)' : 'var(--ink-soft)',
-    border: `1.5px solid ${selected ? 'var(--ink)' : 'var(--parchment-line)'}`,
-  }
-}
-
-/** Maquette `.segmented` control for the 2 / 3 / 4 player format. */
+/** Arcade `.segmented` control for the 2 / 3 / 4 player format. */
 export function FormatSegmented({
   value,
   onChange,
@@ -30,7 +20,7 @@ export function FormatSegmented({
   disabled = false,
 }: FormatSegmentedProps) {
   return (
-    <div className="flex gap-1.5" role="radiogroup" aria-label="Nombre de joueurs">
+    <div className="segmented" role="radiogroup" aria-label="Nombre de joueurs">
       {FORMATS.map((format) => {
         const selected = format === value
         const blocked = disabled || format < minFormat
@@ -44,8 +34,7 @@ export function FormatSegmented({
             onClick={() => {
               if (!selected && !blocked) onChange(format)
             }}
-            className="flex-1 rounded-[10px] py-2 text-center font-bold disabled:cursor-not-allowed disabled:opacity-40"
-            style={segmentStyle(selected)}
+            className="segment num"
           >
             {format}
           </button>

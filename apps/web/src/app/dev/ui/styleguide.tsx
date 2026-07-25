@@ -1,9 +1,12 @@
 'use client'
 
 import { useEffect, useState } from 'react'
+import type { GameFormat } from '@degommix/game-core'
 import { CHARACTER_IDS, CHARACTER_META } from '@/lib/characters'
 import { Icon, ICON_NAMES } from '@/components/icons'
+import { FormatSegmented } from '@/components/lobby/format-segmented'
 import { TabBar } from '@/components/tab-bar'
+import { ThemeSegmented } from '@/components/theme/theme-segmented'
 import { Button } from '@/components/ui/button'
 import { Card } from '@/components/ui/card'
 import { CharacterBadge } from '@/components/ui/character-badge'
@@ -20,6 +23,7 @@ const AVATAR_SIZES = [32, 40, 44, 56] as const
 export function Styleguide() {
   const [theme, setTheme] = useState<'light' | 'dark'>('light')
   const [code, setCode] = useState('ROM')
+  const [format, setFormat] = useState<GameFormat>(3)
 
   useEffect(() => {
     if (window.matchMedia('(prefers-color-scheme: dark)').matches) {
@@ -71,6 +75,12 @@ export function Styleguide() {
             Enfoncé
           </button>
         </div>
+      </section>
+
+      <section className="flex flex-col gap-2">
+        <p className="sec-label">Contrôles segmentés</p>
+        <FormatSegmented value={format} onChange={setFormat} />
+        <ThemeSegmented />
       </section>
 
       <section className="flex flex-col gap-2">

@@ -207,6 +207,88 @@ a {
   }
 }
 
+/**
+ * Segmented pickers, in the same arcade language as `.cta` but on a shallower
+ * 3px lip (like `.code-box`) so these small controls stay light. Only the
+ * selected segment is a raised key: unselected segments sit flat on the plate.
+ * Raised-for-selected (rather than pressed-in) keeps the transient `:active`
+ * press readable on every segment — a permanently pressed-in selection would
+ * be indistinguishable from a finger currently holding it down.
+ * `margin-bottom` on the row reserves the lip so nothing shifts on press.
+ */
+.segmented {
+  display: flex;
+  gap: 0.4rem;
+  margin-bottom: 3px;
+}
+
+.segment {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.3rem;
+  background: var(--surface-2);
+  color: var(--ink-soft);
+  border: 1.5px solid var(--parchment-line);
+  border-radius: 11px;
+  padding: 0.55rem 0.4rem;
+  font-size: 0.78rem;
+  font-weight: 700;
+  cursor: pointer;
+  user-select: none;
+  -webkit-tap-highlight-color: transparent;
+  transition:
+    transform 90ms cubic-bezier(0.2, 0.8, 0.3, 1),
+    box-shadow 90ms cubic-bezier(0.2, 0.8, 0.3, 1),
+    background-color 90ms linear;
+}
+
+/* Quiet press for the flat segments: no lip to swallow, so nudge and darken. */
+.segment:active:not([disabled]):not([aria-checked='true']) {
+  transform: translateY(1px);
+  background: color-mix(in srgb, var(--parchment-deep) 45%, var(--surface-2));
+}
+
+.segment[aria-checked='true'] {
+  background: var(--bronze);
+  color: var(--surface-2);
+  border-color: var(--ink);
+  box-shadow: 0 3px 0 var(--key-lip);
+  cursor: default;
+}
+
+.segment[aria-checked='true']:active {
+  transform: translateY(3px);
+  box-shadow: 0 0 0 var(--key-lip);
+}
+
+/* Icon-over-label segments (theme picker). */
+.segment.stacked {
+  flex-direction: column;
+  gap: 0.2rem;
+  padding: 0.6rem 0.3rem;
+  font-size: 0.72rem;
+}
+
+/* Numeric segments (player count) borrow the mono face of the code tiles. */
+.segment.num {
+  font-family: var(--font-mono);
+  font-size: 0.95rem;
+  padding: 0.5rem 0.4rem;
+}
+
+.segment[disabled] {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .segment {
+    transition: none;
+  }
+}
+
 .avatar-ring {
   width: 40px;
   height: 40px;
