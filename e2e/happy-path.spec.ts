@@ -1,5 +1,5 @@
 import { expect, test, type BrowserContext } from '@playwright/test'
-import { expectCounter, registerAndOnboard, shot } from './helpers'
+import { expectCounter, newAppContext, registerAndOnboard, shot } from './helpers'
 
 const PASSWORD = 'motdepasse-123'
 const J1 = { email: 'j1@degommix.test', username: 'Asterix' }
@@ -9,8 +9,8 @@ test('two-player 1v1 happy path (design §7.3)', async ({ browser }) => {
   let c1: BrowserContext | undefined
   let c2: BrowserContext | undefined
   try {
-    c1 = await browser.newContext()
-    c2 = await browser.newContext()
+    c1 = await newAppContext(browser)
+    c2 = await newAppContext(browser)
     const p1 = await c1.newPage()
     const p2 = await c2.newPage()
 
