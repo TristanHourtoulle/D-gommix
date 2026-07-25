@@ -18,6 +18,9 @@ const eslintConfig = [
       "out/**",
       "build/**",
       "next-env.d.ts",
+      // Service worker bundles emitted by @serwist/next.
+      "public/sw.js",
+      "public/swe-worker-*.js",
     ],
   },
 ];
