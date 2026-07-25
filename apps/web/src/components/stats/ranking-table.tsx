@@ -1,3 +1,4 @@
+import Link from 'next/link'
 import { Card } from '@/components/ui/card'
 import { CharacterBadge } from '@/components/ui/character-badge'
 import { Icon } from '@/components/icons'
@@ -14,10 +15,13 @@ export function RankingTable({ rows, viewerId }: RankingTableProps) {
   return (
     <Card className="px-4 py-1">
       {rows.map((row, index) => (
-        <div
+        <Link
           key={row.userId}
+          href={`/amis/${row.userId}`}
           data-testid={`ranking-row-${row.username}`}
-          className={`flex items-center gap-2.5 py-2.5 ${index > 0 ? 'border-t border-parchment-line/60' : ''}`}
+          aria-label={`Voir le profil de ${row.username}`}
+          className={`flex items-center gap-2.5 py-2.5 ${index > 0 ? 'border-t border-parchment-line/60' : ''} no-underline`}
+          style={{ color: 'inherit' }}
         >
           <span className="w-5 shrink-0 text-center font-mono text-sm font-bold text-bronze">
             {row.rank}
@@ -47,7 +51,7 @@ export function RankingTable({ rows, viewerId }: RankingTableProps) {
               aria-hidden
             />
           )}
-        </div>
+        </Link>
       ))}
     </Card>
   )

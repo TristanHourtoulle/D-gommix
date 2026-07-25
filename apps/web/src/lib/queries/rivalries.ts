@@ -81,7 +81,10 @@ async function loadRivalryEvents(gameIds: string[]): Promise<RivalryEventRow[]> 
 }
 
 /** Ids of the finished games both players sat in. */
-async function sharedFinishedGameIds(viewerId: string, opponentId: string): Promise<string[]> {
+export async function sharedFinishedGameIds(
+  viewerId: string,
+  opponentId: string
+): Promise<string[]> {
   const [mine, theirs] = await Promise.all([
     finishedGameIdsFor(viewerId),
     finishedGameIdsFor(opponentId),
