@@ -81,6 +81,12 @@ export const friendsPayloadSchema = z.object({
   myLobbyId: z.string().nullable(),
 })
 
+const rivalryPeerSchema = z.object({
+  userId: z.string(),
+  username: z.string(),
+  count: z.number(),
+})
+
 export const leaderboardPayloadSchema = z.object({
   rows: z.array(
     z.object({
@@ -98,6 +104,10 @@ export const leaderboardPayloadSchema = z.object({
   topDegommeur: z
     .object({ userId: z.string(), username: z.string(), degommages: z.number() })
     .nullable(),
+  rivalry: z.object({
+    nemesis: rivalryPeerSchema.nullable(),
+    favoriteVictim: rivalryPeerSchema.nullable(),
+  }),
   characterWinrates: z.array(
     z.object({ character: characterSchema, winrate: z.number(), games: z.number() })
   ),

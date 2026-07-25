@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server'
 import { getLeaderboard } from '@/lib/queries/stats'
+import { getRivalrySpotlight } from '@/lib/queries/rivalries'
 import type { LeaderboardPayload } from '@/lib/api-payloads'
 import { getOnboardedApiSession } from '@/lib/session'
 
@@ -17,6 +18,10 @@ export async function GET() {
     return NextResponse.json({ error: 'UNAUTHORIZED' }, { status: 401 })
   }
 
-  const payload: LeaderboardPayload = await getLeaderboard(session.user.id)
+  const [leaderboard, rivalry] = await Promise.all([
+    getLeaderboard(session.user.id),
+    getRivalrySpotlight(session.user.id),
+  ])
+  const payload: LeaderboardPayload = { ...leaderboard, rivalry }
   return NextResponse.json(payload, { headers: PRIVATE_HEADERS })
 }
