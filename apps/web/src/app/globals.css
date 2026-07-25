@@ -498,6 +498,17 @@ a {
   color: var(--ink-faint);
 }
 
+/* ---------- Fullscreen live screen ---------- */
+
+/**
+ * Bottom action keys of `/partie/[gameId]`. That route sits outside the `(tabs)`
+ * group, so nothing reserves the home-indicator strip for it the way
+ * `.tabs-content` does for the tabbed screens — the keys would otherwise land
+ * flush on the bottom edge. The fixed 0.75rem stacks on the shell's own
+ * `py-5` (1.25rem) for 2rem of breathing room on devices with no inset.
+ */
+.live-actions { padding-bottom: calc(0.75rem + env(safe-area-inset-bottom)); }
+
 /* ---------- Liquid glass tab bar ---------- */
 
 .tabs-content { padding-bottom: calc(5.5rem + env(safe-area-inset-bottom)); }
