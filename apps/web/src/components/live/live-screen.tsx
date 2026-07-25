@@ -102,6 +102,7 @@ export function LiveScreen({
         gameId={gameId}
         state={state}
         names={names}
+        viewerId={viewerId}
         startedAt={startedAt ?? fallbackStartedAt}
         endedAt={journal.lastEventAt ?? fallbackEndedAt}
       />
