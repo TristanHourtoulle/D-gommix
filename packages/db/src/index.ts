@@ -1,12 +1,3 @@
-import { drizzle } from 'drizzle-orm/postgres-js'
-import postgres from 'postgres'
-import * as schema from './schema'
-
-export type Db = ReturnType<typeof createDb>
-
-export function createDb(databaseUrl: string) {
-  const client = postgres(databaseUrl)
-  return drizzle(client, { schema })
-}
-
-export * from './schema'
+export { createDb, type Db } from './client'
+export * from './schema/index'
+export { TEST_DATABASE_URL, migrateTestDb, truncateAll, createTestUser } from './test-utils'
