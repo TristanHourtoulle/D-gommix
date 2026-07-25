@@ -4,19 +4,8 @@ import { useState } from 'react'
 import Link from 'next/link'
 import type { Presence } from '@degommix/game-core'
 import { PlayerAvatar } from '@/components/ui/player-avatar'
+import { PresenceDot } from '@/components/ui/presence-dot'
 import { RoundIconButton } from './round-icon-button'
-
-const PRESENCE_LABEL: Record<Presence, string> = {
-  online: 'en ligne',
-  in_game: 'en partie',
-  offline: 'hors ligne',
-}
-
-const PRESENCE_COLOR: Record<Presence, string> = {
-  online: 'var(--good)',
-  in_game: 'var(--bronze-strong)',
-  offline: 'var(--ink-faint)',
-}
 
 interface FriendRowProps {
   friendId: string
@@ -55,20 +44,7 @@ export function FriendRow({
         <PlayerAvatar username={username} size={32} />
         <span className="min-w-0">
           <span className="block truncate text-sm font-bold">{username}</span>
-          <span
-            className="flex items-center gap-1.5 text-xs"
-            style={{ color: PRESENCE_COLOR[presence] }}
-          >
-            <span
-              aria-hidden
-              className="inline-block h-2 w-2 rounded-full"
-              style={{
-                background: PRESENCE_COLOR[presence],
-                opacity: presence === 'offline' ? 0.45 : 1,
-              }}
-            />
-            {PRESENCE_LABEL[presence]}
-          </span>
+          <PresenceDot presence={presence} />
         </span>
       </Link>
 

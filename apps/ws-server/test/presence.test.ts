@@ -3,6 +3,7 @@ import { migrateTestDb } from '@degommix/db/test-utils'
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest'
 import {
   expectNoEvent,
+  sleep,
   startTestServer,
   waitForEvent,
   type TestServer,
@@ -56,5 +57,50 @@ describe('presence', () => {
     const s3 = await ts.connectAs('u3')
     await ts.connectAs('u1')
     await expectNoEvent(s3, 'presence:update', 300)
+  })
+
+  it('sends a snapshot of the friends already online to a connecting socket', async () => {
+    await ts.connectAs('u1')
+    const s2 = await ts.connectAs('u2')
+    // u1 was already online: no transition happens, only the snapshot can carry it.
+    expect(await waitForEvent<PresenceUpdate>(s2, 'presence:update')).toEqual({
+      userId: 'u1',
+      presence: 'online',
+    })
+  })
+
+  it('sends in_game in the snapshot for a friend already in a game', async () => {
+    const s1 = await ts.connectAs('u1')
+    // u1's own handshake ends with syncInGameFlag(false); let it land first,
+    // otherwise it silently clears the flag set here.
+    await sleep(100)
+    ts.server.presence.syncInGameFlag('u1', true)
+    const s2 = await ts.connectAs('u2')
+    expect(await waitForEvent<PresenceUpdate>(s2, 'presence:update')).toEqual({
+      userId: 'u1',
+      presence: 'in_game',
+    })
+    s1.disconnect()
+  })
+
+  it('does not send a snapshot entry for an offline friend', async () => {
+    const s2 = await ts.connectAs('u2')
+    await expectNoEvent(s2, 'presence:update', 300)
+  })
+
+  it('does not leak the presence of a non-friend', async () => {
+    await ts.connectAs('u3')
+    const s2 = await ts.connectAs('u2')
+    await expectNoEvent(s2, 'presence:update', 300)
+  })
+
+  it('sends the snapshot to a second tab, which triggers no transition', async () => {
+    await ts.connectAs('u1')
+    await ts.connectAs('u2')
+    const s2b = await ts.connectAs('u2')
+    expect(await waitForEvent<PresenceUpdate>(s2b, 'presence:update')).toEqual({
+      userId: 'u1',
+      presence: 'online',
+    })
   })
 })

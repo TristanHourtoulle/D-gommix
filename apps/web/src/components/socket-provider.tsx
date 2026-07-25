@@ -2,6 +2,7 @@
 
 import { createContext, useContext, useEffect, useState, type ReactNode } from 'react'
 import { attachLobbyCache } from '@/lib/lobby-cache'
+import { attachPresenceStore } from '@/lib/presence-store'
 import { getSocket } from '@/lib/socket'
 import type { AppSocket } from '@/lib/realtime-types'
 
@@ -34,6 +35,7 @@ export function SocketProvider({ children }: SocketProviderProps) {
   useEffect(() => {
     const s = getSocket()
     attachLobbyCache(s)
+    attachPresenceStore(s)
     setSocket(s)
     setStatus(s.connected ? 'connected' : 'connecting')
 

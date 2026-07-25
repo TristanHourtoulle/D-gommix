@@ -172,12 +172,15 @@ async function onSocketConnected(
   becameOnline: boolean
 ): Promise<void> {
   const userId = socket.data.userId
+  // Frozen before the first await, i.e. still inside the connection event.
+  const presenceAtHandshake = ctx.presence.capture()
   try {
     ctx.hostTransfer.onUserOnline(userId)
     const memberships = await findActiveMemberships(ctx.db, userId)
     const seated = memberships.find((m) => m.player.status === 'joined')
     ctx.presence.syncInGameFlag(userId, seated?.game.status === 'active')
     if (becameOnline) await ctx.presence.broadcast(userId)
+    await ctx.presence.sendSnapshot(userId, socket, presenceAtHandshake)
     // Emitted to this socket only: other tabs already hold their own banner.
     await pushPendingInvites(ctx, socket, memberships)
     if (!seated) return
