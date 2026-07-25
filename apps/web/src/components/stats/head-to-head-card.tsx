@@ -13,7 +13,7 @@ export function HeadToHeadCard({ username, headToHead }: HeadToHeadCardProps) {
   const isEmpty = headToHead.dealt === 0 && headToHead.taken === 0
 
   return (
-    <Card className="px-4 py-3">
+    <Card className="flex flex-col gap-2 px-4 py-3">
       <p className="sec-label">Face à face</p>
       {isEmpty ? (
         <p className="m-0 text-sm" style={{ color: 'var(--ink-soft)' }}>

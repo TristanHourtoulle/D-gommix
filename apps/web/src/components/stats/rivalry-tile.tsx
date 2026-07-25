@@ -24,7 +24,7 @@ export function RivalryTile({ rivalry }: RivalryTileProps) {
   if (nemesis === null && favoriteVictim === null) return null
 
   return (
-    <Card className="px-4 py-3">
+    <Card className="flex flex-col gap-2 px-4 py-3">
       <p className="sec-label">Rivalités</p>
       <div className="flex flex-col gap-3">
         {nemesis ? (
