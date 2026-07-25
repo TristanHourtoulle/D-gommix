@@ -1,26 +1,29 @@
-import { z } from 'zod'
-import { createWsServer } from './server.js'
+import { createDb } from '@degommix/db'
+import { makeJwksVerifier } from './auth'
+import { loadEnv } from './env'
+import { createWsServer } from './server'
 
-const envSchema = z.object({
-  PORT: z.coerce.number().int().positive().default(4001),
-  WEB_ORIGIN: z.url().default('http://localhost:3000'),
+const env = loadEnv()
+
+const server = createWsServer({
+  db: createDb(env.databaseUrl),
+  verifyToken: makeJwksVerifier(env.jwksUrl),
+  webOrigin: env.webOrigin,
+  startJobs: true,
 })
-
-const env = envSchema.parse(process.env)
-
-const { httpServer, close } = createWsServer({ webOrigin: env.WEB_ORIGIN })
 
 function log(message: string): void {
   process.stdout.write(`${JSON.stringify({ time: new Date().toISOString(), message })}\n`)
 }
 
-httpServer.listen(env.PORT, () => {
-  log(`ws-server listening on port ${env.PORT} (CORS origin: ${env.WEB_ORIGIN})`)
+server.httpServer.listen(env.port, () => {
+  log(`ws-server listening on port ${env.port} (CORS origin: ${env.webOrigin})`)
 })
 
 process.on('SIGTERM', () => {
   log('SIGTERM received, shutting down')
-  void close()
+  void server
+    .close()
     .then(() => {
       process.exit(0)
     })

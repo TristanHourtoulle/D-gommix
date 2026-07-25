@@ -5,13 +5,18 @@
   "type": "module",
   "scripts": {
     "dev": "tsx watch src/index.ts",
-    "build": "tsc -p tsconfig.build.json",
+    "build": "tsup",
     "start": "node dist/index.js",
-    "lint": "eslint src",
+    "lint": "eslint src test",
     "typecheck": "tsc --noEmit",
     "test": "vitest run"
   },
   "dependencies": {
+    "@degommix/db": "workspace:*",
+    "@degommix/game-core": "workspace:*",
+    "drizzle-orm": "^0.44.0",
+    "jose": "^6.0.0",
+    "postgres": "^3.4.0",
     "socket.io": "^4.8.0",
     "zod": "^4.0.0"
   },
@@ -19,6 +24,7 @@
     "@types/node": "^22.0.0",
     "eslint": "^9.0.0",
     "socket.io-client": "^4.8.0",
+    "tsup": "^8.0.0",
     "tsx": "^4.0.0",
     "typescript": "^5.0.0",
     "vitest": "^3.0.0"
