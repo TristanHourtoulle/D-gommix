@@ -1,34 +1,33 @@
 'use client'
 
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useMemo, useSyncExternalStore } from 'react'
 import type { Presence } from '@degommix/game-core'
-import { useSocket } from '@/components/socket-provider'
+import { mergePresence, presenceStore } from '@/lib/presence-store'
 
 export interface UsePresenceResult {
   /** Latest known presence per userId (friends only — server scoped). */
-  presenceMap: Record<string, Presence>
+  presenceMap: Readonly<Record<string, Presence>>
   /** Presence for one user, `offline` when nothing was received yet. */
   presenceOf: (userId: string) => Presence
 }
 
 /**
- * Friends presence map fed by `presence:update` broadcasts. The initial
- * values come from SSR data (T24); this hook only tracks live transitions.
+ * Friends presence map, read from the socket-lifetime store so it survives
+ * client-side navigations (see `@/lib/presence-store`).
+ *
+ * `initial` is an optional SSR/query seed (T24) and is merged UNDER the live
+ * map: a value received on the socket always wins over the seed, whatever the
+ * order in which they arrive, and the seed is only what fills the first paint
+ * (and the friends the socket has said nothing about).
  */
 export function usePresence(initial?: Record<string, Presence>): UsePresenceResult {
-  const [presenceMap, setPresenceMap] = useState<Record<string, Presence>>(initial ?? {})
-  const { socket } = useSocket()
+  const live = useSyncExternalStore(
+    presenceStore.subscribe,
+    presenceStore.getSnapshot,
+    presenceStore.getSnapshot
+  )
 
-  useEffect(() => {
-    if (!socket) return
-    const onUpdate = ({ userId, presence }: { userId: string; presence: Presence }): void => {
-      setPresenceMap((current) => ({ ...current, [userId]: presence }))
-    }
-    socket.on('presence:update', onUpdate)
-    return () => {
-      socket.off('presence:update', onUpdate)
-    }
-  }, [socket])
+  const presenceMap = useMemo(() => mergePresence(initial, live), [initial, live])
 
   const presenceOf = useCallback(
     (userId: string): Presence => presenceMap[userId] ?? 'offline',

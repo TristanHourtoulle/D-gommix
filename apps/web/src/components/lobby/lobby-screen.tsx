@@ -56,7 +56,9 @@ export function LobbyScreen({ gameId, meId, friends }: LobbyScreenProps) {
   const { toast } = useToast()
   const { lobby, pickCharacter, invite, cancelInvite, kick, setFormat, start, leave } =
     useLobby(gameId)
-  // No seed: the ws-server pushes a friends presence snapshot right after connect.
+  // No seed: the connect-time snapshot pushed by the ws-server is kept in the
+  // presence store, so it is there even when the lobby is reached by a
+  // client-side navigation long after the socket connected.
   const { presenceOf } = usePresence()
   const [busy, setBusy] = useState(false)
 
