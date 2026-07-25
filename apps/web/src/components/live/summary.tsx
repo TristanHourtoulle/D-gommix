@@ -111,7 +111,7 @@ export function Summary({ gameId, state, names, startedAt, endedAt }: SummaryPro
         <StatTile icon="flag" label="Format" value={FORMAT_LABELS[state.format]} />
       </div>
 
-      <div className="mt-auto flex flex-col gap-2">
+      <div className="live-actions mt-auto flex flex-col gap-2">
         <Button onClick={() => router.push('/classement')}>Voir le classement</Button>
         <RematchButton finishedGameId={gameId} variant="ghost" />
       </div>
