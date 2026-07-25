@@ -2,7 +2,7 @@
 
 import { useMemo } from 'react'
 import Link from 'next/link'
-import { parseHomeGames, type HomePayload } from '@/lib/api-payloads'
+import { parseHomeGames, type HomePayload, type InvitesPayload } from '@/lib/api-payloads'
 import { useHomeData } from '@/hooks/use-tab-data'
 import { Icon } from '@/components/icons'
 import { CharacterBadge } from '@/components/ui/character-badge'
@@ -21,6 +21,8 @@ interface HomeScreenProps {
   username: string
   /** SSR payload, so the first paint needs no client round-trip. */
   initialData: HomePayload
+  /** SSR payload of the pending invitations banner (its own query key). */
+  initialInvites: InvitesPayload
 }
 
 /**
@@ -28,7 +30,7 @@ interface HomeScreenProps {
  * revisiting the tab reads it from cache, and invite/game events invalidate it
  * instead of refetching the whole page.
  */
-export function HomeScreen({ username, initialData }: HomeScreenProps) {
+export function HomeScreen({ username, initialData, initialInvites }: HomeScreenProps) {
   const { data } = useHomeData(initialData)
   const { stats, activeGame } = data
   const lastGames = useMemo(() => parseHomeGames(data.lastGames), [data.lastGames])
@@ -54,7 +56,7 @@ export function HomeScreen({ username, initialData }: HomeScreenProps) {
         </Link>
       </header>
 
-      <InviteBanner />
+      <InviteBanner initialData={initialInvites} />
 
       {activeGame ? <ResumeBanner game={activeGame} /> : null}
 

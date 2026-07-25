@@ -7,15 +7,21 @@ import { Button } from '@/components/ui/button'
 import { useToast } from '@/components/ui/toast'
 import { useInvites } from '@/hooks/use-invites'
 import { useInvalidateTabData } from '@/hooks/use-tab-data'
+import type { InvitesPayload } from '@/lib/api-payloads'
 import { ackErrorMessage } from '@/lib/ws-errors'
 import { formatLabel } from './format'
 
+interface InviteBannerProps {
+  /** SSR payload of the `invites` query, so a pending invite paints instantly. */
+  initialData: InvitesPayload
+}
+
 /**
- * Realtime invitation banners (`invite:received`): accepting routes to the
- * lobby, declining removes the banner. Errors surface as toasts.
+ * Invitation banners: accepting routes to the lobby, declining removes the
+ * banner. The list is server state, so it survives a reload. Errors are toasts.
  */
-export function InviteBanner() {
-  const { invites, accept, decline } = useInvites()
+export function InviteBanner({ initialData }: InviteBannerProps) {
+  const { invites, accept, decline } = useInvites(initialData)
   const router = useRouter()
   const { toast } = useToast()
   const invalidate = useInvalidateTabData()

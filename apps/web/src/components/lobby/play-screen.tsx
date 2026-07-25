@@ -12,6 +12,7 @@ import { PlayerAvatar } from '@/components/ui/player-avatar'
 import { SectionTitle } from '@/components/ui/section-title'
 import { useToast } from '@/components/ui/toast'
 import { useInvites } from '@/hooks/use-invites'
+import type { InvitesPayload } from '@/lib/api-payloads'
 import { emitWithAck } from '@/lib/socket'
 import { ackErrorMessage } from '@/lib/ws-errors'
 import { FormatSegmented } from './format-segmented'
@@ -59,12 +60,17 @@ function ModeTabs({ mode, onChange }: ModeTabsProps) {
   )
 }
 
+interface PlayScreenProps {
+  /** SSR payload of the `invites` query: the « Invitations reçues » list. */
+  initialInvites: InvitesPayload
+}
+
 /** Jouer tab: create a lobby (format 2/3/4) or join one (code + invitations). */
-export function PlayScreen() {
+export function PlayScreen({ initialInvites }: PlayScreenProps) {
   const router = useRouter()
   const { socket } = useSocket()
   const { toast } = useToast()
-  const { invites, accept, decline } = useInvites()
+  const { invites, accept, decline } = useInvites(initialInvites)
 
   const [mode, setMode] = useState<PlayMode>('create')
   const [format, setFormat] = useState<GameFormat>(2)
