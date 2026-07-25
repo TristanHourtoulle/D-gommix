@@ -25,6 +25,12 @@ Playwright happy path. No plan asks you to add test infrastructure.
 | 007  | Per-target tap lock | P3 | S-M | — | DONE (merged `18302eb`, E2E validated 2026-07-25) |
 | 008  | Leaderboard spotlight cards: gap between section title and content | P3 | S | — | DONE (merged `5310eb9`, E2E validated 2026-07-25) |
 | 009  | Live action keys: safe-area bottom breathing room | P3 | S | — | DONE (merged `dbd8992`, E2E validated 2026-07-25) |
+| 010  | Live journal: 44 deterministic dégommage sentences | — | — | — | DONE (merged `f5d4a4a`, E2E validated 2026-07-25 (combined run 6/6)) |
+| 011  | Dégommage hit animation — shake, stars and « PAF ! » stamp | — | — | — | DONE (merged `2057928`, E2E validated 2026-07-25 (combined run 6/6)) |
+| 012  | Two-variant end-of-game sequence on the summary screen | — | — | — | DONE (merged `0315ffd`, E2E validated 2026-07-25 (combined run 6/6)) |
+| 013  | Avatar picker — 16-piece catalog replacing the initial everywhere | — | — | — | DONE (merged `508b6e1`, E2E validated 2026-07-25 (combined run 6/6)) |
+| 014  | Hidden dev animations menu (long-press on /profil) | — | — | 010–013 | TODO |
+| 015  | Lexique gaulois — owner-validated UI lexicon | — | — | — | TODO |
 
 Status values: TODO | IN PROGRESS | DONE | BLOCKED (with one-line reason) | REJECTED (with one-line rationale — finding fixed independently or approach abandoned)
 
