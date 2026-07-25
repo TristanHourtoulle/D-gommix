@@ -54,7 +54,7 @@ export function HomeScreen({
           <PlayerAvatar username={username} size={44} avatarId={avatarId} />
           <div>
             <h1 className="s-title m-0" style={{ fontSize: '0.95rem' }}>
-              Salut {username}
+              Salve, {username}
             </h1>
             <p className="s-sub">
               {plural(stats.wins, 'victoire')} · {plural(stats.degommages, 'dégommage')}
@@ -83,7 +83,7 @@ export function HomeScreen({
 
       <Link href="/jouer" className="cta no-underline">
         <Icon name="play" size={18} />
-        Nouvelle partie
+        Aux armes !
       </Link>
 
       <section className="flex flex-col gap-2">
