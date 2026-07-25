@@ -19,10 +19,12 @@ Playwright happy path. No plan asks you to add test infrastructure.
 | 001  | Durable invitations + invited-seat unlock | P1 | M | — | DONE (merged `acd070a`, E2E validated 2026-07-25) |
 | 002  | « Rejouer » from game detail & history | P1 | S | 001 (soft) | DONE (merged `b4d162c`, E2E validated 2026-07-25) |
 | 003  | Rivalry stats — « qui dégomme qui » | P1 | M | — | DONE (merged `c9d3cb0`, E2E validated 2026-07-25) |
-| 004  | Presence snapshot on connect + lobby availability | P2 | S-M | — | TODO — Current-state excerpts must be refreshed against post-wave-1 main before execution |
-| 005  | « Inviter » from Amis creates the lobby | P2 | S | 001, 004 (both soft) | TODO — Current-state excerpts must be refreshed against post-wave-1 main before execution |
-| 006  | Friend profile: « Vos parties ensemble » + tappable ranking rows | P2 | M | — (composes with 003) | TODO — Current-state excerpts must be refreshed against post-wave-1 main before execution |
+| 004  | Presence snapshot on connect + lobby availability | P2 | S-M | — | DONE (merged `ad61450`, E2E validated 2026-07-25) |
+| 005  | « Inviter » from Amis creates the lobby | P2 | S | 001, 004 (both soft) | DONE (merged `ada135e`, E2E validated 2026-07-25) |
+| 006  | Friend profile: « Vos parties ensemble » + tappable ranking rows | P2 | M | — (composes with 003) | DONE (merged `76ff631`, E2E validated 2026-07-25) |
 | 007  | Per-target tap lock | P3 | S-M | — | DONE (merged `18302eb`, E2E validated 2026-07-25) |
+| 008  | Leaderboard spotlight cards: gap between section title and content | P3 | S | — | DONE (merged `5310eb9`, E2E validated 2026-07-25) |
+| 009  | Live action keys: safe-area bottom breathing room | P3 | S | — | DONE (merged `dbd8992`, E2E validated 2026-07-25) |
 
 Status values: TODO | IN PROGRESS | DONE | BLOCKED (with one-line reason) | REJECTED (with one-line rationale — finding fixed independently or approach abandoned)
 
