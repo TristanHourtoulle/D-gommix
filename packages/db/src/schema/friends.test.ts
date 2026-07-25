@@ -40,9 +40,9 @@ describe('friendships canonical constraint (requires docker-compose.test.yml pos
   })
 
   it('accepts the canonical pair even when the database collation is linguistic', async () => {
-    // The local test image (postgres:16-alpine, musl) ignores locales, so its default
-    // collation already behaves like "C". Replaying the live constraint on columns forced
-    // to a linguistic collation reproduces the production database here.
+    // The test image is glibc-based so its default collation is already linguistic, like
+    // production. Replaying the live constraint on explicitly collated columns keeps this
+    // guard meaningful even if the image or its locale ever changes.
     const [row] = await db.execute<{ def: string }>(
       sql`SELECT pg_get_constraintdef(oid) AS def FROM pg_constraint
           WHERE conrelid = 'friendships'::regclass AND conname = 'friendships_canonical'`

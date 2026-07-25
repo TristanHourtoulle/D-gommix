@@ -58,7 +58,7 @@ Prérequis : **Node ≥ 22**, **pnpm 11.13.1** (`packageManager`), **Docker** (p
 # 1. Dépendances
 pnpm install
 
-# 2. Postgres local (image postgres:16-alpine, exposé sur le port 54329)
+# 2. Postgres local (image postgres:16, exposé sur le port 54329)
 docker compose -f docker-compose.test.yml up -d
 
 # 3. Variables d'environnement
@@ -74,7 +74,7 @@ pnpm dev
 
 Notes :
 
-- `docker-compose.test.yml` démarre la base `degommix_test` (utilisateur et mot de passe `degommix`) sur le port hôte **54329** ; c'est la base utilisée par les tests, et elle fait aussi office de base de dev locale.
+- `docker-compose.test.yml` démarre la base `degommix_test` (utilisateur et mot de passe `degommix`) sur le port hôte **54329** ; c'est la base utilisée par les tests, et elle fait aussi office de base de dev locale. L'image est volontairement la variante glibc (`postgres:16`) avec la locale `en_US.UTF-8`, pour que le collationnement local soit le même qu'en production — la variante alpine (musl) ignore les locales et masque les bugs de collationnement.
 - `apps/ws-server` ne charge pas de fichier `.env` : ses variables (`DATABASE_URL`, `WEB_ORIGIN`, `PORT`, `JWKS_URL` optionnel) doivent être présentes dans l'environnement du process. Les valeurs de dev sont celles de `.env.example` — `PORT=4001`, aligné avec `NEXT_PUBLIC_WS_URL=http://localhost:4001`.
 - Le schéma évolue via `pnpm --filter @degommix/db db:generate` (génération de la migration) puis `db:migrate`.
 
