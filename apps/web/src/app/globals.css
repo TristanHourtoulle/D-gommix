@@ -320,6 +320,43 @@ a {
   display: block;
 }
 
+.avatar-choice {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.3rem;
+  padding: 0.4rem 0.2rem;
+  background: transparent;
+  border: 1.5px solid transparent;
+  border-radius: 12px;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.avatar-choice[aria-pressed='true'] {
+  border-color: var(--bronze);
+  background: var(--bronze-tint);
+}
+
+.avatar-choice[disabled] {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.avatar-choice-name {
+  font-size: 0.6rem;
+  font-weight: 700;
+  line-height: 1.2;
+  text-align: center;
+  color: var(--ink-soft);
+}
+
+.avatar-choice.none {
+  flex-direction: row;
+  gap: 0.6rem;
+  justify-content: flex-start;
+}
+
 .field-label {
   display: block;
   font-size: 0.72rem;
