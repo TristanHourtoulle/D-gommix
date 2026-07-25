@@ -7,7 +7,7 @@ import { generateGameCode } from '../game-code'
 import { broadcastLobbyState, loadLobbyState } from '../lobby-state'
 import {
   assertLobby,
-  assertNotInGame,
+  assertNotJoinedElsewhere,
   findActiveMemberships,
   getGameOrThrow,
   getSeat,
@@ -78,7 +78,7 @@ export function registerLobbyHandlers(socket: AppSocket, ctx: AppContext): void 
   socket.on(
     'lobby:create',
     withAck(createSchema, async ({ format }) => {
-      await assertNotInGame(db, userId)
+      await assertNotJoinedElsewhere(db, io, userId)
       const { gameId, code } = await createLobby(ctx, userId, format)
       await socket.join(`game:${gameId}`)
       await broadcastLobbyState(db, io, gameId)
@@ -176,7 +176,7 @@ export function registerLobbyHandlers(socket: AppSocket, ctx: AppContext): void 
         const lobbyState = await loadLobbyState(db, game.id)
         return { ok: true, gameId: game.id, lobbyState }
       }
-      if (seat?.status !== 'invited') await assertNotInGame(db, userId)
+      await assertNotJoinedElsewhere(db, io, userId, { exceptGameId: game.id })
       const seats = await listSeats(db, game.id)
       const joinedCount = seats.filter((s) => s.status === 'joined').length
       if (joinedCount >= game.format) throw new CommandError('LOBBY_FULL')

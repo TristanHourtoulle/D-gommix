@@ -6,6 +6,8 @@
 export const queryKeys = {
   /** GET /api/home — stats tiles, resume banner, recent history. */
   home: ['home'] as const,
+  /** GET /api/invites — lobby invitations still awaiting an answer. */
+  invites: ['invites'] as const,
   /** GET /api/friends — requests in/out, friend list, own lobby id. */
   friends: ['friends'] as const,
   /** GET /api/leaderboard — friends-circle ranking and character winrates. */

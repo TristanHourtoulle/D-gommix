@@ -3,6 +3,7 @@ import type { ActiveGame, HomeGame, HomeStats } from '@/lib/queries/home'
 import {
   friendsPayloadSchema,
   homePayloadSchema,
+  invitesPayloadSchema,
   leaderboardPayloadSchema,
   parseHomeGame,
   parseHomeGames,
@@ -88,6 +89,16 @@ describe('wire schemas', () => {
   it('rejects an unsupported game format', () => {
     const payload = serializeHomePayload(stats, null, [game({ format: 5 as 2 })])
     expect(homePayloadSchema.safeParse(payload).success).toBe(false)
+  })
+
+  it('accepts an empty invites payload', () => {
+    const empty = { invites: [] }
+    expect(invitesPayloadSchema.parse(empty)).toEqual(empty)
+  })
+
+  it('rejects an invitation with an unsupported game format', () => {
+    const bad = { invites: [{ gameId: 'g1', hostUsername: 'Obelix', format: 5 }] }
+    expect(invitesPayloadSchema.safeParse(bad).success).toBe(false)
   })
 
   it('accepts an empty friends payload', () => {

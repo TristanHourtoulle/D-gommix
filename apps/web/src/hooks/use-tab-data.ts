@@ -6,9 +6,11 @@ import type { ZodType } from 'zod'
 import {
   friendsPayloadSchema,
   homePayloadSchema,
+  invitesPayloadSchema,
   leaderboardPayloadSchema,
   type FriendsPayload,
   type HomePayload,
+  type InvitesPayload,
   type LeaderboardPayload,
 } from '@/lib/api-payloads'
 import { queryKeys } from '@/lib/query-keys'
@@ -41,6 +43,17 @@ export function useHomeData(initialData: HomePayload): DefinedUseQueryResult<Hom
   return useQuery({
     queryKey: queryKeys.home,
     queryFn: () => fetchPayload('/api/home', homePayloadSchema),
+    initialData,
+  })
+}
+
+/** Pending lobby invitations (Accueil banner + Jouer tab list). */
+export function useInvitesData(
+  initialData: InvitesPayload
+): DefinedUseQueryResult<InvitesPayload, Error> {
+  return useQuery({
+    queryKey: queryKeys.invites,
+    queryFn: () => fetchPayload('/api/invites', invitesPayloadSchema),
     initialData,
   })
 }

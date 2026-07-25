@@ -7,15 +7,21 @@ import { Button } from '@/components/ui/button'
 import { useToast } from '@/components/ui/toast'
 import { useInvites } from '@/hooks/use-invites'
 import { useInvalidateTabData } from '@/hooks/use-tab-data'
+import type { InvitesPayload } from '@/lib/api-payloads'
 import { ackErrorMessage } from '@/lib/ws-errors'
 import { formatLabel } from './format'
 
+interface InviteBannerProps {
+  /** SSR payload of the `invites` query, so a pending invite paints instantly. */
+  initialData: InvitesPayload
+}
+
 /**
- * Realtime invitation banners (`invite:received`): accepting routes to the
- * lobby, declining removes the banner. Errors surface as toasts.
+ * Invitation banners: accepting routes to the lobby, declining removes the
+ * banner. The list is server state, so it survives a reload. Errors are toasts.
  */
-export function InviteBanner() {
-  const { invites, accept, decline } = useInvites()
+export function InviteBanner({ initialData }: InviteBannerProps) {
+  const { invites, accept, decline } = useInvites(initialData)
   const router = useRouter()
   const { toast } = useToast()
   const invalidate = useInvalidateTabData()
@@ -47,19 +53,24 @@ export function InviteBanner() {
       {invites.map((invite) => (
         <div
           key={invite.gameId}
-          className="card flex items-center gap-3"
+          className="card flex flex-wrap items-center gap-x-3 gap-y-2"
           style={{ borderColor: 'var(--bronze)' }}
         >
           <span className="flex shrink-0" style={{ color: 'var(--bronze-strong)' }} aria-hidden>
             <Icon name="bell" size={20} />
           </span>
-          <p className="m-0 min-w-0 flex-1 text-sm">
+          {/*
+           * `basis-40` reserves a readable column for the host name: a long name no
+           * longer squeezes the text under the actions, the row wraps instead. The
+           * actions keep their intrinsic size and stay right-aligned on either row.
+           */}
+          <p className="m-0 min-w-0 flex-1 basis-40 break-words text-sm">
             <b>{invite.hostUsername} t’invite</b>
             <span className="block text-xs" style={{ color: 'var(--ink-faint)' }}>
               {formatLabel(invite.format)}
             </span>
           </p>
-          <div className="flex shrink-0 gap-2">
+          <div className="ml-auto flex shrink-0 gap-2">
             <Button
               fullWidth={false}
               disabled={pendingGameId === invite.gameId}

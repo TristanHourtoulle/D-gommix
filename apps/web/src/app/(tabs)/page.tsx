@@ -1,20 +1,23 @@
 import { requireOnboardedSession } from '@/lib/session'
 import { getActiveGame, getHomeStats, getLastGames } from '@/lib/queries/home'
+import { getPendingInvites } from '@/lib/queries/invites'
 import { serializeHomePayload } from '@/lib/api-payloads'
 import { HomeScreen } from '@/components/home/home-screen'
 
 export default async function HomePage() {
   const { user } = await requireOnboardedSession()
-  const [stats, activeGame, lastGames] = await Promise.all([
+  const [stats, activeGame, lastGames, invites] = await Promise.all([
     getHomeStats(user.id),
     getActiveGame(user.id),
     getLastGames(user.id),
+    getPendingInvites(user.id),
   ])
 
   return (
     <HomeScreen
       username={user.username}
       initialData={serializeHomePayload(stats, activeGame, lastGames)}
+      initialInvites={{ invites }}
     />
   )
 }

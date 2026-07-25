@@ -1,6 +1,7 @@
 import { createServer, type Server as HttpServer } from 'node:http'
+import { eq } from 'drizzle-orm'
 import { Server as SocketIOServer } from 'socket.io'
-import type { Db } from '@degommix/db'
+import { user, type Db } from '@degommix/db'
 import type { TokenVerifier } from './auth'
 import type { AppContext } from './context'
 import { GameManager } from './game-manager'
@@ -10,7 +11,7 @@ import { registerLobbyHandlers } from './handlers/lobby'
 import { registerLobbyAdminHandlers } from './handlers/lobby-admin'
 import { HostTransferManager, type TimerApi } from './host-transfer'
 import { loadLobbyState } from './lobby-state'
-import { findActiveMemberships } from './lobby-shared'
+import { findActiveMemberships, type ActiveMembership } from './lobby-shared'
 import { PresenceTracker } from './presence'
 import { RateLimiter } from './rate-limit'
 import type { AppServer, AppSocket } from './socket-types'
@@ -74,6 +75,7 @@ export function createWsServer(deps: WsServerDeps): WsServer {
   })
   const zombie = createZombieJob({
     db: deps.db,
+    io,
     manager,
     now: deps.zombieNow,
     thresholdMs: deps.zombieThresholdMs,
@@ -136,6 +138,33 @@ export function createWsServer(deps: WsServerDeps): WsServer {
   return { httpServer, io, manager, presence, hostTransfer, zombie, close }
 }
 
+/**
+ * Re-emits `invite:received` for every seat still `invited` in an open lobby.
+ * Invitations are otherwise lost on reload, tab remount or a sleeping phone —
+ * the seat survives in Postgres but nothing re-pushed it (SPECS.md:94: in-app
+ * invitations only, no Web Push).
+ */
+async function pushPendingInvites(
+  ctx: AppContext,
+  socket: AppSocket,
+  memberships: ActiveMembership[]
+): Promise<void> {
+  const pending = memberships.filter(
+    (m) => m.player.status === 'invited' && m.game.status === 'lobby'
+  )
+  for (const membership of pending) {
+    const [host] = await ctx.db
+      .select({ username: user.username })
+      .from(user)
+      .where(eq(user.id, membership.game.hostId))
+    socket.emit('invite:received', {
+      gameId: membership.game.id,
+      hostUsername: host?.username ?? '',
+      format: membership.game.format,
+    })
+  }
+}
+
 /** Presence bookkeeping + automatic room re-join and state push at handshake. */
 async function onSocketConnected(
   ctx: AppContext,
@@ -149,6 +178,8 @@ async function onSocketConnected(
     const seated = memberships.find((m) => m.player.status === 'joined')
     ctx.presence.syncInGameFlag(userId, seated?.game.status === 'active')
     if (becameOnline) await ctx.presence.broadcast(userId)
+    // Emitted to this socket only: other tabs already hold their own banner.
+    await pushPendingInvites(ctx, socket, memberships)
     if (!seated) return
     await socket.join(`game:${seated.game.id}`)
     if (seated.game.status === 'lobby') {
