@@ -3,8 +3,9 @@
 import { useCallback, useEffect, useState } from 'react'
 import type { Ack, CharacterId, GameEvent, GameFormat } from '@degommix/game-core'
 import { useSocket } from '@/components/socket-provider'
+import { attachLobbyCache, getCachedLobbyState } from '@/lib/lobby-cache'
 import { emitWithAck, timeoutAck } from '@/lib/socket'
-import type { AppSocket, CommandMap, CommandName, LobbyState } from '@/lib/realtime-types'
+import type { CommandMap, CommandName, LobbyState } from '@/lib/realtime-types'
 
 type EmptyAck = Ack<Record<never, never>>
 
@@ -21,22 +22,6 @@ export interface UseLobbyResult {
 }
 
 /**
- * The `lobby:state` broadcast can arrive before the lobby screen mounts
- * (e.g. right after `lobby:create` acks, during navigation). A module-level
- * cache keeps the latest state per game so the hook can seed itself.
- */
-const lobbyCache = new Map<string, LobbyState>()
-let cacheAttachedTo: AppSocket | null = null
-
-function ensureLobbyCache(socket: AppSocket): void {
-  if (cacheAttachedTo === socket) return
-  cacheAttachedTo = socket
-  socket.on('lobby:state', (state) => {
-    lobbyCache.set(state.gameId, state)
-  })
-}
-
-/**
  * Lobby state subscription + typed lobby commands for `/lobby/[gameId]`.
  * The server pushes `lobby:state` at handshake for seated players and
  * rebroadcasts the full state on every change.
@@ -47,8 +32,8 @@ export function useLobby(gameId: string): UseLobbyResult {
 
   useEffect(() => {
     if (!socket) return
-    ensureLobbyCache(socket)
-    setLobby(lobbyCache.get(gameId) ?? null)
+    attachLobbyCache(socket)
+    setLobby(getCachedLobbyState(gameId))
     const onLobbyState = (state: LobbyState): void => {
       if (state.gameId === gameId) setLobby(state)
     }
