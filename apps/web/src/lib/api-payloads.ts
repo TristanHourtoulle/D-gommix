@@ -3,10 +3,11 @@ import { CHARACTERS } from '@degommix/game-core'
 import type { ActiveGame, HomeGame, HomeStats } from '@/lib/queries/home'
 
 /**
- * Wire shapes of the tab data endpoints (`/api/home`, `/api/friends`,
- * `/api/leaderboard`). They mirror the server query return types with every
- * `Date` flattened to an ISO string, so the JSON a client query receives is
- * byte-identical to the `initialData` the server component seeds it with.
+ * Wire shapes of the tab data endpoints (`/api/home`, `/api/invites`,
+ * `/api/friends`, `/api/leaderboard`). They mirror the server query return
+ * types with every `Date` flattened to an ISO string, so the JSON a client
+ * query receives is byte-identical to the `initialData` the server component
+ * seeds it with.
  */
 
 const characterSchema = z.enum(CHARACTERS)
@@ -43,6 +44,16 @@ export const homePayloadSchema = z.object({
   stats: homeStatsSchema,
   activeGame: activeGameSchema.nullable(),
   lastGames: z.array(serializedHomeGameSchema),
+})
+
+export const invitesPayloadSchema = z.object({
+  invites: z.array(
+    z.object({
+      gameId: z.string(),
+      hostUsername: z.string(),
+      format: formatSchema,
+    })
+  ),
 })
 
 export const friendsPayloadSchema = z.object({
@@ -94,6 +105,7 @@ export const leaderboardPayloadSchema = z.object({
 
 export type SerializedHomeGame = z.infer<typeof serializedHomeGameSchema>
 export type HomePayload = z.infer<typeof homePayloadSchema>
+export type InvitesPayload = z.infer<typeof invitesPayloadSchema>
 export type FriendsPayload = z.infer<typeof friendsPayloadSchema>
 export type LeaderboardPayload = z.infer<typeof leaderboardPayloadSchema>
 
