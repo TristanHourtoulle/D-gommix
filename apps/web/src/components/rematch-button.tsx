@@ -16,7 +16,7 @@ interface RematchButtonProps {
 }
 
 /**
- * « Rejouer » — asks the server for a fresh lobby at the same format with every
+ * « Revanche ! » — asks the server for a fresh lobby at the same format with every
  * former player re-invited, then lands the caller in it as host.
  */
 export function RematchButton({ finishedGameId, variant = 'ghost' }: RematchButtonProps) {
@@ -49,7 +49,7 @@ export function RematchButton({ finishedGameId, variant = 'ghost' }: RematchButt
         void rematch()
       }}
     >
-      Rejouer
+      Revanche !
     </Button>
   )
 }
