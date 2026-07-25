@@ -53,7 +53,7 @@ function inList<T>(column: T, values: string[]) {
   )})`
 }
 
-async function getCircleMemberIds(userId: string): Promise<string[]> {
+export async function getCircleMemberIds(userId: string): Promise<string[]> {
   const pairs = await db
     .select({ low: friendships.userLow, high: friendships.userHigh })
     .from(friendships)
