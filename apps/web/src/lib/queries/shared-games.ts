@@ -54,6 +54,7 @@ export async function getSharedGames(viewerId: string, friendId: string): Promis
     .select({
       gameId: gamePlayers.gameId,
       username: user.username,
+      avatarId: user.avatarId,
       character: gamePlayers.character,
     })
     .from(gamePlayers)
@@ -69,7 +70,7 @@ export async function getSharedGames(viewerId: string, friendId: string): Promis
   const participantsByGame = new Map<string, HomeGameParticipant[]>()
   for (const row of participantRows) {
     const list = participantsByGame.get(row.gameId) ?? []
-    list.push({ username: row.username ?? '?', character: row.character })
+    list.push({ username: row.username ?? '?', avatarId: row.avatarId, character: row.character })
     participantsByGame.set(row.gameId, list)
   }
 
