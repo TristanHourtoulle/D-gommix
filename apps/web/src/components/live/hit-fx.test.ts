@@ -77,7 +77,7 @@ describe('pickOnomatopee', () => {
   })
 
   it('ignores an unknown previous word rather than throwing', () => {
-    expect(HIT_ONOMATOPEES).toContain(pickOnomatopee(7, 'Menhir !'))
+    expect(HIT_ONOMATOPEES).toContain(pickOnomatopee(7, 'Not a word !'))
   })
 })
 
