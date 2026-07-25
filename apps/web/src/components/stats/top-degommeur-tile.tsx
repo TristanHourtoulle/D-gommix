@@ -13,7 +13,7 @@ export function TopDegommeurTile({ top }: TopDegommeurTileProps) {
     <Card className="flex flex-col gap-2 px-4 py-3">
       <p className="sec-label">Plus grand dégommeur</p>
       <div className="flex items-center gap-3">
-        <PlayerAvatar username={top.username} size={40} />
+        <PlayerAvatar username={top.username} size={40} avatarId={top.avatarId ?? null} />
         <div className="min-w-0 flex-1">
           <p className="m-0 truncate text-sm font-bold">{top.username}</p>
           <p className="m-0 text-xs text-ink-soft">

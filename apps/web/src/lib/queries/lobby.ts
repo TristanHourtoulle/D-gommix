@@ -9,6 +9,7 @@ export interface LobbyAccess {
 export interface InvitableFriend {
   id: string
   username: string
+  avatarId?: string | null
 }
 
 /** SSR gate for /lobby/[gameId]: game status + seated membership of the viewer. */
@@ -31,10 +32,12 @@ export async function getInvitableFriends(userId: string): Promise<InvitableFrie
   const friendIds = rows.map((row) => (row.low === userId ? row.high : row.low))
   if (friendIds.length === 0) return []
   const users = await db
-    .select({ id: user.id, username: user.username })
+    .select({ id: user.id, username: user.username, avatarId: user.avatarId })
     .from(user)
     .where(or(...friendIds.map((id) => eq(user.id, id))))
   return users
-    .flatMap((row) => (row.username ? [{ id: row.id, username: row.username }] : []))
+    .flatMap((row) =>
+      row.username ? [{ id: row.id, username: row.username, avatarId: row.avatarId }] : []
+    )
     .sort((a, b) => a.username.localeCompare(b.username))
 }

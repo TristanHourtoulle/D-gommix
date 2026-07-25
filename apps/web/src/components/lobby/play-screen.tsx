@@ -186,7 +186,11 @@ export function PlayScreen({ initialInvites }: PlayScreenProps) {
                     border: '1.5px solid var(--parchment-line)',
                   }}
                 >
-                  <PlayerAvatar username={invite.hostUsername} size={32} />
+                  <PlayerAvatar
+                    username={invite.hostUsername}
+                    size={32}
+                    avatarId={invite.hostAvatarId ?? null}
+                  />
                   <p className="m-0 flex-1 text-[0.78rem] leading-snug">
                     <b>{invite.hostUsername}</b> t’invite — FFA, {invite.format} joueurs
                   </p>

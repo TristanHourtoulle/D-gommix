@@ -10,6 +10,7 @@ import { RoundIconButton } from './round-icon-button'
 interface FriendRowProps {
   friendId: string
   username: string
+  avatarId: string | null
   presence: Presence
   busy: boolean
   onInvite: () => void
@@ -23,6 +24,7 @@ interface FriendRowProps {
 export function FriendRow({
   friendId,
   username,
+  avatarId,
   presence,
   busy,
   onInvite,
@@ -38,7 +40,7 @@ export function FriendRow({
         className="flex min-w-0 flex-1 items-center gap-3 no-underline"
         style={{ color: 'inherit' }}
       >
-        <PlayerAvatar username={username} size={32} />
+        <PlayerAvatar username={username} size={32} avatarId={avatarId} />
         <span className="min-w-0">
           <span className="block truncate text-sm font-bold">{username}</span>
           <PresenceDot presence={presence} />

@@ -18,6 +18,7 @@ export interface LeaderboardRow {
   rank: number
   userId: string
   username: string
+  avatarId?: string | null
   wins: number
   /** Percentage 0-100, over village_reached games only (aborted excluded) */
   winrate: number
@@ -29,6 +30,7 @@ export interface LeaderboardRow {
 export interface TopDegommeur {
   userId: string
   username: string
+  avatarId?: string | null
   degommages: number
 }
 
@@ -77,7 +79,10 @@ export async function getLeaderboard(userId: string): Promise<Leaderboard> {
   )
 
   const [members, statRows, characterRows, seatRows] = await Promise.all([
-    db.select({ id: user.id, username: user.username }).from(user).where(inList(user.id, memberIds)),
+    db
+      .select({ id: user.id, username: user.username, avatarId: user.avatarId })
+      .from(user)
+      .where(inList(user.id, memberIds)),
     db
       .select({
         userId: gamePlayers.userId,
@@ -150,6 +155,7 @@ export async function getLeaderboard(userId: string): Promise<Leaderboard> {
     return {
       userId: member.id,
       username: member.username ?? 'Inconnu',
+      avatarId: member.avatarId ?? null,
       wins,
       villageGames,
       winrate: villageGames > 0 ? Math.round((wins / villageGames) * 100) : 0,
@@ -170,7 +176,12 @@ export async function getLeaderboard(userId: string): Promise<Leaderboard> {
   const best = [...rows].sort((a, b) => b.degommages - a.degommages)[0]
   const topDegommeur =
     best && best.degommages > 0
-      ? { userId: best.userId, username: best.username, degommages: best.degommages }
+      ? {
+          userId: best.userId,
+          username: best.username,
+          avatarId: best.avatarId,
+          degommages: best.degommages,
+        }
       : null
 
   const characterWinrates: CharacterWinrate[] = seatRows
@@ -193,6 +204,7 @@ export async function getLeaderboard(userId: string): Promise<Leaderboard> {
 export interface GameDetailPlayer {
   userId: string
   username: string
+  avatarId: string | null
   character: CharacterId | null
   degommages: number
   isWinner: boolean
@@ -305,6 +317,7 @@ export async function getGameDetail(gameId: string, viewerId: string): Promise<G
     .select({
       userId: gamePlayers.userId,
       username: user.username,
+      avatarId: user.avatarId,
       character: gamePlayers.character,
       degommages: gamePlayers.degommages,
       status: gamePlayers.status,
@@ -348,6 +361,7 @@ export async function getGameDetail(gameId: string, viewerId: string): Promise<G
   const players: GameDetailPlayer[] = playerRows.map((row) => ({
     userId: row.userId,
     username: row.username ?? 'Inconnu',
+    avatarId: row.avatarId,
     character: row.character,
     degommages: row.degommages,
     isWinner: row.userId === game.winnerId,

@@ -26,7 +26,7 @@ export function RankingTable({ rows, viewerId }: RankingTableProps) {
           <span className="w-5 shrink-0 text-center font-mono text-sm font-bold text-bronze">
             {row.rank}
           </span>
-          <PlayerAvatar username={row.username} size={32} />
+          <PlayerAvatar username={row.username} size={32} avatarId={row.avatarId ?? null} />
           <span
             className={`min-w-0 flex-1 truncate text-sm ${row.userId === viewerId ? 'font-bold' : 'font-medium'}`}
           >

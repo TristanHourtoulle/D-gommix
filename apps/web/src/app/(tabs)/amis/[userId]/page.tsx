@@ -57,7 +57,7 @@ export default async function FriendProfilePage({ params }: FriendProfilePagePro
       </SectionTitle>
 
       <section className="card flex items-center gap-3 p-5">
-        <PlayerAvatar username={profile.username} size={44} />
+        <PlayerAvatar username={profile.username} size={44} avatarId={profile.avatarId} />
         <div className="min-w-0">
           <p className="m-0 truncate font-bold">{profile.username}</p>
           <p className="m-0 text-xs" style={{ color: 'var(--ink-faint)' }}>
