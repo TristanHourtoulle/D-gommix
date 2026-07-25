@@ -6,7 +6,7 @@ import { CommandError, withAck } from '../ack'
 import type { AppContext } from '../context'
 import { createLobby, inviteSeat } from './lobby'
 import { broadcastLobbyState } from '../lobby-state'
-import { assertNotInGame, getSeat } from '../lobby-shared'
+import { assertNotJoinedElsewhere, getSeat } from '../lobby-shared'
 import type { AppSocket } from '../socket-types'
 
 const commandSchema: z.ZodType<Command> = z.discriminatedUnion('type', [
@@ -66,7 +66,7 @@ export function registerGameHandlers(socket: AppSocket, ctx: AppContext): void {
       if (!finished || finished.status !== 'finished') throw new CommandError('NOT_FOUND')
       const mySeat = await getSeat(db, finishedGameId, userId)
       if (!mySeat) throw new CommandError('NOT_MEMBER')
-      await assertNotInGame(db, userId)
+      await assertNotJoinedElsewhere(db, io, userId)
       const formerPlayers = await db
         .select()
         .from(gamePlayers)
