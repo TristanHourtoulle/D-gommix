@@ -33,10 +33,7 @@ export interface SplashGateInput {
  * Reduced motion wins over everything: there is no shortened variant, the
  * sequence simply never mounts. Otherwise it plays exactly once per session.
  */
-export function shouldShowSplash({
-  seenFlag,
-  prefersReducedMotion,
-}: SplashGateInput): boolean {
+export function shouldShowSplash({ seenFlag, prefersReducedMotion }: SplashGateInput): boolean {
   if (prefersReducedMotion) return false
   return seenFlag !== SPLASH_SEEN_VALUE
 }
