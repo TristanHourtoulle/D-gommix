@@ -8,20 +8,30 @@ interface Tab {
   href: string
   label: string
   icon: IconName
+  /** Route prefixes (beyond `href`) that keep this tab highlighted. */
+  aliases: string[]
 }
 
 const TABS: Tab[] = [
-  { href: '/', label: 'Accueil', icon: 'home' },
-  { href: '/amis', label: 'Amis', icon: 'users' },
-  { href: '/jouer', label: 'Jouer', icon: 'play' },
-  { href: '/classement', label: 'Classement', icon: 'trophy' },
+  { href: '/', label: 'Accueil', icon: 'home', aliases: [] },
+  { href: '/amis', label: 'Amis', icon: 'users', aliases: [] },
+  { href: '/jouer', label: 'Jouer', icon: 'play', aliases: ['/lobby'] },
+  { href: '/classement', label: 'Classement', icon: 'trophy', aliases: ['/parties'] },
 ]
+
+function matchesPrefix(pathname: string, prefix: string): boolean {
+  return pathname === prefix || pathname.startsWith(`${prefix}/`)
+}
 
 function activeIndex(pathname: string): number {
   const index = TABS.findIndex(
-    (tab) => tab.href !== '/' && (pathname === tab.href || pathname.startsWith(`${tab.href}/`)),
+    (tab) =>
+      tab.href !== '/' &&
+      (matchesPrefix(pathname, tab.href) ||
+        tab.aliases.some((alias) => matchesPrefix(pathname, alias))),
   )
-  return index === -1 ? 0 : index
+  if (index !== -1) return index
+  return pathname === '/' ? 0 : -1
 }
 
 /** Floating liquid-glass bottom tab bar with a sliding water-bubble indicator. */
@@ -32,13 +42,15 @@ export function TabBar() {
   return (
     <nav className="tabbar-zone" aria-label="Navigation principale">
       <div className="tabbar">
-        <span
-          className="tab-bubble"
-          style={{ transform: `translateX(${active * 100}%)` }}
-          aria-hidden
-        >
-          <span key={active} className="tab-bubble-water" />
-        </span>
+        {active !== -1 ? (
+          <span
+            className="tab-bubble"
+            style={{ transform: `translateX(${active * 100}%)` }}
+            aria-hidden
+          >
+            <span key={active} className="tab-bubble-water" />
+          </span>
+        ) : null}
         {TABS.map((tab, index) => (
           <Link
             key={tab.href}
