@@ -75,6 +75,7 @@ export function createWsServer(deps: WsServerDeps): WsServer {
   })
   const zombie = createZombieJob({
     db: deps.db,
+    io,
     manager,
     now: deps.zombieNow,
     thresholdMs: deps.zombieThresholdMs,
