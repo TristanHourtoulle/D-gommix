@@ -2,20 +2,15 @@
 
 import Image from 'next/image'
 import { useRouter } from 'next/navigation'
-import { useState } from 'react'
 import type { GameState } from '@degommix/game-core'
 import { Icon } from '@/components/icons'
-import { useSocket } from '@/components/socket-provider'
+import { RematchButton } from '@/components/rematch-button'
 import { Button } from '@/components/ui/button'
 import { CharacterBadge } from '@/components/ui/character-badge'
 import { Pill } from '@/components/ui/pill'
 import { StatTile } from '@/components/ui/stat-tile'
-import { useToast } from '@/components/ui/toast'
-import { useInvalidateTabData } from '@/hooks/use-tab-data'
 import { CHARACTER_META } from '@/lib/characters'
 import { formatChrono } from '@/lib/chrono'
-import { emitWithAck } from '@/lib/socket'
-import { ackErrorMessage } from '@/lib/ws-errors'
 import { displayName, type NameMap } from './types'
 
 interface SummaryProps {
@@ -35,10 +30,6 @@ const FORMAT_LABELS = { 2: '1v1', 3: '3J', 4: '4J' } as const
  */
 export function Summary({ gameId, state, names, startedAt, endedAt }: SummaryProps) {
   const router = useRouter()
-  const { socket } = useSocket()
-  const { toast } = useToast()
-  const invalidate = useInvalidateTabData()
-  const [replaying, setReplaying] = useState(false)
 
   const winner = state.winnerId ? state.players[state.winnerId] : undefined
   const durationSec =
@@ -46,21 +37,6 @@ export function Summary({ gameId, state, names, startedAt, endedAt }: SummaryPro
       ? Math.max(0, Math.round((Date.parse(endedAt) - Date.parse(startedAt)) / 1000))
       : null
   const totalDegommages = Object.values(state.players).reduce((sum, p) => sum + p.degommages, 0)
-
-  const replay = async (): Promise<void> => {
-    if (!socket || replaying) return
-    setReplaying(true)
-    const ack = await emitWithAck(socket, 'replay:create', { finishedGameId: gameId })
-    if (ack.ok) {
-      // The rematch lobby becomes the resume banner on Accueil and the lobby
-      // the Amis screen can invite into.
-      invalidate('home', 'friends')
-      router.push(`/lobby/${ack.gameId}`)
-      return
-    }
-    setReplaying(false)
-    toast(ackErrorMessage(ack), 'error')
-  }
 
   return (
     <main className="mx-auto flex min-h-dvh w-full max-w-md flex-col gap-4 px-4 py-6">
@@ -137,15 +113,7 @@ export function Summary({ gameId, state, names, startedAt, endedAt }: SummaryPro
 
       <div className="mt-auto flex flex-col gap-2">
         <Button onClick={() => router.push('/classement')}>Voir le classement</Button>
-        <Button
-          variant="ghost"
-          disabled={replaying}
-          onClick={() => {
-            void replay()
-          }}
-        >
-          Rejouer
-        </Button>
+        <RematchButton finishedGameId={gameId} variant="ghost" />
       </div>
     </main>
   )
