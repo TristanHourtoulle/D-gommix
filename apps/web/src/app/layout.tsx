@@ -15,7 +15,14 @@ export const metadata: Metadata = {
   applicationName: 'Dégommix',
   appleWebApp: {
     capable: true,
-    statusBarStyle: 'default',
+    /*
+     * `black-translucent` is the only value that lets the installed PWA draw
+     * edge-to-edge under the iOS status bar. With `default` iOS reserves the
+     * strip and paints it itself — an opaque black band above the app. Every
+     * top-of-page shell compensates with `env(safe-area-inset-top)` so the
+     * content still starts below the clock.
+     */
+    statusBarStyle: 'black-translucent',
     title: 'Dégommix',
   },
   icons: {

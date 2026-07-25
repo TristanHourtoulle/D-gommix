@@ -472,6 +472,14 @@ a {
 .empty-title { margin: 0; font-size: 0.85rem; font-weight: 700; color: var(--ink); }
 .empty-desc { margin: 0; font-size: 0.74rem; color: var(--ink-soft); max-width: 30ch; }
 
+/**
+ * Page shell of every tabbed screen (plus lobby/play/dev). The app draws
+ * edge-to-edge under the iOS status bar (`black-translucent`), so the shell's
+ * own top breathing room stacks on `env(safe-area-inset-top)` — the same
+ * pattern the auth/live/summary shells apply inline with
+ * `pt-[calc(…_+_env(safe-area-inset-top))]`. In a regular browser tab the
+ * inset is 0 and the padding stays exactly 2rem.
+ */
 .tab-page {
   margin: 0 auto;
   display: flex;
@@ -480,7 +488,7 @@ a {
   max-width: 28rem;
   flex-direction: column;
   gap: 1.1rem;
-  padding: 2rem 1.25rem;
+  padding: calc(2rem + env(safe-area-inset-top)) 1.25rem 2rem;
 }
 
 .icon-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 0.5rem; }
