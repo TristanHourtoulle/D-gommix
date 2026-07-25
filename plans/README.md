@@ -31,6 +31,7 @@ Playwright happy path. No plan asks you to add test infrastructure.
 | 013  | Avatar picker — 16-piece catalog replacing the initial everywhere | — | — | — | DONE (merged `508b6e1`, E2E validated 2026-07-25 (combined run 6/6)) |
 | 014  | Hidden dev animations menu (long-press on /profil) | — | — | 010–013 | TODO |
 | 015  | Lexique gaulois — owner-validated UI lexicon | — | — | — | TODO |
+| 016  | Splash « Le déroulé » — once-per-session opening sequence | P2 | M | — | TODO |
 
 Status values: TODO | IN PROGRESS | DONE | BLOCKED (with one-line reason) | REJECTED (with one-line rationale — finding fixed independently or approach abandoned)
 
