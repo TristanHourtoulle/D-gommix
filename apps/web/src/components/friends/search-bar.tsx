@@ -1,25 +1,14 @@
 'use client'
 
-import { useEffect, useState } from 'react'
-import { z } from 'zod'
+import { useCallback, useEffect, useState } from 'react'
 import { Icon } from '@/components/icons'
 import { PlayerAvatar } from '@/components/ui/player-avatar'
+import { useFriendsEvents } from '@/hooks/use-friends-events'
+import type { FriendsEventPayload } from '@/lib/realtime-types'
+import { applyFriendsEvent, searchResponseSchema, type SearchUser } from './search-results'
 
 const SEARCH_DEBOUNCE_MS = 300
 const MIN_QUERY_LENGTH = 2
-
-const searchResponseSchema = z.object({
-  users: z.array(
-    z.object({
-      id: z.string(),
-      username: z.string(),
-      isFriend: z.boolean(),
-      hasPending: z.boolean(),
-    })
-  ),
-})
-
-type SearchUser = z.infer<typeof searchResponseSchema>['users'][number]
 
 interface SearchBarProps {
   /** Sends `friends:request`; resolves true on success to flip the row state. */
@@ -32,6 +21,15 @@ export function SearchBar({ onRequest }: SearchBarProps) {
   const [results, setResults] = useState<SearchUser[]>([])
   const [searched, setSearched] = useState(false)
   const [busyId, setBusyId] = useState<string | null>(null)
+
+  // The results are a snapshot of the relation flags at query time: replay the
+  // live friend events on them so an open list never lies (see
+  // `./search-results`). The lists below own their own invalidation.
+  useFriendsEvents(
+    useCallback((event: FriendsEventPayload) => {
+      setResults((current) => applyFriendsEvent(current, event))
+    }, [])
+  )
 
   useEffect(() => {
     const trimmed = query.trim()

@@ -14,7 +14,7 @@ const FRIENDS_RATE_LIMIT = 10
 const FRIENDS_RATE_WINDOW_MS = 60_000
 
 export function registerFriendsHandlers(socket: AppSocket, ctx: AppContext): void {
-  const { db, io, limiter } = ctx
+  const { db, io, limiter, presence } = ctx
   const userId = socket.data.userId
 
   const getUsername = async (id: string): Promise<string> => {
@@ -93,6 +93,9 @@ export function registerFriendsHandlers(socket: AppSocket, ctx: AppContext): voi
           requestId,
           from: { id: userId, username: await getUsername(userId) },
         })
+        // The friendship did not exist when either side connected, so neither
+        // was in the other's `presence:update` audience: seed both maps now.
+        presence.notifyNewFriendship(userId, request.senderId)
       } else {
         await db
           .update(friendRequests)
