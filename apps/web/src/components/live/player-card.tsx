@@ -39,7 +39,7 @@ export function PlayerCard({ player, username, isHost, taken }: PlayerCardProps)
         </p>
         {taken !== undefined && taken > 0 ? (
           <p className="m-0 text-xs" style={{ color: 'var(--ink-faint)' }}>
-            {taken} subis
+            {taken} subi{taken > 1 ? 's' : ''}
           </p>
         ) : null}
         {player.inGame ? null : (

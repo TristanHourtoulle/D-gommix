@@ -7,6 +7,17 @@ interface RivalryTileProps {
   rivalry: RivalrySpotlight
 }
 
+/** « 1 dégommage subi » / « 2 dégommages subis ». */
+function sufferedLabel(count: number): string {
+  const s = count > 1 ? 's' : ''
+  return `${count} dégommage${s} subi${s}`
+}
+
+/** « 1 dégommage » / « 3 dégommages ». */
+function dealtLabel(count: number): string {
+  return `${count} dégommage${count > 1 ? 's' : ''}`
+}
+
 /** « Qui dégomme qui » spotlight: my nemesis and my favourite victim. */
 export function RivalryTile({ rivalry }: RivalryTileProps) {
   const { nemesis, favoriteVictim } = rivalry
@@ -24,7 +35,7 @@ export function RivalryTile({ rivalry }: RivalryTileProps) {
                 Ta bête noire
               </p>
               <p className="m-0 truncate text-sm font-bold">
-                {nemesis.username} · {nemesis.count} dégommages subis
+                {nemesis.username} · {sufferedLabel(nemesis.count)}
               </p>
             </div>
             <Icon name="sword" size={16} className="text-bronze" />
@@ -38,7 +49,7 @@ export function RivalryTile({ rivalry }: RivalryTileProps) {
                 Ta victime préférée
               </p>
               <p className="m-0 truncate text-sm font-bold">
-                {favoriteVictim.username} · {favoriteVictim.count} dégommages
+                {favoriteVictim.username} · {dealtLabel(favoriteVictim.count)}
               </p>
             </div>
             <Icon name="sword" size={16} className="text-bronze" />
