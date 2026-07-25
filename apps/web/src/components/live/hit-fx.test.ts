@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import type { DegommageEntry } from '@degommix/game-core'
-import { HIT_ONOMATOPEES, hitByTarget, pickOnomatopee } from './hit-fx'
+import { HIT_ONOMATOPEES, hitByTarget, hitPhase, pickOnomatopee } from './hit-fx'
 
 function log(...pairs: readonly [number, string][]): DegommageEntry[] {
   return pairs.map(([seq, targetId]) => ({ seq, actorId: 'x', targetId }))
@@ -13,8 +13,8 @@ describe('hitByTarget', () => {
 
   it('counts every entry per target, in seq order', () => {
     const hits = hitByTarget(log([1, 'a'], [2, 'b'], [3, 'a'], [4, 'a']))
-    expect(hits.a).toEqual({ count: 3, seq: 4, previousSeq: 3 })
-    expect(hits.b).toEqual({ count: 1, seq: 2, previousSeq: null })
+    expect(hits.a).toEqual({ count: 3, seq: 4, word: expect.any(String) })
+    expect(hits.b).toEqual({ count: 1, seq: 2, word: expect.any(String) })
   })
 
   it('keeps counting undone dégommages — the log is append-only', () => {
@@ -30,6 +30,23 @@ describe('hitByTarget', () => {
     const parities = entries.map((_, i) => hitByTarget(entries.slice(0, i + 1)).a?.count ?? 0)
     expect(parities).toEqual([1, 2, 3])
   })
+
+  it('is a pure function of the log — every phone derives the same words', () => {
+    const entries = log([1, 'a'], [2, 'a'], [3, 'b'], [4, 'a'], [5, 'b'])
+    expect(hitByTarget(entries)).toEqual(hitByTarget(entries.slice()))
+  })
+
+  it('never stamps the same word twice in a row on one card', () => {
+    const entries = log(...Array.from({ length: 200 }, (_, i): [number, string] => [i + 1, 'a']))
+    const words = entries.map((_, i) => hitByTarget(entries.slice(0, i + 1)).a?.word)
+    for (let i = 1; i < words.length; i++) expect(words[i]).not.toBe(words[i - 1])
+  })
+
+  it('uses all six words within 60 hits on the same card', () => {
+    const entries = log(...Array.from({ length: 60 }, (_, i): [number, string] => [i + 1, 'a']))
+    const words = new Set(entries.map((_, i) => hitByTarget(entries.slice(0, i + 1)).a?.word))
+    expect(words.size).toBe(6)
+  })
 })
 
 describe('pickOnomatopee', () => {
@@ -40,33 +57,38 @@ describe('pickOnomatopee', () => {
   it('is deterministic for a given seq', () => {
     for (const seq of [1, 2, 17, 512, 99999]) {
       expect(pickOnomatopee(seq, null)).toBe(pickOnomatopee(seq, null))
+      expect(pickOnomatopee(seq, 'Paf !')).toBe(pickOnomatopee(seq, 'Paf !'))
     }
   })
 
   it('always returns a word from the list', () => {
     for (let seq = 1; seq <= 300; seq++) {
       expect(HIT_ONOMATOPEES).toContain(pickOnomatopee(seq, null))
+      expect(HIT_ONOMATOPEES).toContain(pickOnomatopee(seq, 'Vlan !'))
     }
   })
 
-  it('never repeats the previous word on the same card', () => {
-    let previousSeq: number | null = null
-    let previousWord: string | null = null
+  it('never returns the previous word, whatever the seq', () => {
     for (let seq = 1; seq <= 300; seq++) {
-      const word = pickOnomatopee(seq, previousSeq)
-      if (previousWord !== null) expect(word).not.toBe(previousWord)
-      previousWord = word
-      previousSeq = seq
+      for (const previous of HIT_ONOMATOPEES) {
+        expect(pickOnomatopee(seq, previous)).not.toBe(previous)
+      }
     }
   })
 
-  it('uses all six words within 60 hits', () => {
-    const seen = new Set<string>()
-    let previousSeq: number | null = null
-    for (let seq = 1; seq <= 60; seq++) {
-      seen.add(pickOnomatopee(seq, previousSeq))
-      previousSeq = seq
-    }
-    expect(seen.size).toBe(6)
+  it('ignores an unknown previous word rather than throwing', () => {
+    expect(HIT_ONOMATOPEES).toContain(pickOnomatopee(7, 'Menhir !'))
+  })
+})
+
+describe('hitPhase', () => {
+  it('is undefined while the card has taken no hit', () => {
+    expect(hitPhase(undefined)).toBeUndefined()
+  })
+
+  it('alternates on every new hit so the CSS animation restarts', () => {
+    const entries = log([1, 'a'], [2, 'a'], [3, 'a'], [4, 'a'])
+    const phases = entries.map((_, i) => hitPhase(hitByTarget(entries.slice(0, i + 1)).a))
+    expect(phases).toEqual(['b', 'a', 'b', 'a'])
   })
 })
