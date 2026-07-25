@@ -1,15 +1,13 @@
-import { SectionTitle } from '@/components/ui/section-title'
-import { EmptyState } from '@/components/ui/empty-state'
+import { requireOnboardedSession } from '@/lib/session'
+import { PlayScreen } from '@/components/lobby/play-screen'
+import { RealtimeProviders } from '@/components/lobby/providers'
 
-export default function PlayPage() {
+export default async function PlayPage() {
+  await requireOnboardedSession()
+
   return (
-    <main className="tab-page">
-      <SectionTitle sub="Créer ou rejoindre une partie">Jouer</SectionTitle>
-      <EmptyState
-        icon="sword"
-        title="Bientôt disponible"
-        description="La création de partie et le code à 6 caractères arrivent ici."
-      />
-    </main>
+    <RealtimeProviders>
+      <PlayScreen />
+    </RealtimeProviders>
   )
 }
