@@ -6,12 +6,15 @@ import { Card } from '@/components/ui/card'
 import { PlayerAvatar } from '@/components/ui/player-avatar'
 import { SignOutButton } from '@/components/sign-out-button'
 import { UsernameForm } from '@/components/profile/username-form'
+import { AvatarPicker } from '@/components/profile/avatar-picker'
 import { ThemeSegmented } from '@/components/theme/theme-segmented'
+import { getAvatarId } from '@/lib/queries/profile'
 
 export default async function ProfilePage() {
   const session = await requireSession()
   const { username, email } = session.user
   if (!username) redirect('/onboarding')
+  const avatarId = await getAvatarId(session.user.id)
 
   return (
     <main className="tab-page">
@@ -25,7 +28,7 @@ export default async function ProfilePage() {
       </Link>
 
       <header className="flex items-center gap-3">
-        <PlayerAvatar username={username} size={56} />
+        <PlayerAvatar username={username} size={56} avatarId={avatarId} />
         <div>
           <h1 className="s-title m-0" style={{ fontSize: '1.05rem' }}>
             {username}
@@ -41,6 +44,16 @@ export default async function ProfilePage() {
             C&apos;est lui que tes amis verront dans les parties. 20 caractères maximum.
           </p>
           <UsernameForm currentUsername={username} />
+        </Card>
+      </section>
+
+      <section className="flex flex-col gap-2">
+        <p className="sec-label">Avatar</p>
+        <Card className="flex flex-col gap-3 p-4">
+          <p className="m-0 text-xs" style={{ color: 'var(--ink-soft)' }}>
+            Choisis ta tête. Elle s’affiche partout où ton pseudo apparaît.
+          </p>
+          <AvatarPicker username={username} currentAvatarId={avatarId} />
         </Card>
       </section>
 
