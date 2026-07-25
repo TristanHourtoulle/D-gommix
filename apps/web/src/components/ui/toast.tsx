@@ -30,7 +30,11 @@ interface ToastProviderProps {
   children: ReactNode
 }
 
-/** Minimal app toaster: stacked pills above the tab bar, auto-dismiss 4s. */
+/**
+ * Minimal app toaster: stacked pills above the tab bar, auto-dismiss 4s.
+ * Mounted exactly once, in the root layout, so the queue is never thrown away
+ * by a client-side navigation that crosses a route-group boundary.
+ */
 export function ToastProvider({ children }: ToastProviderProps) {
   const [toasts, setToasts] = useState<ToastItem[]>([])
   const nextId = useRef(0)
