@@ -7,6 +7,7 @@ import { SectionTitle } from '@/components/ui/section-title'
 import { EmptyState } from '@/components/ui/empty-state'
 import { CharacterWinrateBars } from './character-winrate-bars'
 import { RankingTable } from './ranking-table'
+import { RivalryTile } from './rivalry-tile'
 import { TopDegommeurTile } from './top-degommeur-tile'
 
 interface LeaderboardScreenProps {
@@ -43,6 +44,8 @@ export function LeaderboardScreen({ viewerId, initialData }: LeaderboardScreenPr
       <SectionTitle sub="Le cercle d'amis au grand complet">Classement</SectionTitle>
 
       {leaderboard.topDegommeur ? <TopDegommeurTile top={leaderboard.topDegommeur} /> : null}
+
+      <RivalryTile rivalry={leaderboard.rivalry} />
 
       <RankingTable rows={leaderboard.rows} viewerId={viewerId} />
 

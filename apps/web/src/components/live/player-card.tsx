@@ -7,13 +7,15 @@ interface PlayerCardProps {
   player: PlayerState
   username: string
   isHost: boolean
+  /** Degommages suffered so far, hidden while still at zero. */
+  taken?: number
 }
 
 /**
  * Roster card of the live screen: portrait, pseudo (crown for the host) and
  * the sword tally. A player who left is grayed out with the quit note.
  */
-export function PlayerCard({ player, username, isHost }: PlayerCardProps) {
+export function PlayerCard({ player, username, isHost, taken }: PlayerCardProps) {
   return (
     <div
       className="card flex items-center gap-3 p-3"
@@ -35,6 +37,11 @@ export function PlayerCard({ player, username, isHost }: PlayerCardProps) {
           <Icon name="sword" size={14} title="Pions dégommés" />
           <span data-testid="degommage-count">{player.degommages}</span>
         </p>
+        {taken !== undefined && taken > 0 ? (
+          <p className="m-0 text-xs" style={{ color: 'var(--ink-faint)' }}>
+            {taken} subi{taken > 1 ? 's' : ''}
+          </p>
+        ) : null}
         {player.inGame ? null : (
           <p className="m-0 text-xs italic" style={{ color: 'var(--ink-faint)' }}>
             a quitté la partie

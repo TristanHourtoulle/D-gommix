@@ -9,6 +9,7 @@ import { useGame } from '@/hooks/use-game'
 import { useInvalidateTabData } from '@/hooks/use-tab-data'
 import { useWakeLock } from '@/hooks/use-wake-lock'
 import { ackErrorMessage } from '@/lib/ws-errors'
+import { takenByTarget } from '@/lib/rivalries'
 import { EndRequestSheet } from './end-request-sheet'
 import { shouldInvalidateOnFinish } from './finish-guard'
 import { GameClock } from './game-clock'
@@ -113,6 +114,7 @@ export function LiveScreen({
   const canAct = me !== undefined && me.inGame
   const canUndo = canAct && validateCommand(state, viewerId, { type: 'undo' }, { isHost }).ok
   const pending = state.pendingEndRequest
+  const taken = takenByTarget(state)
 
   const submitEnd = (kind: EndKind, winnerId?: string): void => {
     setEndSheetOpen(false)
@@ -139,6 +141,7 @@ export function LiveScreen({
               player={player}
               username={displayName(names, userId)}
               isHost={userId === hostId}
+              taken={taken[userId] ?? 0}
             />
           )
         })}

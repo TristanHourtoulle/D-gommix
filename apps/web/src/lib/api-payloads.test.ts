@@ -117,8 +117,33 @@ describe('wire schemas', () => {
   })
 
   it('accepts an empty leaderboard payload', () => {
-    const empty = { rows: [], friendCount: 0, topDegommeur: null, characterWinrates: [] }
+    const empty = {
+      rows: [],
+      friendCount: 0,
+      topDegommeur: null,
+      rivalry: { nemesis: null, favoriteVictim: null },
+      characterWinrates: [],
+    }
     expect(leaderboardPayloadSchema.parse(empty)).toEqual(empty)
+  })
+
+  it('keeps the rivalry spotlight on a leaderboard payload', () => {
+    const payload = {
+      rows: [],
+      friendCount: 1,
+      topDegommeur: null,
+      rivalry: {
+        nemesis: { userId: 'u1', username: 'Obelix', count: 4 },
+        favoriteVictim: { userId: 'u2', username: 'Asterix', count: 2 },
+      },
+      characterWinrates: [],
+    }
+    expect(leaderboardPayloadSchema.parse(payload)).toEqual(payload)
+  })
+
+  it('rejects a leaderboard payload without a rivalry spotlight', () => {
+    const bad = { rows: [], friendCount: 0, topDegommeur: null, characterWinrates: [] }
+    expect(leaderboardPayloadSchema.safeParse(bad).success).toBe(false)
   })
 
   it('rejects a leaderboard row missing its rank', () => {
