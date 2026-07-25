@@ -29,10 +29,10 @@ Playwright happy path. No plan asks you to add test infrastructure.
 | 011  | Dégommage hit animation — shake, stars and « PAF ! » stamp | — | — | — | DONE (merged `2057928`, E2E validated 2026-07-25 (combined run 6/6)) |
 | 012  | Two-variant end-of-game sequence on the summary screen | — | — | — | DONE (merged `0315ffd`, E2E validated 2026-07-25 (combined run 6/6)) |
 | 013  | Avatar picker — 16-piece catalog replacing the initial everywhere | — | — | — | DONE (merged `508b6e1`, E2E validated 2026-07-25 (combined run 6/6)) |
-| 014  | Hidden dev animations menu (long-press on /profil) | — | — | 010–013 | TODO |
-| 015  | Lexique gaulois — owner-validated UI lexicon | — | — | — | TODO |
-| 016  | Splash « Le déroulé » — once-per-session opening sequence | P2 | M | — | TODO |
-| 017  | Logo « Le pion couronné » — vector sources + regenerated PWA icon set | P2 | M | — (step 6 optional, needs 016) | TODO |
+| 014  | Hidden dev animations menu (long-press on /profil) | — | — | 010–013 | DONE (merged `87c4219`, E2E validated 2026-07-25 (wave-4 combined run 6/6)) |
+| 015  | Lexique gaulois — owner-validated UI lexicon | — | — | — | DONE (merged `d4ccd5e`, E2E validated 2026-07-25 (wave-4 combined run 6/6)) |
+| 016  | Splash « Le déroulé » — once-per-session opening sequence | P2 | M | — | DONE (merged `1fb4f76`, E2E validated 2026-07-25 (wave-4 combined run 6/6)) |
+| 017  | Logo « Le pion couronné » — vector sources + regenerated PWA icon set | P2 | M | — (step 6 optional, needs 016) | DONE (merged `19fafd4`, pixel-verified icon masking 2026-07-25) |
 
 Status values: TODO | IN PROGRESS | DONE | BLOCKED (with one-line reason) | REJECTED (with one-line rationale — finding fixed independently or approach abandoned)
 
