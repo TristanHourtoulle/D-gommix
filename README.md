@@ -1,6 +1,8 @@
 <p align="center">
-  <img src="assets/branding/logo.png" alt="Dégommix" width="440">
+  <img src="assets/branding/pion-couronne.svg" alt="Dégommix" width="160">
 </p>
+
+<h1 align="center">Dégommix</h1>
 
 <p align="center">
   <em>Le classement officieux de vos parties de petits chevaux Astérix</em>
