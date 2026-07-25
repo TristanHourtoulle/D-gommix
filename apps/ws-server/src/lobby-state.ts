@@ -8,6 +8,8 @@ export interface LobbyPlayer {
   username: string
   status: 'invited' | 'joined'
   character: CharacterId | null
+  /** Profile avatar, `null` when the player kept their initial. */
+  avatarId: string | null
 }
 
 export interface LobbyState {
@@ -27,6 +29,7 @@ export async function loadLobbyState(db: Db, gameId: string): Promise<LobbyState
       status: gamePlayers.status,
       character: gamePlayers.character,
       username: user.username,
+      avatarId: user.avatarId,
     })
     .from(gamePlayers)
     .innerJoin(user, eq(user.id, gamePlayers.userId))
@@ -42,6 +45,7 @@ export async function loadLobbyState(db: Db, gameId: string): Promise<LobbyState
       username: row.username ?? '',
       status: row.status as 'invited' | 'joined',
       character: row.character,
+      avatarId: row.avatarId,
     })),
   }
 }

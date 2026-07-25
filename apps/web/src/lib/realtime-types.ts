@@ -14,6 +14,8 @@ export interface LobbyPlayer {
   username: string
   status: 'invited' | 'joined'
   character: CharacterId | null
+  /** Optional on this side: an older ws-server build does not send it. */
+  avatarId?: string | null
 }
 
 /** Mirror of the ws-server `LobbyState` broadcast payload. */

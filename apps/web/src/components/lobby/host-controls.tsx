@@ -74,7 +74,7 @@ export function HostControls({
                 opacity: presenceOf(friend.id) === 'online' ? 1 : 0.62,
               }}
             >
-              <PlayerAvatar username={friend.username} size={32} />
+              <PlayerAvatar username={friend.username} size={32} avatarId={friend.avatarId} />
               <span className="flex min-w-0 flex-1 flex-col">
                 <span className="truncate text-[0.82rem] font-semibold">{friend.username}</span>
                 <PresenceDot presence={presenceOf(friend.id)} />
