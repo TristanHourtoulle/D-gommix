@@ -1,0 +1,22 @@
+# Dependencies
+node_modules/
+
+# Build outputs
+.next/
+dist/
+out/
+
+# Turborepo
+.turbo/
+
+# Environment files (never commit secrets)
+.env*
+!.env.example
+
+# Test coverage
+coverage/
+
+# Misc
+.DS_Store
+*.log
+*.tsbuildinfo

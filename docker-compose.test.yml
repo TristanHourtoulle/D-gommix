@@ -1,0 +1,9 @@
+services:
+  postgres-test:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: degommix
+      POSTGRES_PASSWORD: degommix
+      POSTGRES_DB: degommix_test
+    ports:
+      - "54329:5432"
