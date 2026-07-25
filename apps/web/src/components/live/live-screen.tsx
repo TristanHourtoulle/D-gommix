@@ -182,7 +182,7 @@ export function LiveScreen({
 
       <LiveJournal entries={journal.entries} state={state} />
 
-      <div className="relative z-10 mt-auto flex flex-col gap-2">
+      <div className="live-actions relative z-10 mt-auto flex flex-col gap-2">
         <Button
           variant="ghost"
           disabled={!canUndo}
