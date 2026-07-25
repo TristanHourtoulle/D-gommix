@@ -32,7 +32,7 @@ export interface ActiveGame {
   characters: CharacterId[]
 }
 
-function toGameFormat(value: number): GameFormat {
+export function toGameFormat(value: number): GameFormat {
   if (value === 2 || value === 3 || value === 4) return value
   throw new Error(`Invalid game format: ${value}`)
 }
