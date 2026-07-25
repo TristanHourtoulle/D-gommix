@@ -11,7 +11,7 @@ interface CharacterWinrateBarsProps {
 export function CharacterWinrateBars({ winrates }: CharacterWinrateBarsProps) {
   return (
     <div>
-      <p className="sec-label">Winrate par personnage</p>
+      <p className="sec-label">Victoires par personnage</p>
       <div className="flex flex-col gap-2">
         {winrates.map(({ character, winrate, games }) => (
           <div key={character} className="flex items-center gap-2.5">
