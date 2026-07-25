@@ -5,6 +5,7 @@ import Link from 'next/link'
 import { parseHomeGames, type HomePayload, type InvitesPayload } from '@/lib/api-payloads'
 import { useHomeData } from '@/hooks/use-tab-data'
 import { Icon } from '@/components/icons'
+import { RematchButton } from '@/components/rematch-button'
 import { CharacterBadge } from '@/components/ui/character-badge'
 import { EmptyState } from '@/components/ui/empty-state'
 import { PlayerAvatar } from '@/components/ui/player-avatar'
@@ -89,6 +90,12 @@ export function HomeScreen({ username, initialData, initialInvites }: HomeScreen
         ) : (
           lastGames.map((game) => <GameHistoryItem key={game.id} game={game} />)
         )}
+        {/* Sibling of the rows, never inside them: GameHistoryItem's root is a
+            <Link>, and a <button> nested in an <a> is invalid HTML. Hidden while
+            a lobby/game is open, which the server would reject anyway. */}
+        {activeGame === null && lastGames[0] ? (
+          <RematchButton finishedGameId={lastGames[0].id} variant="ghost" />
+        ) : null}
       </section>
     </main>
   )

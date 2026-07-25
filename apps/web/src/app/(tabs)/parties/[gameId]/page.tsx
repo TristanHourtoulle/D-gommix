@@ -1,6 +1,7 @@
 import { notFound, redirect } from 'next/navigation'
 import { requireOnboardedSession } from '@/lib/session'
 import { getGameDetail, type GameDetailPlayer } from '@/lib/queries/stats'
+import { RematchButton } from '@/components/rematch-button'
 import { Card } from '@/components/ui/card'
 import { CharacterBadge } from '@/components/ui/character-badge'
 import { Icon } from '@/components/icons'
@@ -62,6 +63,9 @@ export default async function GameDetailPage({ params }: GameDetailPageProps) {
       ? Math.max(0, Math.round((detail.endedAt.getTime() - detail.startedAt.getTime()) / 1000))
       : null
   const isVictory = detail.outcome === 'village_reached' && detail.winner !== null
+  // getGameDetail also serves friends of the participants, and only participants
+  // may open a rematch (the server would answer NOT_MEMBER otherwise).
+  const isParticipant = detail.players.some((player) => player.userId === user.id)
 
   return (
     <main className="tab-page">
@@ -113,6 +117,8 @@ export default async function GameDetailPage({ params }: GameDetailPageProps) {
       </div>
 
       <GameJournal entries={detail.journal} />
+
+      {isParticipant ? <RematchButton finishedGameId={detail.id} variant="primary" /> : null}
     </main>
   )
 }
