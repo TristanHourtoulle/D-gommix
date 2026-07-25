@@ -17,17 +17,20 @@ export interface ReceivedRequest {
   requestId: string
   senderId: string
   senderUsername: string
+  senderAvatarId?: string | null
 }
 
 export interface SentRequest {
   requestId: string
   receiverId: string
   receiverUsername: string
+  receiverAvatarId?: string | null
 }
 
 export interface FriendEntry {
   id: string
   username: string
+  avatarId?: string | null
   /** SSR seed: 'in_game' when an active game exists in db, 'offline' otherwise. */
   initialPresence: Presence
 }
@@ -63,14 +66,14 @@ export async function areFriends(a: string, b: string): Promise<boolean> {
 /** Public identity of any user, null when the id is unknown. */
 export async function getPublicUser(
   userId: string
-): Promise<{ id: string; username: string } | null> {
+): Promise<{ id: string; username: string; avatarId: string | null } | null> {
   const [row] = await db
-    .select({ id: user.id, username: user.username })
+    .select({ id: user.id, username: user.username, avatarId: user.avatarId })
     .from(user)
     .where(eq(user.id, userId))
     .limit(1)
   if (!row) return null
-  return { id: row.id, username: row.username ?? '' }
+  return { id: row.id, username: row.username ?? '', avatarId: row.avatarId }
 }
 
 /** Everything the Amis screen needs, in one SSR pass. */
@@ -81,6 +84,7 @@ export async function getFriendsPageData(userId: string): Promise<FriendsPageDat
         requestId: friendRequests.id,
         senderId: user.id,
         senderUsername: user.username,
+        senderAvatarId: user.avatarId,
       })
       .from(friendRequests)
       .innerJoin(user, eq(user.id, friendRequests.senderId))
@@ -91,13 +95,14 @@ export async function getFriendsPageData(userId: string): Promise<FriendsPageDat
         requestId: friendRequests.id,
         receiverId: user.id,
         receiverUsername: user.username,
+        receiverAvatarId: user.avatarId,
       })
       .from(friendRequests)
       .innerJoin(user, eq(user.id, friendRequests.receiverId))
       .where(and(eq(friendRequests.senderId, userId), eq(friendRequests.status, 'pending')))
       .orderBy(sql`${friendRequests.createdAt} desc`),
     db
-      .select({ id: user.id, username: user.username })
+      .select({ id: user.id, username: user.username, avatarId: user.avatarId })
       .from(friendships)
       .innerJoin(
         user,
@@ -144,15 +149,18 @@ export async function getFriendsPageData(userId: string): Promise<FriendsPageDat
       requestId: row.requestId,
       senderId: row.senderId,
       senderUsername: row.senderUsername ?? '',
+      senderAvatarId: row.senderAvatarId,
     })),
     sent: sentRows.map((row) => ({
       requestId: row.requestId,
       receiverId: row.receiverId,
       receiverUsername: row.receiverUsername ?? '',
+      receiverAvatarId: row.receiverAvatarId,
     })),
     friends: friendRows.map((row) => ({
       id: row.id,
       username: row.username ?? '',
+      avatarId: row.avatarId,
       initialPresence: inGameIds.has(row.id) ? ('in_game' as const) : ('offline' as const),
     })),
     myLobbyId: lobbyRows[0]?.gameId ?? null,

@@ -20,6 +20,8 @@ function plural(count: number, singular: string): string {
 
 interface HomeScreenProps {
   username: string
+  /** Profile avatar of the viewer, `null` when they kept their initial. */
+  avatarId: string | null
   /** SSR payload, so the first paint needs no client round-trip. */
   initialData: HomePayload
   /** SSR payload of the pending invitations banner (its own query key). */
@@ -31,7 +33,12 @@ interface HomeScreenProps {
  * revisiting the tab reads it from cache, and invite/game events invalidate it
  * instead of refetching the whole page.
  */
-export function HomeScreen({ username, initialData, initialInvites }: HomeScreenProps) {
+export function HomeScreen({
+  username,
+  avatarId,
+  initialData,
+  initialInvites,
+}: HomeScreenProps) {
   const { data } = useHomeData(initialData)
   const { stats, activeGame } = data
   const lastGames = useMemo(() => parseHomeGames(data.lastGames), [data.lastGames])
@@ -44,7 +51,7 @@ export function HomeScreen({ username, initialData, initialInvites }: HomeScreen
           className="flex items-center gap-3 no-underline"
           aria-label="Ouvrir mon profil"
         >
-          <PlayerAvatar username={username} size={44} />
+          <PlayerAvatar username={username} size={44} avatarId={avatarId} />
           <div>
             <h1 className="s-title m-0" style={{ fontSize: '0.95rem' }}>
               Salut {username}

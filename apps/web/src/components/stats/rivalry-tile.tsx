@@ -29,7 +29,7 @@ export function RivalryTile({ rivalry }: RivalryTileProps) {
       <div className="flex flex-col gap-3">
         {nemesis ? (
           <div className="flex items-center gap-3">
-            <PlayerAvatar username={nemesis.username} size={32} />
+            <PlayerAvatar username={nemesis.username} size={32} avatarId={nemesis.avatarId ?? null} />
             <div className="min-w-0 flex-1">
               <p className="m-0 text-xs uppercase" style={{ color: 'var(--ink-faint)' }}>
                 Ta bête noire
@@ -43,7 +43,11 @@ export function RivalryTile({ rivalry }: RivalryTileProps) {
         ) : null}
         {favoriteVictim ? (
           <div className="flex items-center gap-3">
-            <PlayerAvatar username={favoriteVictim.username} size={32} />
+            <PlayerAvatar
+              username={favoriteVictim.username}
+              size={32}
+              avatarId={favoriteVictim.avatarId ?? null}
+            />
             <div className="min-w-0 flex-1">
               <p className="m-0 text-xs uppercase" style={{ color: 'var(--ink-faint)' }}>
                 Ta victime préférée

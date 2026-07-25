@@ -5,6 +5,7 @@ import { db } from '@/lib/db'
 export interface PendingInvite {
   gameId: string
   hostUsername: string
+  hostAvatarId?: string | null
   format: GameFormat
 }
 
@@ -19,7 +20,12 @@ function toGameFormat(value: number): GameFormat {
  */
 export async function getPendingInvites(userId: string): Promise<PendingInvite[]> {
   const rows = await db
-    .select({ gameId: games.id, format: games.format, hostUsername: user.username })
+    .select({
+      gameId: games.id,
+      format: games.format,
+      hostUsername: user.username,
+      hostAvatarId: user.avatarId,
+    })
     .from(gamePlayers)
     .innerJoin(games, eq(games.id, gamePlayers.gameId))
     .innerJoin(user, eq(user.id, games.hostId))
@@ -36,5 +42,6 @@ export async function getPendingInvites(userId: string): Promise<PendingInvite[]
     gameId: row.gameId,
     format: toGameFormat(row.format),
     hostUsername: row.hostUsername ?? '',
+    hostAvatarId: row.hostAvatarId,
   }))
 }

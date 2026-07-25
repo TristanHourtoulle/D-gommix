@@ -35,7 +35,7 @@ export function SeatCard({
   return (
     <div className="flex items-center justify-between gap-2 py-2">
       <span className="flex min-w-0 items-center gap-2 text-[0.85rem] font-semibold">
-        <PlayerAvatar username={player.username} size={32} />
+        <PlayerAvatar username={player.username} size={32} avatarId={player.avatarId ?? null} />
         <span className="truncate">
           {player.username}
           {isMe ? ' (toi)' : ''}

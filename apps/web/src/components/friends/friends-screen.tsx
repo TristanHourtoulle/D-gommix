@@ -152,6 +152,7 @@ export function FriendsScreen({ initialData }: FriendsScreenProps) {
               key={request.requestId}
               variant="received"
               username={request.senderUsername}
+              avatarId={request.senderAvatarId ?? null}
               busy={busyKey === request.requestId}
               onAccept={() =>
                 void run(
@@ -180,6 +181,7 @@ export function FriendsScreen({ initialData }: FriendsScreenProps) {
               key={request.requestId}
               variant="sent"
               username={request.receiverUsername}
+              avatarId={request.receiverAvatarId ?? null}
               busy={busyKey === request.requestId}
               onCancel={() =>
                 void run(request.requestId, 'friends:cancel', {
@@ -206,6 +208,7 @@ export function FriendsScreen({ initialData }: FriendsScreenProps) {
                 key={friend.id}
                 friendId={friend.id}
                 username={friend.username}
+                avatarId={friend.avatarId ?? null}
                 presence={presenceOf(friend.id)}
                 busy={busyKey === friend.id}
                 onInvite={() => void inviteFriend(friend.id)}

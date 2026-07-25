@@ -166,3 +166,155 @@ describe('wire schemas', () => {
     expect(leaderboardPayloadSchema.safeParse(bad).success).toBe(false)
   })
 })
+
+/**
+ * The avatar field is `.nullable().optional()` everywhere on purpose: the app
+ * is a PWA and react-query keeps payloads across deploys, so a payload cached
+ * before this feature shipped must still parse.
+ */
+describe('avatar ids on the wire', () => {
+  it('accepts a friends payload without any avatarId — old cached shape', () => {
+    const legacy = {
+      received: [{ requestId: 'r1', senderId: 'u1', senderUsername: 'Obelix' }],
+      sent: [],
+      friends: [{ id: 'u2', username: 'Asterix', initialPresence: 'online' }],
+      myLobbyId: null,
+    }
+    expect(friendsPayloadSchema.safeParse(legacy).success).toBe(true)
+  })
+
+  it('accepts a friends payload carrying avatar ids', () => {
+    const fresh = {
+      received: [],
+      sent: [],
+      friends: [{ id: 'u2', username: 'Asterix', initialPresence: 'online', avatarId: 'b-menhir' }],
+      myLobbyId: null,
+    }
+    expect(friendsPayloadSchema.parse(fresh).friends[0]?.avatarId).toBe('b-menhir')
+  })
+
+  it('accepts an explicit null avatarId — the player chose the initial back', () => {
+    const cleared = {
+      received: [],
+      sent: [],
+      friends: [{ id: 'u2', username: 'Asterix', initialPresence: 'online', avatarId: null }],
+      myLobbyId: null,
+    }
+    expect(friendsPayloadSchema.safeParse(cleared).success).toBe(true)
+  })
+
+  it('accepts a leaderboard payload without any avatarId — old cached shape', () => {
+    const legacy = {
+      rows: [
+        {
+          rank: 1,
+          userId: 'u1',
+          username: 'Obelix',
+          wins: 1,
+          winrate: 100,
+          villageGames: 1,
+          degommages: 2,
+          favoriteCharacter: null,
+        },
+      ],
+      friendCount: 1,
+      topDegommeur: { userId: 'u1', username: 'Obelix', degommages: 2 },
+      rivalry: {
+        nemesis: { userId: 'u2', username: 'Asterix', count: 1 },
+        favoriteVictim: null,
+      },
+      characterWinrates: [],
+    }
+    expect(leaderboardPayloadSchema.safeParse(legacy).success).toBe(true)
+  })
+
+  it('accepts a leaderboard payload carrying avatar ids', () => {
+    const fresh = {
+      rows: [
+        {
+          rank: 1,
+          userId: 'u1',
+          username: 'Obelix',
+          avatarId: 'b-sanglier',
+          wins: 1,
+          winrate: 100,
+          villageGames: 1,
+          degommages: 2,
+          favoriteCharacter: null,
+        },
+      ],
+      friendCount: 1,
+      topDegommeur: { userId: 'u1', username: 'Obelix', avatarId: 'b-sanglier', degommages: 2 },
+      rivalry: {
+        nemesis: { userId: 'u2', username: 'Asterix', avatarId: 'c-lyre', count: 1 },
+        favoriteVictim: null,
+      },
+      characterWinrates: [],
+    }
+    const parsed = leaderboardPayloadSchema.parse(fresh)
+    expect(parsed.rows[0]?.avatarId).toBe('b-sanglier')
+    expect(parsed.topDegommeur?.avatarId).toBe('b-sanglier')
+    expect(parsed.rivalry.nemesis?.avatarId).toBe('c-lyre')
+  })
+
+  it('accepts explicit null avatar ids on a leaderboard payload', () => {
+    const cleared = {
+      rows: [
+        {
+          rank: 1,
+          userId: 'u1',
+          username: 'Obelix',
+          avatarId: null,
+          wins: 1,
+          winrate: 100,
+          villageGames: 1,
+          degommages: 2,
+          favoriteCharacter: null,
+        },
+      ],
+      friendCount: 1,
+      topDegommeur: { userId: 'u1', username: 'Obelix', avatarId: null, degommages: 2 },
+      rivalry: { nemesis: null, favoriteVictim: null },
+      characterWinrates: [],
+    }
+    expect(leaderboardPayloadSchema.safeParse(cleared).success).toBe(true)
+  })
+
+  it('accepts an invites payload without any hostAvatarId — old cached shape', () => {
+    const legacy = { invites: [{ gameId: 'g1', hostUsername: 'Obelix', format: 3 }] }
+    expect(invitesPayloadSchema.safeParse(legacy).success).toBe(true)
+  })
+
+  it('accepts an invites payload carrying a host avatar id', () => {
+    const fresh = {
+      invites: [{ gameId: 'g1', hostUsername: 'Obelix', hostAvatarId: 'a-druide', format: 3 }],
+    }
+    expect(invitesPayloadSchema.parse(fresh).invites[0]?.hostAvatarId).toBe('a-druide')
+  })
+
+  it('accepts an explicit null hostAvatarId', () => {
+    const cleared = {
+      invites: [{ gameId: 'g1', hostUsername: 'Obelix', hostAvatarId: null, format: 3 }],
+    }
+    expect(invitesPayloadSchema.safeParse(cleared).success).toBe(true)
+  })
+
+  it('accepts a home payload whose history rows carry no avatar id', () => {
+    const legacy = {
+      stats,
+      activeGame: null,
+      lastGames: [
+        {
+          id: 'a1',
+          myResult: 'won',
+          winnerUsername: 'Asterix',
+          format: 2,
+          durationSec: 640,
+          endedAt: null,
+          participants: [{ username: 'Asterix', character: 'asterix' }],
+        },
+      ],
+    }
+    expect(homePayloadSchema.safeParse(legacy).success).toBe(true)
+  })
+})
