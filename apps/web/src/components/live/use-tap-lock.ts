@@ -6,8 +6,8 @@ import { TAP_LOCK_COOLDOWN_MS, TapLock, type TapLockSnapshot } from './tap-lock'
 export interface UseTapLockResult extends TapLockSnapshot {
   /** Registers a tap — `false` means it was swallowed as a double tap. */
   begin: (targetId: string) => boolean
-  /** Resolves the pending tap with the server ack result. */
-  settle: (ok: boolean) => void
+  /** Resolves the pending tap on that target with the server ack result. */
+  settle: (targetId: string, ok: boolean) => void
 }
 
 /** React binding of {@link TapLock} — that module documents the lock rules. */
@@ -21,11 +21,11 @@ export function useTapLock(cooldownMs: number = TAP_LOCK_COOLDOWN_MS): UseTapLoc
     [lock]
   )
 
-  const { pendingTargetId, isLocked } = useSyncExternalStore(
+  const { lockedTargetIds, pendingTargetIds } = useSyncExternalStore(
     lock.subscribe,
     lock.getSnapshot,
     lock.getSnapshot
   )
 
-  return { pendingTargetId, isLocked, begin: lock.begin, settle: lock.settle }
+  return { lockedTargetIds, pendingTargetIds, begin: lock.begin, settle: lock.settle }
 }

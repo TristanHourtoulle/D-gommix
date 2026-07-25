@@ -77,11 +77,11 @@ export function LiveScreen({
     if (!ack.ok) toast(ackErrorMessage(ack), 'error')
   }
 
-  /** Anti double-tap: a tap locks every chip until the ack and the cooldown. */
+  /** Anti double-tap: a tap locks that chip until its ack and cooldown. */
   const handleTap = async (targetId: string): Promise<void> => {
     if (!tapLock.begin(targetId)) return
     const ack = await game.degommage(targetId)
-    tapLock.settle(ack.ok)
+    tapLock.settle(targetId, ack.ok)
     if (!ack.ok) toast(ackErrorMessage(ack), 'error')
   }
 
@@ -151,8 +151,8 @@ export function LiveScreen({
         <TapZone
           opponents={opponents}
           names={names}
-          pendingTargetId={tapLock.pendingTargetId}
-          isLocked={tapLock.isLocked}
+          lockedTargetIds={tapLock.lockedTargetIds}
+          pendingTargetIds={tapLock.pendingTargetIds}
           onTap={(targetId) => {
             void handleTap(targetId)
           }}
