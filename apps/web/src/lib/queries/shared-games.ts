@@ -1,6 +1,7 @@
 import { and, eq, sql, gamePlayers, games, user } from '@degommix/db'
 import { db } from '@/lib/db'
 import { durationSeconds, filterSharedGames, resolveMyResult } from '@/lib/shared-games'
+import { gameStarted } from './game-filters'
 import { toGameFormat, type HomeGame, type HomeGameParticipant } from './home'
 import { sharedFinishedGameIds } from './rivalries'
 
@@ -35,7 +36,8 @@ export async function getSharedGames(viewerId: string, friendId: string): Promis
       and(
         eq(gamePlayers.userId, viewerId),
         sql`${gamePlayers.status} in ('joined', 'left')`,
-        eq(games.status, 'finished')
+        eq(games.status, 'finished'),
+        gameStarted
       )
     )
     .orderBy(sql`${games.endedAt} desc nulls last`)

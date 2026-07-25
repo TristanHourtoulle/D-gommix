@@ -7,6 +7,7 @@ import {
   type PairCount,
   type RivalryEventRow,
 } from '@/lib/rivalries'
+import { gameStarted } from './game-filters'
 import { getCircleMemberIds } from './stats'
 
 export interface HeadToHead {
@@ -39,9 +40,10 @@ function inList<T>(column: T, values: string[]) {
 }
 
 /**
- * Ids of every finished game where the user held a seat. Aborted games are
+ * Ids of every finished game the user actually played. Aborted games are
  * included on purpose: per design §5.3 dégommages count « toutes parties finies
- * confondues, abandons inclus ».
+ * confondues, abandons inclus ». Lobbies dissolved before the start are not —
+ * they carry no event at all, but they must not leak into « parties ensemble ».
  */
 async function finishedGameIdsFor(userId: string): Promise<string[]> {
   const rows = await db
@@ -52,7 +54,8 @@ async function finishedGameIdsFor(userId: string): Promise<string[]> {
       and(
         eq(gamePlayers.userId, userId),
         sql`${gamePlayers.status} in ('joined', 'left')`,
-        eq(games.status, 'finished')
+        eq(games.status, 'finished'),
+        gameStarted
       )
     )
 

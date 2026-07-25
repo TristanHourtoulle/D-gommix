@@ -1,6 +1,7 @@
 import { and, eq, sql, gamePlayers, games, user } from '@degommix/db'
 import type { CharacterId, GameFormat } from '@degommix/game-core'
 import { db } from '@/lib/db'
+import { gameStarted } from './game-filters'
 
 export type HomeGameResult = 'won' | 'lost' | 'aborted'
 
@@ -44,18 +45,19 @@ export function toGameFormat(value: number): GameFormat {
  * non-undone total across ALL finished games (aborted included, via the
  * denormalized game_players counter); favorite = most played character in
  * started finished games, ties broken by the most recent one.
+ * Lobbies dissolved before the start never count anywhere (see ./game-filters).
  */
 export async function getHomeStats(userId: string): Promise<HomeStats> {
   const [winRows, degommageRows, favoriteRows] = await Promise.all([
     db
       .select({ count: sql<number>`count(*)::int` })
       .from(games)
-      .where(and(eq(games.winnerId, userId), eq(games.status, 'finished'))),
+      .where(and(eq(games.winnerId, userId), eq(games.status, 'finished'), gameStarted)),
     db
       .select({ total: sql<number>`coalesce(sum(${gamePlayers.degommages}), 0)::int` })
       .from(gamePlayers)
       .innerJoin(games, eq(games.id, gamePlayers.gameId))
-      .where(and(eq(gamePlayers.userId, userId), eq(games.status, 'finished'))),
+      .where(and(eq(gamePlayers.userId, userId), eq(games.status, 'finished'), gameStarted)),
     db
       .select({ character: gamePlayers.character })
       .from(gamePlayers)
@@ -64,7 +66,7 @@ export async function getHomeStats(userId: string): Promise<HomeStats> {
         and(
           eq(gamePlayers.userId, userId),
           eq(games.status, 'finished'),
-          sql`${games.startedAt} is not null`,
+          gameStarted,
           sql`${gamePlayers.character} is not null`,
         ),
       )
@@ -116,7 +118,11 @@ export async function getActiveGame(userId: string): Promise<ActiveGame | null> 
   }
 }
 
-/** My 20 most recent finished games, newest first, for the home history list. */
+/**
+ * My 20 most recent *played* games, newest first, for the home history list.
+ * Lobbies dissolved before the start are finished/aborted rows too, but they
+ * are never games: `gameStarted` keeps them out (see ./game-filters).
+ */
 export async function getLastGames(userId: string): Promise<HomeGame[]> {
   const gameRows = await db
     .select({
@@ -137,6 +143,7 @@ export async function getLastGames(userId: string): Promise<HomeGame[]> {
         eq(gamePlayers.userId, userId),
         sql`${gamePlayers.status} in ('joined', 'left')`,
         eq(games.status, 'finished'),
+        gameStarted,
       ),
     )
     .orderBy(sql`${games.endedAt} desc nulls last`)

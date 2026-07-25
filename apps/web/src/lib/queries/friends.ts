@@ -12,6 +12,7 @@ import {
   user,
 } from '@degommix/db'
 import { db } from '@/lib/db'
+import { gameStarted } from './game-filters'
 
 export interface ReceivedRequest {
   requestId: string
@@ -167,7 +168,11 @@ export async function getFriendsPageData(userId: string): Promise<FriendsPageDat
   }
 }
 
-/** Aggregate stats of design §5.3, computed in SQL over finished games. */
+/**
+ * Aggregate stats of design §5.3, computed in SQL over the finished games the
+ * player actually played — lobbies dissolved before the start are excluded so
+ * they never inflate « parties jouées » (see ./game-filters).
+ */
 export async function getPlayerStats(userId: string): Promise<PlayerStats> {
   const participated = and(
     eq(gamePlayers.userId, userId),
@@ -178,13 +183,18 @@ export async function getPlayerStats(userId: string): Promise<PlayerStats> {
     db
       .select({ count: sql<number>`count(*)::int` })
       .from(games)
-      .where(and(eq(games.winnerId, userId), eq(games.status, 'finished'))),
+      .where(and(eq(games.winnerId, userId), eq(games.status, 'finished'), gameStarted)),
     db
       .select({ count: sql<number>`count(*)::int` })
       .from(gamePlayers)
       .innerJoin(games, eq(games.id, gamePlayers.gameId))
       .where(
-        and(participated, eq(games.status, 'finished'), eq(games.outcome, 'village_reached'))
+        and(
+          participated,
+          eq(games.status, 'finished'),
+          eq(games.outcome, 'village_reached'),
+          gameStarted
+        )
       ),
     db
       .select({
@@ -193,7 +203,7 @@ export async function getPlayerStats(userId: string): Promise<PlayerStats> {
       })
       .from(gamePlayers)
       .innerJoin(games, eq(games.id, gamePlayers.gameId))
-      .where(and(participated, eq(games.status, 'finished'))),
+      .where(and(participated, eq(games.status, 'finished'), gameStarted)),
     db
       .select({ character: gamePlayers.character })
       .from(gamePlayers)
@@ -202,7 +212,7 @@ export async function getPlayerStats(userId: string): Promise<PlayerStats> {
         and(
           participated,
           eq(games.status, 'finished'),
-          sql`${games.startedAt} is not null`,
+          gameStarted,
           sql`${gamePlayers.character} is not null`
         )
       )
