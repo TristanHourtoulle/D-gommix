@@ -774,3 +774,175 @@ a {
   .player-card[data-hit='a'] .hit-tally { animation: hit-tally-fade-a 420ms ease both; }
   .player-card[data-hit='b'] .hit-tally { animation: hit-tally-fade-b 420ms ease both; }
 }
+
+/* ---------- End-of-game sequence (summary screen) ---------- */
+
+/**
+ * End-of-game sequence — two variants (winner ~3.3 s, loser ~3.05 s) played on
+ * the summary screen. Everything is scoped to `.eg-play`: removing that class
+ * skips to the final image, because every keyframe ends on the rest state. That
+ * is also why reduced motion needs nothing but a blanket `animation: none`.
+ *
+ * Only `transform` and `opacity` are animated — including the « VICTOIRE »
+ * tracking, which slides each letter rather than animating `letter-spacing`
+ * (that would reflow the whole line on every frame).
+ */
+.eg-root { position: relative; overflow-x: clip; }
+
+[data-eg-fx] { pointer-events: none; }
+
+.eg-rays {
+  position: absolute;
+  z-index: 0;
+  top: 96px;
+  left: 50%;
+  width: 760px;
+  height: 760px;
+  margin: -380px 0 0 -380px;
+  opacity: 0.85;
+  background: repeating-conic-gradient(
+    from 0deg at 50% 50%,
+    color-mix(in srgb, var(--bronze) 20%, transparent) 0deg 7deg,
+    transparent 7deg 22deg
+  );
+  -webkit-mask-image: radial-gradient(closest-side, #000 12%, rgba(0, 0, 0, 0.55) 42%, transparent 72%);
+  mask-image: radial-gradient(closest-side, #000 12%, rgba(0, 0, 0, 0.55) 42%, transparent 72%);
+  will-change: transform, opacity;
+}
+
+.eg-veil {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  background: radial-gradient(105% 78% at 50% 34%, transparent 28%, color-mix(in srgb, var(--ink) 20%, transparent) 100%);
+}
+
+.eg-confetti { position: absolute; inset: 0; z-index: 3; overflow: hidden; }
+.eg-conf {
+  position: absolute;
+  top: -26px;
+  left: var(--x);
+  width: 7px;
+  height: 11px;
+  opacity: 0;
+  border: 1px solid color-mix(in srgb, var(--ink) 45%, transparent);
+  will-change: transform, opacity;
+}
+.eg-conf.round { border-radius: 50%; }
+
+.eg-title { display: flex; justify-content: center; gap: 0.02em; }
+.eg-title .l {
+  display: inline-block;
+  font-family: var(--font-display);
+  font-weight: 800;
+  font-size: 2.1rem;
+  letter-spacing: 0.06em;
+  color: var(--ink);
+  will-change: transform, opacity;
+}
+
+.eg-defeat {
+  font-family: var(--font-display);
+  font-weight: 800;
+  font-size: 1.8rem;
+  letter-spacing: 0.12em;
+  color: var(--ink-soft);
+  text-align: center;
+  will-change: transform, opacity;
+}
+
+.eg-laurel { display: block; margin: 0 auto; color: var(--bronze); }
+.eg-laurel .arc { fill: none; stroke: currentColor; stroke-width: 3.5; stroke-linecap: round; }
+.eg-laurel .leaf { fill: currentColor; transform-box: fill-box; transform-origin: 50% 100%; }
+
+.eg-pawn { display: block; margin: 0 auto; transform-origin: 50% 100%; will-change: transform; }
+
+.eg-tease { text-align: center; will-change: transform, opacity; }
+.eg-fairplay { will-change: transform, opacity; }
+
+.eg-anim { will-change: transform, opacity; }
+
+@keyframes eg-rays-in { from { opacity: 0; transform: scale(0.6); } to { opacity: 0.85; transform: scale(1); } }
+@keyframes eg-spin { to { transform: rotate(360deg); } }
+@keyframes eg-rise { from { opacity: 0; transform: translate3d(0, 34px, 0) scale(0.9); } to { opacity: 1; transform: none; } }
+@keyframes eg-fade { from { opacity: 0; } to { opacity: 1; } }
+@keyframes eg-engrave {
+  0% { opacity: 0; transform: translate3d(calc(var(--i) * 10px), 0, 0); }
+  45% { opacity: 1; }
+  100% { opacity: 1; transform: translate3d(0, 0, 0); }
+}
+@keyframes eg-trace { to { stroke-dashoffset: 0; } }
+@keyframes eg-leaf { from { opacity: 0; transform: scale(0.1); } to { opacity: 1; transform: scale(1); } }
+@keyframes eg-drop {
+  0% { opacity: 0; transform: translate3d(0, -48px, 0); }
+  52% { opacity: 1; transform: translate3d(0, 7px, 0); }
+  74% { transform: translate3d(0, -4px, 0); }
+  88% { transform: translate3d(0, 2px, 0); }
+  100% { opacity: 1; transform: translate3d(0, 0, 0); }
+}
+@keyframes eg-topple {
+  0% { transform: rotate(0deg); }
+  35% { transform: rotate(-7deg); }
+  78% { transform: rotate(84deg); }
+  88% { transform: rotate(78deg); }
+  100% { transform: rotate(81deg); }
+}
+@keyframes eg-cascade { from { opacity: 0; transform: translate3d(0, 20px, 0); } to { opacity: 1; transform: none; } }
+@keyframes eg-pose { from { opacity: 0; transform: translate3d(0, 16px, 0) scale(0.97); } to { opacity: 1; transform: none; } }
+@keyframes eg-breath { 0%, 100% { transform: none; } 40% { transform: translate3d(0, -3px, 0); } }
+@keyframes eg-fall {
+  0% { transform: translate3d(0, 0, 0) rotate(0deg); opacity: 0; }
+  12% { opacity: 1; }
+  100% { transform: translate3d(var(--dx), 720px, 0) rotate(var(--rot)); opacity: 0; }
+}
+
+/* ---- Winner, total 3300 ms ---- */
+.eg-play.winner .eg-rays {
+  animation: eg-rays-in 700ms cubic-bezier(0.16, 0.84, 0.44, 1) 0ms both,
+    eg-spin 26s linear infinite;
+}
+.eg-play.winner .eg-hero { animation: eg-rise 620ms cubic-bezier(0.18, 0.9, 0.34, 1.08) 60ms both; }
+.eg-play.winner .eg-title .l {
+  animation: eg-engrave 700ms cubic-bezier(0.2, 0.75, 0.3, 1) calc(400ms + var(--i0) * 26ms) both;
+}
+.eg-play.winner .eg-subtitle { animation: eg-fade 400ms ease 900ms both; }
+.eg-play.winner .eg-laurel .arc {
+  stroke-dasharray: 1;
+  stroke-dashoffset: 1;
+  animation: eg-trace 620ms cubic-bezier(0.4, 0, 0.2, 1) 1000ms both;
+}
+.eg-play.winner .eg-laurel .leaf {
+  animation: eg-leaf 260ms cubic-bezier(0.2, 1.4, 0.4, 1) calc(1080ms + var(--i) * 42ms) both;
+}
+.eg-play.winner .eg-conf { animation: eg-fall var(--dur) linear var(--del) both; }
+.eg-play.winner .eg-recap-row { animation: eg-cascade 380ms cubic-bezier(0.2, 0.85, 0.35, 1) calc(1900ms + var(--i) * 80ms) both; }
+.eg-play.winner .eg-tile { animation: eg-cascade 400ms cubic-bezier(0.2, 0.85, 0.35, 1) calc(2180ms + var(--i) * 110ms) both; }
+.eg-play.winner .eg-action { animation: eg-pose 340ms cubic-bezier(0.2, 0.9, 0.3, 1.05) calc(2950ms + var(--i) * 110ms) both; }
+
+/* ---- Loser, total 3050 ms ---- */
+.eg-play.loser .eg-veil { animation: eg-fade 520ms ease 0ms both; }
+.eg-play.loser .eg-defeat { animation: eg-drop 620ms cubic-bezier(0.3, 0.7, 0.4, 1) 250ms both; }
+.eg-play.loser .eg-subtitle { animation: eg-fade 400ms ease 760ms both; }
+.eg-play.loser .eg-pawn { animation: eg-topple 700ms cubic-bezier(0.35, 0.05, 0.3, 1) 850ms both; }
+.eg-play.loser .eg-tease { animation: eg-cascade 420ms cubic-bezier(0.2, 0.85, 0.35, 1) 1500ms both; }
+.eg-play.loser .eg-fairplay { animation: eg-cascade 420ms cubic-bezier(0.2, 0.85, 0.35, 1) 1800ms both; }
+.eg-play.loser .eg-recap-row { animation: eg-cascade 360ms cubic-bezier(0.2, 0.85, 0.35, 1) calc(2150ms + var(--i) * 70ms) both; }
+.eg-play.loser .eg-tile { animation: eg-cascade 380ms cubic-bezier(0.2, 0.85, 0.35, 1) calc(2380ms + var(--i) * 100ms) both; }
+.eg-play.loser .eg-action {
+  animation: eg-pose 320ms cubic-bezier(0.2, 0.9, 0.3, 1.05) calc(2750ms + var(--i) * 90ms) both,
+    eg-breath 900ms ease calc(3100ms + var(--i) * 90ms) 1 both;
+}
+
+/**
+ * Reduced motion: the rest state IS the final image, so neutralising every
+ * animation is the whole implementation — the screen appears complete, at once.
+ */
+@media (prefers-reduced-motion: reduce) {
+  .eg-play,
+  .eg-play *,
+  .eg-play *::before,
+  .eg-play *::after {
+    animation: none !important;
+  }
+  .eg-confetti { display: none; }
+}
