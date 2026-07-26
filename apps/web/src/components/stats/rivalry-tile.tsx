@@ -1,7 +1,7 @@
 import { Card } from '@/components/ui/card'
 import { Icon } from '@/components/icons'
-import { PlayerAvatar } from '@/components/ui/player-avatar'
 import type { RivalryPair, RivalrySpotlight } from '@/lib/queries/rivalries'
+import { RivalryPairsList } from './rivalry-pairs-list'
 
 interface RivalryTileProps {
   rivalry: RivalrySpotlight
@@ -18,13 +18,6 @@ function sufferedLabel(count: number): string {
 /** « 1 dégommage » / « 3 dégommages ». */
 function dealtLabel(count: number): string {
   return `${count} dégommage${count > 1 ? 's' : ''}`
-}
-
-/** « 3 subis · 5 donnés » — dégommages taken, then dealt, both pluralized. */
-function pairCountsLabel(pair: RivalryPair): string {
-  const taken = `${pair.taken} subi${pair.taken > 1 ? 's' : ''}`
-  const dealt = `${pair.dealt} donné${pair.dealt > 1 ? 's' : ''}`
-  return `${taken} · ${dealt}`
 }
 
 /**
@@ -62,18 +55,7 @@ export function RivalryTile({ rivalry, pairs }: RivalryTileProps) {
           </div>
         ) : null}
       </div>
-      {listedPairs.length > 0 ? (
-        <div className="flex flex-col gap-2 border-t border-parchment-line pt-3">
-          <p className="sec-label">Rivalités</p>
-          {listedPairs.map((pair) => (
-            <div key={pair.userId} className="flex items-center gap-2">
-              <PlayerAvatar username={pair.username} size={32} avatarId={pair.avatarId} />
-              <p className="m-0 min-w-0 flex-1 truncate text-sm font-bold">{pair.username}</p>
-              <p className="m-0 shrink-0 text-xs text-ink-soft">{pairCountsLabel(pair)}</p>
-            </div>
-          ))}
-        </div>
-      ) : null}
+      {listedPairs.length > 0 ? <RivalryPairsList pairs={listedPairs} /> : null}
     </Card>
   )
 }

@@ -21,6 +21,7 @@ import type {
 import { ackErrorMessage } from '@/lib/ws-errors'
 import { CharacterGrid } from './character-grid'
 import { CodeDisplay } from './code-display'
+import { DuelBanner } from './duel-banner'
 import { HostControls } from './host-controls'
 import { SeatCard } from './seat-card'
 
@@ -161,6 +162,8 @@ export function LobbyScreen({ gameId, meId, friends }: LobbyScreenProps) {
       </div>
 
       <CodeDisplay code={lobby.code} />
+
+      <DuelBanner lobby={lobby} meId={meId} />
 
       <Card className="p-4">
         <p className="sec-label">Joueurs</p>
