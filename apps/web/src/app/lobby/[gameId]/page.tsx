@@ -4,6 +4,7 @@ import { TabBar } from '@/components/tab-bar'
 import { LobbyScreen } from '@/components/lobby/lobby-screen'
 import { SocketProvider } from '@/components/socket-provider'
 import { getInvitableFriends, getLobbyAccess } from '@/lib/queries/lobby'
+import { getMyOraclePick } from '@/lib/queries/oracle'
 import { QueryProvider } from '@/lib/query-client'
 import { requireOnboardedSession } from '@/lib/session'
 
@@ -22,6 +23,9 @@ export default async function LobbyPage({ params }: LobbyPageProps) {
   if (access.status !== 'lobby' || !access.isMember) redirect('/jouer')
 
   const friends = await getInvitableFriends(user.id)
+  // The viewer's OWN prediction only (plan 040): keyed by their id, so it can
+  // never return somebody else's secret.
+  const myOraclePick = await getMyOraclePick(gameId, user.id)
 
   return (
     <>
@@ -35,7 +39,12 @@ export default async function LobbyPage({ params }: LobbyPageProps) {
             keeps rendering outside any QueryClientProvider, unchanged. */}
         <QueryProvider>
           <SocketProvider>
-            <LobbyScreen gameId={gameId} meId={user.id} friends={friends} />
+            <LobbyScreen
+              gameId={gameId}
+              meId={user.id}
+              friends={friends}
+              initialOraclePick={myOraclePick}
+            />
           </SocketProvider>
         </QueryProvider>
       </div>
