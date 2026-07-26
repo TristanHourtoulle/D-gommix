@@ -32,10 +32,10 @@ export default async function FriendProfilePage({ params }: FriendProfilePagePro
   if (!isSelf && !(await areFriends(me.id, userId))) {
     return (
       <main className="tab-page">
-        <SectionTitle sub="Accès réservé">Profil</SectionTitle>
+        <SectionTitle sub="Accès réservé">Faits d&apos;armes</SectionTitle>
         <EmptyState
           icon="users"
-          title="Profil réservé aux amis"
+          title="Faits d'armes réservés aux amis"
           description="Envoie-lui une demande d'ami pour découvrir ses stats."
         />
         <Link href="/amis" className="helper-text">
@@ -60,7 +60,7 @@ export default async function FriendProfilePage({ params }: FriendProfilePagePro
   return (
     <main className="tab-page">
       <SectionTitle sub={isSelf ? 'Tes stats de dégommeur' : 'Stats de ton ami'}>
-        Profil
+        Faits d&apos;armes
       </SectionTitle>
 
       <section className="card flex items-center gap-3 p-5">

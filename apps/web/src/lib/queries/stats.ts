@@ -352,7 +352,7 @@ export interface GameDetailPlayer {
   /**
    * True when this player is the viewer or one of the viewer's friends —
    * the only profiles /amis/[userId] shows the viewer (it walls strangers
-   * behind « Profil réservé aux amis »), so the only rows the detail page
+   * behind « Faits d'armes réservés aux amis »), so the only rows the detail page
    * links.
    */
   isCircleMember: boolean
