@@ -7,8 +7,10 @@ import { getSharedGames } from '@/lib/queries/shared-games'
 import { CHARACTER_META } from '@/lib/characters'
 import { CharacterBadge } from '@/components/ui/character-badge'
 import { EmptyState } from '@/components/ui/empty-state'
+import { FriendProfileActions } from '@/components/friends/friend-profile-actions'
 import { GameHistoryItem } from '@/components/home/game-history-item'
 import { HeadToHeadCard } from '@/components/stats/head-to-head-card'
+import { RematchButton } from '@/components/rematch-button'
 import { PlayerAvatar } from '@/components/ui/player-avatar'
 import { SectionTitle } from '@/components/ui/section-title'
 import { StatTile } from '@/components/ui/stat-tile'
@@ -66,6 +68,7 @@ export default async function FriendProfilePage({ params }: FriendProfilePagePro
             {stats.gamesPlayed > 1 ? 's' : ''}
           </p>
         </div>
+        {isSelf ? null : <FriendProfileActions friendId={userId} />}
       </section>
 
       <div className="stat-row">
@@ -110,7 +113,18 @@ export default async function FriendProfilePage({ params }: FriendProfilePagePro
               description="Invite-le dans un salon pour lancer la première."
             />
           ) : (
-            sharedGames.map((game) => <GameHistoryItem key={game.id} game={game} />)
+            sharedGames.map((game, index) => (
+              <GameHistoryItem
+                key={game.id}
+                game={game}
+                action={
+                  // « Revanche » on the most recent shared game only, like Accueil.
+                  // Unlike Accueil the server page cannot see the client's activeGame,
+                  // so the server-side rejection (+ error toast) is the guard.
+                  index === 0 ? <RematchButton finishedGameId={game.id} compact /> : undefined
+                }
+              />
+            ))
           )}
         </section>
       )}
