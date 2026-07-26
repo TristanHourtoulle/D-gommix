@@ -128,6 +128,23 @@ Si un bug de détection est livré : corriger `detectSeals`, puis `TRUNCATE TABL
 le backfill reconstruit la table à l'identique — c'est un cache d'une fonction pure du journal
 d'événements, rien d'autre dans l'app n'en dépend.
 
+#### Vague 2 des sceaux (plan 039)
+
+Le plan 039 ajoute dix sceaux **sans aucune migration** (`seals.seal_id` est un `text`). Après le
+déploiement qui les embarque, relancer **exactement la même commande** — même script, **ni migration
+ni truncate** :
+
+```bash
+DATABASE_URL="$RAILWAY_POSTGRES_URL" pnpm --filter @degommix/ws-server backfill:seals
+```
+
+La variable est **référencée, jamais recopiée** : sa valeur vient des variables du service
+`postgres` sur Railway et ne doit apparaître dans aucun fichier, commit, log ou ticket.
+
+Ordre à respecter : **déployer d'abord, backfiller ensuite**. Le chemin live grave les nouveaux
+sceaux dès la partie suivante quoi qu'il arrive ; le backfill est ce qui les rend rétroactifs. Un
+`TRUNCATE` détruirait les `unlocked_at` corrects des six sceaux déjà en base sans rien apporter.
+
 ## 4. Domaine
 
 - Domaine public : `https://degommix.tristanhourtoulle.fr` → service `web`, port cible `3000`.
