@@ -15,6 +15,7 @@ import { Podium } from './podium'
 import { RankingTable } from './ranking-table'
 import { RecordsCard } from './records-card'
 import { RivalryTile } from './rivalry-tile'
+import { SouffreDouleurTile } from './souffre-douleur-tile'
 import { TopDegommeurTile } from './top-degommeur-tile'
 
 interface LeaderboardScreenProps {
@@ -105,6 +106,8 @@ export function LeaderboardScreen({ viewerId, initialData }: LeaderboardScreenPr
       ) : (
         <>
           {leaderboard.topDegommeur ? <TopDegommeurTile top={leaderboard.topDegommeur} /> : null}
+
+          <SouffreDouleurTile peer={leaderboard.souffreDouleur ?? null} />
 
           <RivalryTile rivalry={leaderboard.rivalry} pairs={leaderboard.rivalryPairs} />
 

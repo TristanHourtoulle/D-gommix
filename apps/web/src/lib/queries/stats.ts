@@ -12,6 +12,7 @@ import {
 } from '@degommix/db'
 import type { CharacterId, GameFormat, GameOutcome } from '@degommix/game-core'
 import { db } from '@/lib/db'
+import { buildPerCharacter, type CharacterStat } from '@/lib/character-stats'
 import {
   buildGameJournal,
   deriveAbortReason,
@@ -43,6 +44,12 @@ export interface LeaderboardRow {
    */
   currentStreak?: number
   favoriteCharacter: CharacterId | null
+  /**
+   * Per-character record, most played first. The server always sets it;
+   * optional only so old PWA-cached wire payloads stay assignable (same
+   * convention as `currentStreak`).
+   */
+  perCharacter?: CharacterStat[]
 }
 
 export interface TopDegommeur {
@@ -152,6 +159,27 @@ function queryCircleStats(memberIds: string[], range: LeaderboardRange = {}) {
     .groupBy(gamePlayers.userId)
 }
 
+/** One row per `(member, character)` seat: played, village games and wins. */
+function queryCharacterStats(memberIds: string[], range: LeaderboardRange = {}) {
+  return db
+    .select({
+      userId: gamePlayers.userId,
+      character: gamePlayers.character,
+      played: sql`count(*)`.mapWith(Number),
+      villageGames: sql`count(*) filter (where ${games.outcome} = 'village_reached')`.mapWith(
+        Number
+      ),
+      wins: sql`count(*) filter (where ${games.winnerId} = ${gamePlayers.userId})`.mapWith(Number),
+      lastPlayed: sql`extract(epoch from max(${games.startedAt}))`.mapWith(Number),
+    })
+    .from(gamePlayers)
+    .innerJoin(games, eq(games.id, gamePlayers.gameId))
+    .where(
+      and(circleFinishedStarted(memberIds, range), sql`${gamePlayers.character} is not null`)
+    )
+    .groupBy(gamePlayers.userId, gamePlayers.character)
+}
+
 type CircleMemberRow = Awaited<ReturnType<typeof queryCircleMembers>>[number]
 type CircleStatRow = Awaited<ReturnType<typeof queryCircleStats>>[number]
 
@@ -211,8 +239,6 @@ export async function getLeaderboard(
 ): Promise<Leaderboard> {
   const memberIds = await getCircleMemberIds(userId)
 
-  const finishedStarted = circleFinishedStarted(memberIds, range)
-
   // Single all-time scan feeding both the current-streak chips and the
   // longest-streak record (plan 026). Never windowed by `range`. `.execute()`
   // is load-bearing: a drizzle query builder re-runs its SQL on every `await`
@@ -223,17 +249,7 @@ export async function getLeaderboard(
   const [members, statRows, characterRows, seatRows, streakRows, records] = await Promise.all([
     queryCircleMembers(memberIds),
     queryCircleStats(memberIds, range),
-    db
-      .select({
-        userId: gamePlayers.userId,
-        character: gamePlayers.character,
-        played: sql`count(*)`.mapWith(Number),
-        lastPlayed: sql`extract(epoch from max(${games.startedAt}))`.mapWith(Number),
-      })
-      .from(gamePlayers)
-      .innerJoin(games, eq(games.id, gamePlayers.gameId))
-      .where(and(finishedStarted, sql`${gamePlayers.character} is not null`))
-      .groupBy(gamePlayers.userId, gamePlayers.character),
+    queryCharacterStats(memberIds, range),
     db
       .select({
         character: gamePlayers.character,
@@ -281,11 +297,13 @@ export async function getLeaderboard(
   }
 
   const streaks = computeCurrentStreaks(streakRows)
+  const perCharacterByUser = buildPerCharacter(characterRows)
 
   const rows: LeaderboardRow[] = buildStandings(members, statRows).map((row, index) => ({
     ...row,
     currentStreak: streaks.get(row.userId) ?? 0,
     favoriteCharacter: favorites.get(row.userId)?.character ?? null,
+    perCharacter: perCharacterByUser.get(row.userId) ?? [],
     rank: index + 1,
   }))
 
@@ -315,6 +333,12 @@ export async function getLeaderboard(
     .sort((a, b) => b.winrate - a.winrate || b.games - a.games)
 
   return { rows, friendCount: memberIds.length - 1, topDegommeur, characterWinrates, records }
+}
+
+/** One player's all-time per-character record (profile pages). */
+export async function getPlayerCharacterStats(userId: string): Promise<CharacterStat[]> {
+  const rows = await queryCharacterStats([userId])
+  return buildPerCharacter(rows).get(userId) ?? []
 }
 
 export interface GameDetailPlayer {

@@ -135,6 +135,14 @@ const countRecordSchema = z.object({
   gameId: z.string().optional(),
 })
 
+const characterStatSchema = z.object({
+  character: characterSchema,
+  played: z.number(),
+  villageGames: z.number(),
+  wins: z.number(),
+  winrate: z.number().nullable(),
+})
+
 export const leaderboardPayloadSchema = z.object({
   rows: z.array(
     z.object({
@@ -149,6 +157,8 @@ export const leaderboardPayloadSchema = z.object({
       /** Optional for old PWA-cached SSR payloads (same convention as lastSeenAt). */
       currentStreak: z.number().optional(),
       favoriteCharacter: characterSchema.nullable(),
+      /** Optional for old PWA-cached SSR payloads (same convention as currentStreak). */
+      perCharacter: z.array(characterStatSchema).optional(),
     })
   ),
   friendCount: z.number(),
@@ -164,6 +174,8 @@ export const leaderboardPayloadSchema = z.object({
     nemesis: rivalryPeerSchema.nullable(),
     favoriteVictim: rivalryPeerSchema.nullable(),
   }),
+  /** Optional for old PWA-cached SSR payloads (same convention as currentStreak). */
+  souffreDouleur: rivalryPeerSchema.nullable().optional(),
   /** Optional for old PWA-cached SSR payloads (same convention as currentStreak). */
   rivalryPairs: z.array(rivalryPairSchema).optional(),
   characterWinrates: z.array(
