@@ -1,5 +1,5 @@
 import type { DegommageEntry } from '@degommix/game-core'
-import { hashSeq } from '@/lib/seq-hash'
+import { hashGameSeq } from '@/lib/seq-hash'
 
 /**
  * The six comic-book words that stamp over a struck card. Stored capitalised
@@ -23,17 +23,18 @@ export interface TargetHit {
 }
 
 /**
- * Picks the onomatopée for a hit. Seeded by the event's `seq` so every phone
- * stamps the same word on the same card at the same moment, and rotated by a
- * non-zero step away from the card's previous word so a repeat is impossible by
- * construction rather than by luck.
+ * Picks the onomatopée for a hit. Seeded by the game id and the event's `seq`
+ * so every phone stamps the same word on the same card at the same moment
+ * while two games do not open on the same stamp (see `seq-hash.ts`), and
+ * rotated by a non-zero step away from the card's previous word so a repeat is
+ * impossible by construction rather than by luck.
  *
  * The previous *word* is the input, not the previous `seq`: the word shown for
  * a hit depends on the whole chain before it, so no function of two seqs alone
  * can tell whether it is about to repeat.
  */
-export function pickOnomatopee(seq: number, previousWord: string | null): string {
-  const hash = hashSeq(seq)
+export function pickOnomatopee(gameId: string, seq: number, previousWord: string | null): string {
+  const hash = hashGameSeq(gameId, seq)
   const previousIndex =
     previousWord === null ? -1 : HIT_ONOMATOPEES.findIndex((word) => word === previousWord)
   if (previousIndex < 0) return HIT_ONOMATOPEES[hash % HIT_ONOMATOPEES.length] ?? HIT_ONOMATOPEES[0]
@@ -48,14 +49,17 @@ export function pickOnomatopee(seq: number, previousWord: string | null): string
  * hit chain — the same log yields the same words on every phone and after a
  * reload.
  */
-export function hitByTarget(log: readonly DegommageEntry[]): Record<string, TargetHit> {
+export function hitByTarget(
+  gameId: string,
+  log: readonly DegommageEntry[]
+): Record<string, TargetHit> {
   const hits: Record<string, TargetHit> = {}
   for (const entry of log) {
     const current = hits[entry.targetId]
     hits[entry.targetId] = {
       count: current ? current.count + 1 : 1,
       seq: entry.seq,
-      word: pickOnomatopee(entry.seq, current ? current.word : null),
+      word: pickOnomatopee(gameId, entry.seq, current ? current.word : null),
     }
   }
   return hits

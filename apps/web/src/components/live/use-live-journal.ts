@@ -118,6 +118,7 @@ export function useLiveJournal(
     }
     const fallbackRefs: DegommageRef[] = state ? state.degommageLog : []
     const degommageLabels = renderDegommageJournal(
+      gameId,
       eventRefs.length > 0 ? eventRefs : fallbackRefs,
       (userId) => displayName(names, userId)
     )
@@ -143,5 +144,5 @@ export function useLiveJournal(
       entries: entries.slice(-JOURNAL_LENGTH).reverse(),
       lastEventAt: last?.createdAt ?? null,
     }
-  }, [version, state, names])
+  }, [version, state, names, gameId])
 }

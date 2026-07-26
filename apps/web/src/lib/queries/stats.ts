@@ -467,6 +467,6 @@ export async function getGameDetail(gameId: string, viewerId: string): Promise<G
     winner: players.find((player) => player.isWinner) ?? null,
     totalDegommages: players.reduce((sum, player) => sum + player.degommages, 0),
     players,
-    journal: buildGameJournal(eventRows, name),
+    journal: buildGameJournal(game.id, eventRows, name),
   }
 }
