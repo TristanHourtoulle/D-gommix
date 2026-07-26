@@ -1,7 +1,9 @@
 'use client'
 
+import { useContext } from 'react'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
+import { QueryClientContext } from '@tanstack/react-query'
 import { Icon, type IconName } from '@/components/icons'
 import { useInvitesCount } from '@/hooks/use-tab-data'
 
@@ -35,11 +37,34 @@ function activeIndex(pathname: string): number {
   return pathname === '/' ? 0 : -1
 }
 
+/**
+ * Pending-invites badge for the Arène tab. Guarded by QueryClientContext so
+ * the TabBar also renders (badge-less) on routes mounted outside the (tabs)
+ * layout, which provide no QueryClientProvider (e.g. /lobby/[gameId]).
+ */
+function InvitesBadge() {
+  const client = useContext(QueryClientContext)
+  if (!client) return null
+  return <InvitesBadgeContent />
+}
+
+function InvitesBadgeContent() {
+  const inviteCount = useInvitesCount()
+  if (inviteCount === 0) return null
+  return (
+    <span
+      className="tab-badge"
+      aria-label={`${inviteCount} invitation${inviteCount > 1 ? 's' : ''} en attente`}
+    >
+      {inviteCount}
+    </span>
+  )
+}
+
 /** Floating liquid-glass bottom tab bar with a sliding water-bubble indicator. */
 export function TabBar() {
   const pathname = usePathname()
   const active = activeIndex(pathname)
-  const inviteCount = useInvitesCount()
 
   return (
     <nav className="tabbar-zone" aria-label="Navigation principale">
@@ -62,14 +87,7 @@ export function TabBar() {
           >
             <Icon name={tab.icon} size={22} strokeWidth={index === active ? 2.2 : 1.8} />
             <span className="tab-label">{tab.label}</span>
-            {tab.href === '/jouer' && inviteCount > 0 ? (
-              <span
-                className="tab-badge"
-                aria-label={`${inviteCount} invitation${inviteCount > 1 ? 's' : ''} en attente`}
-              >
-                {inviteCount}
-              </span>
-            ) : null}
+            {tab.href === '/jouer' ? <InvitesBadge /> : null}
           </Link>
         ))}
       </div>
