@@ -123,7 +123,7 @@ export function HomeScreen({
 
       <section className="flex flex-col gap-2">
         <div className="flex items-center justify-between">
-          <p className="sec-label">Historique récent</p>
+          <p className="sec-label">Chronique</p>
           {lastGames.length > 0 ? (
             <Link
               href="/parties"

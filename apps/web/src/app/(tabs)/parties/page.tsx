@@ -21,7 +21,7 @@ export default async function GamesHistoryPage() {
 
   return (
     <main className="tab-page">
-      <SectionTitle sub="Toutes tes parties jouées">Historique</SectionTitle>
+      <SectionTitle sub="Toutes tes parties jouées">La chronique</SectionTitle>
       {games.length === 0 ? (
         <EmptyState icon="flag" title="Aucune partie" description="Lance ta première partie !" />
       ) : (
