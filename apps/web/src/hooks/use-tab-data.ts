@@ -90,6 +90,21 @@ export function useInvitesCount(): number {
   return data?.invites.length ?? 0
 }
 
+/**
+ * Friends payload for surfaces without an SSR seed (the friend profile
+ * island). Same query key as the Amis screen, so it rides the cache that
+ * screen seeds and every `friends` invalidation — it only triggers its own
+ * `/api/friends` fetch on a cold cache (a hard load landing on a profile).
+ * `undefined` until the first payload is available.
+ */
+export function useFriendsSnapshot(): FriendsPayload | undefined {
+  const { data } = useQuery({
+    queryKey: queryKeys.friends,
+    queryFn: () => fetchPayload('/api/friends', friendsPayloadSchema),
+  })
+  return data
+}
+
 export type LeaderboardPeriod = 'all' | 'month'
 
 /**
