@@ -60,6 +60,14 @@ export interface GazetteFacts {
   readonly playerCount: number
   readonly totalDegommages: number
   readonly undoTotal: number
+  /**
+   * Net dégommages dealt / taken per participant, most first. Not slot-backed:
+   * no template reads these, they feed the parchment's stats box, which needs
+   * a real number per player rather than the leaders alone. `biggestHitter`
+   * and `souffreDouleur` are simply the strictly-ahead top of each.
+   */
+  readonly dealtCounts: readonly GazetteCount[]
+  readonly takenCounts: readonly GazetteCount[]
   readonly winner: GazettePerson | null
   /** Most dégommages dealt in THIS game — only when strictly ahead. */
   readonly biggestHitter: GazetteCount | null
@@ -294,6 +302,8 @@ export function deriveGazetteFacts(input: GazetteInput): GazetteFacts {
     playerCount: input.players.length,
     totalDegommages,
     undoTotal,
+    dealtCounts: hitCounts,
+    takenCounts,
     winner,
     biggestHitter: topStrict(hitCounts),
     souffreDouleur,

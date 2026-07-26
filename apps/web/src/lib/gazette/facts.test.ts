@@ -299,6 +299,26 @@ describe('deriveGazetteFacts — pass-through and shape', () => {
     expect(facts.stamps).toEqual(stamps)
   })
 
+  it('carries the net dealt and taken counts of every participant', () => {
+    const facts = deriveGazetteFacts(
+      input({
+        events: [
+          ...hits(1, 'o', 'a', 3),
+          ...hits(4, 'a', 'b', 1),
+          ev({ seq: 5, type: 'UNDO', actorId: 'o', payload: { targetSeq: 3 } }),
+        ],
+      })
+    )
+    expect(facts.dealtCounts.map((row) => [row.username, row.count])).toEqual([
+      ['Obelix', 2],
+      ['Asterix', 1],
+    ])
+    expect(facts.takenCounts.map((row) => [row.username, row.count])).toEqual([
+      ['Asterix', 2],
+      ['Bonemine', 1],
+    ])
+  })
+
   it('carries the code, the end date, the duration and the player count', () => {
     const facts = deriveGazetteFacts(input({ endedAt: endedAfter(760) }))
     expect(facts.gameCode).toBe('4F2K9B')

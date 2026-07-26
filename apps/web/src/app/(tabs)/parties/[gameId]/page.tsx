@@ -148,6 +148,11 @@ export default async function GameDetailPage({ params }: GameDetailPageProps) {
         )}
       </Card>
 
+      <Link href={`/parties/${gameId}/gazette`} className="cta ghost no-underline">
+        <Icon name="flag" size={18} />
+        Lire la gazette
+      </Link>
+
       <div className="stat-row">
         <StatTile
           icon="timer"

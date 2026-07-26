@@ -2119,3 +2119,120 @@ body[data-toast-anchor='live'] .toast-zone {
 @media (prefers-reduced-motion: reduce) {
   .moment-stamp { animation: none; }
 }
+
+/* ---------- La Gazette du Village (parchemin de fin de partie) ---------- */
+
+/*
+ * A printed front page, not a card: squarer corners, a double rule under the
+ * masthead, a drop cap on the chapeau. Everything reads design tokens, so dark
+ * mode follows for free and there is not one literal colour in the block. No
+ * animation anywhere — a newspaper does not move.
+ */
+.gz-sheet {
+  background: var(--parchment);
+  border: 2px solid var(--parchment-line);
+  border-radius: 6px;
+  box-shadow: var(--shadow);
+  padding: 1.1rem 1rem 1.25rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  overflow-wrap: break-word;
+}
+
+.gz-masthead {
+  text-align: center;
+  border-bottom: 3px double var(--parchment-line);
+  padding-bottom: 0.5rem;
+}
+
+/* Same bronze-with-ink-stroke treatment as `.wordmark`. */
+.gz-title {
+  font-family: var(--font-display);
+  text-transform: uppercase;
+  font-size: clamp(1.35rem, 6.5vw, 2rem);
+  line-height: 1;
+  letter-spacing: 0.03em;
+  font-weight: 900;
+  color: var(--bronze);
+  -webkit-text-stroke: 1px var(--ink);
+  paint-order: stroke fill;
+  margin: 0;
+}
+
+.gz-edition {
+  margin: 0.35rem 0 0;
+  font-size: 0.65rem;
+  color: var(--ink-faint);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+.gz-headline {
+  font-family: var(--font-display);
+  font-size: 1.35rem;
+  line-height: 1.15;
+  font-weight: 800;
+  text-wrap: balance;
+  margin: 0;
+}
+
+.gz-lede {
+  font-size: 0.9rem;
+  line-height: 1.5;
+  margin: 0;
+}
+
+.gz-lede::first-letter {
+  float: left;
+  font-family: var(--font-display);
+  font-size: 2.6em;
+  line-height: 0.78;
+  padding-right: 0.1em;
+  color: var(--bronze-strong);
+}
+
+.gz-briefs {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.gz-briefs li {
+  position: relative;
+  padding: 0.45rem 0 0.45rem 0.9rem;
+  font-size: 0.82rem;
+  line-height: 1.4;
+}
+
+.gz-briefs li::before {
+  content: "\00b7";
+  position: absolute;
+  left: 0.15rem;
+  color: var(--bronze);
+  font-weight: 900;
+}
+
+/* Separator from the second brief on — the `game-journal` list idiom. */
+.gz-briefs li + li {
+  border-top: 1px solid var(--parchment-line);
+}
+
+.gz-box {
+  border: 1px solid var(--parchment-line);
+  border-radius: 4px;
+  background: transparent;
+  padding: 0.25rem 0.6rem;
+}
+
+.gz-line {
+  display: flex;
+  align-items: baseline;
+  gap: 0.6rem;
+  padding: 0.35rem 0;
+  font-size: 0.82rem;
+}
+
+.gz-line + .gz-line {
+  border-top: 1px solid var(--parchment-line);
+}

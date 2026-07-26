@@ -137,6 +137,9 @@ function onlyFacts(present: readonly GazetteFactKey[], family: GazetteFamily = '
     playerCount: 4,
     totalDegommages: 9,
     undoTotal: has('undoers') ? 2 : 0,
+    // Not slot-backed: the stats box reads these, no template ever does.
+    dealtCounts: [],
+    takenCounts: [],
     winner: has('winner') ? { userId: 'o', username: 'Obélix' } : null,
     biggestHitter: has('biggestHitter')
       ? { userId: 'o', username: 'Obélix', count: 5 }
