@@ -6,6 +6,7 @@ import { useLeaderboardData } from '@/hooks/use-tab-data'
 import { SectionTitle } from '@/components/ui/section-title'
 import { EmptyState } from '@/components/ui/empty-state'
 import { CharacterWinrateBars } from './character-winrate-bars'
+import { Podium } from './podium'
 import { RankingTable } from './ranking-table'
 import { RivalryTile } from './rivalry-tile'
 import { TopDegommeurTile } from './top-degommeur-tile'
@@ -39,6 +40,9 @@ export function LeaderboardScreen({ viewerId, initialData }: LeaderboardScreenPr
     )
   }
 
+  const podiumRows = leaderboard.rows.slice(0, 3)
+  const tableRows = leaderboard.rows.slice(3)
+
   return (
     <main className="tab-page">
       <SectionTitle sub="Toute la tribu, du premier au dernier">Lauriers</SectionTitle>
@@ -47,7 +51,9 @@ export function LeaderboardScreen({ viewerId, initialData }: LeaderboardScreenPr
 
       <RivalryTile rivalry={leaderboard.rivalry} />
 
-      <RankingTable rows={leaderboard.rows} viewerId={viewerId} />
+      <Podium rows={podiumRows} viewerId={viewerId} />
+
+      {tableRows.length > 0 ? <RankingTable rows={tableRows} viewerId={viewerId} /> : null}
 
       {leaderboard.characterWinrates.length > 0 ? (
         <CharacterWinrateBars winrates={leaderboard.characterWinrates} />
