@@ -10,6 +10,10 @@ export const queryKeys = {
   invites: ['invites'] as const,
   /** GET /api/friends — requests in/out, friend list, own lobby id. */
   friends: ['friends'] as const,
-  /** GET /api/leaderboard — friends-circle ranking and character winrates. */
+  /**
+   * GET /api/leaderboard — friends-circle ranking and character winrates.
+   * Invalidation root: `useLeaderboardData` appends the period ('all' |
+   * 'month'); `invalidateQueries` prefix-matches both variants.
+   */
   leaderboard: ['leaderboard'] as const,
 }

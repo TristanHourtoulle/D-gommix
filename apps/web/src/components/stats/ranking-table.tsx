@@ -44,6 +44,11 @@ export function RankingTable({ rows, viewerId }: RankingTableProps) {
             <span className="shrink-0 font-mono text-xs font-semibold text-ink-soft">
               {row.wins} v · {row.winrate}%
             </span>
+            {(row.currentStreak ?? 0) >= 2 ? (
+              <span className="lb-chip" title={`Série de ${row.currentStreak} victoires`}>
+                Série : {row.currentStreak}
+              </span>
+            ) : null}
             {isViewer ? (
               <span
                 className="shrink-0 font-mono text-xs font-semibold text-ink-soft"

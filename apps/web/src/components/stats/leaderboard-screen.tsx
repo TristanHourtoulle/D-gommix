@@ -1,11 +1,13 @@
 'use client'
 
+import { useState } from 'react'
 import Link from 'next/link'
 import type { LeaderboardPayload } from '@/lib/api-payloads'
-import { useLeaderboardData } from '@/hooks/use-tab-data'
+import { useLeaderboardData, type LeaderboardPeriod } from '@/hooks/use-tab-data'
 import { SectionTitle } from '@/components/ui/section-title'
 import { EmptyState } from '@/components/ui/empty-state'
 import { CharacterWinrateBars } from './character-winrate-bars'
+import { PeriodSegmented } from './period-segmented'
 import { Podium } from './podium'
 import { RankingTable } from './ranking-table'
 import { RivalryTile } from './rivalry-tile'
@@ -22,7 +24,11 @@ interface LeaderboardScreenProps {
  * `leaderboard` query, invalidated whenever the friends circle changes.
  */
 export function LeaderboardScreen({ viewerId, initialData }: LeaderboardScreenProps) {
-  const { data: leaderboard } = useLeaderboardData(initialData)
+  const [period, setPeriod] = useState<LeaderboardPeriod>('all')
+  const { data } = useLeaderboardData(initialData, period)
+  // `keepPreviousData` keeps the previous window during a fetch; the SSR
+  // payload is the last-resort fallback and matches the initial 'all' period.
+  const leaderboard = data ?? initialData
 
   if (leaderboard.friendCount === 0) {
     return (
@@ -46,6 +52,8 @@ export function LeaderboardScreen({ viewerId, initialData }: LeaderboardScreenPr
   return (
     <main className="tab-page">
       <SectionTitle sub="Toute la tribu, du premier au dernier">Lauriers</SectionTitle>
+
+      <PeriodSegmented value={period} onChange={setPeriod} />
 
       {leaderboard.topDegommeur ? <TopDegommeurTile top={leaderboard.topDegommeur} /> : null}
 

@@ -14,6 +14,7 @@ import type { CharacterId, GameFormat, GameOutcome } from '@degommix/game-core'
 import { db } from '@/lib/db'
 import { deName } from '@/lib/elision'
 import { gameStarted, isPhantomLobbyGame } from './game-filters'
+import { computeCurrentStreaks } from './streaks'
 
 export interface LeaderboardRow {
   rank: number
@@ -25,6 +26,13 @@ export interface LeaderboardRow {
   winrate: number
   villageGames: number
   degommages: number
+  /**
+   * Consecutive village_reached wins, newest first by endedAt; aborted games
+   * are neutral (design §5.3). Always all-time — never windowed. The server
+   * always sets it; optional only so old PWA-cached wire payloads (which
+   * predate the field, same convention as `avatarId`) stay assignable.
+   */
+  currentStreak?: number
   favoriteCharacter: CharacterId | null
 }
 
@@ -68,18 +76,30 @@ export async function getCircleMemberIds(userId: string): Promise<string[]> {
   return [...ids]
 }
 
+export interface LeaderboardRange {
+  /** Count only games with `ended_at >= from`. Omit for all-time. */
+  from?: Date
+}
+
 /** Friends-circle leaderboard (me + my friends), stats per design §5.3. */
-export async function getLeaderboard(userId: string): Promise<Leaderboard> {
+export async function getLeaderboard(
+  userId: string,
+  range: LeaderboardRange = {}
+): Promise<Leaderboard> {
   const memberIds = await getCircleMemberIds(userId)
+
+  const endedInWindow =
+    range.from === undefined ? [] : [sql`${games.endedAt} >= ${range.from}`]
 
   const finishedStarted = and(
     inList(gamePlayers.userId, memberIds),
     eq(games.status, 'finished'),
     gameStarted,
-    sql`${gamePlayers.status} in ('joined', 'left')`
+    sql`${gamePlayers.status} in ('joined', 'left')`,
+    ...endedInWindow
   )
 
-  const [members, statRows, characterRows, seatRows] = await Promise.all([
+  const [members, statRows, characterRows, seatRows, streakRows] = await Promise.all([
     db
       .select({ id: user.id, username: user.username, avatarId: user.avatarId })
       .from(user)
@@ -125,10 +145,30 @@ export async function getLeaderboard(userId: string): Promise<Leaderboard> {
           eq(games.outcome, 'village_reached'),
           gameStarted,
           sql`${gamePlayers.status} in ('joined', 'left')`,
-          sql`${gamePlayers.character} is not null`
+          sql`${gamePlayers.character} is not null`,
+          ...endedInWindow
         )
       )
       .groupBy(gamePlayers.character),
+    // Streak source: deliberately NOT windowed — the current streak is a
+    // now-anchored, all-time property (plan 019, decision 3).
+    db
+      .select({
+        userId: gamePlayers.userId,
+        won: sql`${games.winnerId} = ${gamePlayers.userId}`.mapWith(Boolean),
+      })
+      .from(gamePlayers)
+      .innerJoin(games, eq(games.id, gamePlayers.gameId))
+      .where(
+        and(
+          inList(gamePlayers.userId, memberIds),
+          eq(games.status, 'finished'),
+          eq(games.outcome, 'village_reached'),
+          gameStarted,
+          sql`${gamePlayers.status} in ('joined', 'left')`
+        )
+      )
+      .orderBy(sql`${games.endedAt} desc`),
   ])
 
   // Favorite character: most played, tie broken by most recently played
@@ -149,6 +189,8 @@ export async function getLeaderboard(userId: string): Promise<Leaderboard> {
     }
   }
 
+  const streaks = computeCurrentStreaks(streakRows)
+
   const statsById = new Map(statRows.map((row) => [row.userId, row]))
   const unranked = members.map((member) => {
     const stats = statsById.get(member.id)
@@ -162,6 +204,7 @@ export async function getLeaderboard(userId: string): Promise<Leaderboard> {
       villageGames,
       winrate: villageGames > 0 ? Math.round((wins / villageGames) * 100) : 0,
       degommages: stats?.degommages ?? 0,
+      currentStreak: streaks.get(member.id) ?? 0,
       favoriteCharacter: favorites.get(member.id)?.character ?? null,
     }
   })

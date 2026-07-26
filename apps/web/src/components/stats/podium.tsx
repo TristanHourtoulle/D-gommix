@@ -90,6 +90,9 @@ export function Podium({ rows, viewerId }: PodiumProps) {
                 <Icon name="sword" size={11} className="text-bronze" />
                 {row.degommages}
               </span>
+              {(row.currentStreak ?? 0) >= 2 ? (
+                <span className="lb-chip">Série : {row.currentStreak}</span>
+              ) : null}
             </span>
             <span className="lb-socle" aria-hidden>
               {ROMAN_RANKS[row.rank - 1]}

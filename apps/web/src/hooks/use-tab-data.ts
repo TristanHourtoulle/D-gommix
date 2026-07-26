@@ -1,7 +1,13 @@
 'use client'
 
 import { useCallback } from 'react'
-import { useQuery, useQueryClient, type DefinedUseQueryResult } from '@tanstack/react-query'
+import {
+  keepPreviousData,
+  useQuery,
+  useQueryClient,
+  type DefinedUseQueryResult,
+  type UseQueryResult,
+} from '@tanstack/react-query'
 import type { ZodType } from 'zod'
 import {
   friendsPayloadSchema,
@@ -70,15 +76,24 @@ export function useInvitesData(
   })
 }
 
-/** Classement of the friends circle. */
+export type LeaderboardPeriod = 'all' | 'month'
+
+/**
+ * Classement of the friends circle. `period` selects the window server-side;
+ * only the all-time variant is SSR-seeded, so the month variant fetches on
+ * first use while `keepPreviousData` keeps the previous window on screen.
+ * Invalidations target the `queryKeys.leaderboard` prefix and hit both.
+ */
 export function useLeaderboardData(
-  initialData: LeaderboardPayload
-): DefinedUseQueryResult<LeaderboardPayload, Error> {
+  initialData: LeaderboardPayload,
+  period: LeaderboardPeriod = 'all'
+): UseQueryResult<LeaderboardPayload, Error> {
   return useQuery({
-    queryKey: queryKeys.leaderboard,
-    queryFn: () => fetchPayload('/api/leaderboard', leaderboardPayloadSchema),
-    initialData,
+    queryKey: [...queryKeys.leaderboard, period] as const,
+    queryFn: () => fetchPayload(`/api/leaderboard?period=${period}`, leaderboardPayloadSchema),
+    initialData: period === 'all' ? initialData : undefined,
     ...STALE_INITIAL_DATA,
+    placeholderData: keepPreviousData,
   })
 }
 
