@@ -324,13 +324,22 @@ describe('STAMP_META', () => {
   })
 })
 
+/** `hit()` rows narrowed to the `{ seq, actorId }` projection `actorRuns` reads. */
+function runInput(events: readonly StampEvent[]): { seq: number; actorId: string }[] {
+  return events.flatMap((event) =>
+    event.actorId === null ? [] : [{ seq: event.seq, actorId: event.actorId }]
+  )
+}
+
 describe('actorRuns', () => {
   it('returns no run for an empty hit list', () => {
     expect(actorRuns([])).toEqual([])
   })
 
   it('splits a b-interrupted sequence into three maximal runs', () => {
-    const runs = actorRuns([hit(2, 'a', 'x'), hit(3, 'a', 'x'), hit(4, 'b', 'x'), hit(5, 'a', 'x')])
+    const runs = actorRuns(
+      runInput([hit(2, 'a', 'x'), hit(3, 'a', 'x'), hit(4, 'b', 'x'), hit(5, 'a', 'x')])
+    )
     expect(runs).toEqual([
       { actorId: 'a', seqs: [2, 3] },
       { actorId: 'b', seqs: [4] },
@@ -339,20 +348,22 @@ describe('actorRuns', () => {
   })
 
   it('reports the TRUE length of a six-long run rather than a latched counter', () => {
-    const runs = actorRuns([
-      hit(2, 'a', 'b'),
-      hit(3, 'a', 'c'),
-      hit(4, 'a', 'd'),
-      hit(5, 'a', 'b'),
-      hit(6, 'a', 'c'),
-      hit(7, 'a', 'd'),
-    ])
+    const runs = actorRuns(
+      runInput([
+        hit(2, 'a', 'b'),
+        hit(3, 'a', 'c'),
+        hit(4, 'a', 'd'),
+        hit(5, 'a', 'b'),
+        hit(6, 'a', 'c'),
+        hit(7, 'a', 'd'),
+      ])
+    )
     expect(runs).toHaveLength(1)
     expect(runs[0]?.seqs).toEqual([2, 3, 4, 5, 6, 7])
   })
 
   it('gives every alternating hit a run of its own', () => {
-    const runs = actorRuns([hit(2, 'a', 'b'), hit(3, 'b', 'a'), hit(4, 'a', 'b')])
+    const runs = actorRuns(runInput([hit(2, 'a', 'b'), hit(3, 'b', 'a'), hit(4, 'a', 'b')]))
     expect(runs.map((run) => run.seqs.length)).toEqual([1, 1, 1])
     expect(runs.map((run) => run.actorId)).toEqual(['a', 'b', 'a'])
   })
