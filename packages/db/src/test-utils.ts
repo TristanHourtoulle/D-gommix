@@ -1,11 +1,28 @@
 import { fileURLToPath } from 'node:url'
-import { getTableName, is, sql } from 'drizzle-orm'
+import { getTableName, is, sql, type SQL } from 'drizzle-orm'
 import { drizzle } from 'drizzle-orm/postgres-js'
 import { migrate } from 'drizzle-orm/postgres-js/migrator'
-import { PgTable } from 'drizzle-orm/pg-core'
+import { PgDialect, PgTable } from 'drizzle-orm/pg-core'
 import postgres from 'postgres'
 import type { Db } from './client'
 import * as schema from './schema/index'
+
+const dialect = new PgDialect()
+
+/**
+ * Compiles a Drizzle `sql` fragment exactly the way the driver does, so a test
+ * can assert on the **bound parameters** rather than on the SQL text.
+ *
+ * Why this exists: a value interpolated in a raw `sql` fragment bypasses the
+ * column's encoder and is handed to postgres-js as-is. A `Date` reaching the
+ * driver that way throws `ERR_INVALID_ARG_TYPE` at query time — invisible to
+ * the type-checker, and only reproducible against a real database unless the
+ * params are inspected. `params` here is the very array postgres-js receives.
+ */
+export function compileFragment(fragment: SQL): { sql: string; params: unknown[] } {
+  const query = dialect.sqlToQuery(fragment)
+  return { sql: query.sql, params: query.params }
+}
 
 export const TEST_DATABASE_URL =
   process.env.TEST_DATABASE_URL ?? 'postgres://degommix:degommix@localhost:54329/degommix_test'
