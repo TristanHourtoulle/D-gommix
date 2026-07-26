@@ -159,6 +159,40 @@ function survivingHits(events: readonly StampEvent[]): Hit[] {
   return hits
 }
 
+/** A streak of consecutive dégommages dealt by one player, in `seq` order. */
+export interface HitRun {
+  readonly actorId: string
+  /** `seq` of every surviving dégommage of the streak, in order. */
+  readonly seqs: readonly number[]
+}
+
+/**
+ * Maximal streaks of consecutive dégommages by the same player, over hits
+ * already filtered of undone ones and sorted by `seq`. A streak ends the
+ * moment another player scores; an undone dégommage neither sustains nor
+ * breaks one, because it never reaches this list.
+ *
+ * Single source of truth for « d'affilée » in this app: `detectLineStamps`
+ * stamps « Triplé ! » on every third hit of a run, and the live « Tableau des
+ * augures » (`lib/augures.ts`) reads the longest run's true length. The two
+ * must never drift apart, which is why neither counts on its own.
+ */
+export function actorRuns(
+  hits: readonly { readonly seq: number; readonly actorId: string }[]
+): HitRun[] {
+  const runs: HitRun[] = []
+  let current: { actorId: string; seqs: number[] } | null = null
+  for (const hit of hits) {
+    if (current !== null && current.actorId === hit.actorId) {
+      current.seqs.push(hit.seq)
+      continue
+    }
+    current = { actorId: hit.actorId, seqs: [hit.seq] }
+    runs.push(current)
+  }
+  return runs
+}
+
 /**
  * `seq → stamp` of every journal line that deserves one, at most one per line
  * (see LINE_STAMP_PRIORITY). Pure fold over the log: same rows in, same map
@@ -171,19 +205,20 @@ export function detectLineStamps(events: readonly StampEvent[]): Map<number, Sta
   const dealt = new Map<string, number>()
   /** Epoch ms of the previous surviving hit on each target. */
   const lastHitOnTarget = new Map<string, number>()
-  let runActorId: string | null = null
-  let runLength = 0
+  // « Triplé ! » fires on the 3rd, 6th, 9th… hit WITHIN a run — which is
+  // exactly what the previous inline counter encoded by resetting itself to
+  // zero after each triplé.
+  const tripleSeqs = new Set<number>()
+  for (const run of actorRuns(hits)) {
+    run.seqs.forEach((seq, index) => {
+      if ((index + 1) % TRIPLE_RUN === 0) tripleSeqs.add(seq)
+    })
+  }
 
   for (const [index, hit] of hits.entries()) {
     const previous = index > 0 ? hits[index - 1] : undefined
     const total = (dealt.get(hit.actorId) ?? 0) + 1
     dealt.set(hit.actorId, total)
-
-    if (hit.actorId === runActorId) runLength += 1
-    else {
-      runActorId = hit.actorId
-      runLength = 1
-    }
 
     const fired = new Set<StampId>()
     // `=== CARNAGE_THRESHOLD`, not `>=`: the stamp marks the moment the
@@ -196,7 +231,7 @@ export function detectLineStamps(events: readonly StampEvent[]): Map<number, Sta
     ) {
       fired.add('vengeance')
     }
-    if (runLength === TRIPLE_RUN) fired.add('triple')
+    if (tripleSeqs.has(hit.seq)) fired.add('triple')
     const previousOnTarget = lastHitOnTarget.get(hit.targetId)
     if (previousOnTarget !== undefined && hit.at - previousOnTarget <= SANS_PITIE_WINDOW_MS) {
       fired.add('sans_pitie')
@@ -204,9 +239,6 @@ export function detectLineStamps(events: readonly StampEvent[]): Map<number, Sta
     if (index === 0) fired.add('premier_sang')
 
     lastHitOnTarget.set(hit.targetId, hit.at)
-    // A six-long run stamps at 3 and at 6: the counter restarts after each
-    // triplé rather than latching.
-    if (runLength === TRIPLE_RUN) runLength = 0
 
     const chosen = LINE_STAMP_PRIORITY.find((id) => fired.has(id))
     if (chosen !== undefined) stamps.set(hit.seq, chosen)
