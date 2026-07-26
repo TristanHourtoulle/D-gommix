@@ -12,6 +12,7 @@ import { useWakeLock } from '@/hooks/use-wake-lock'
 import type { InvitesPayload } from '@/lib/api-payloads'
 import { ackErrorMessage } from '@/lib/ws-errors'
 import { takenByTarget } from '@/lib/rivalries'
+import { AuguresSheet } from './augures-sheet'
 import { EndRequestSheet } from './end-request-sheet'
 import { shouldInvalidateOnFinish } from './finish-guard'
 import { GameClock } from './game-clock'
@@ -57,6 +58,7 @@ export function LiveScreen({
   const { state, startedAt, serverOffset, connected } = game
   const { toast } = useToast()
   const [endSheetOpen, setEndSheetOpen] = useState(false)
+  const [auguresOpen, setAuguresOpen] = useState(false)
   const tapLock = useTapLock()
   const taunts = useTaunts(gameId)
   const [tauntTargetId, setTauntTargetId] = useState<string | null>(null)
@@ -260,6 +262,19 @@ export function LiveScreen({
 
       <LiveJournal entries={journal.entries} state={state} />
 
+      <button
+        type="button"
+        data-testid="augures-handle"
+        className="relative z-10 flex w-full cursor-pointer items-center justify-center gap-1.5 border-0 bg-transparent p-1 text-xs font-bold"
+        style={{ color: 'var(--ink-faint)' }}
+        aria-haspopup="dialog"
+        aria-expanded={auguresOpen}
+        onClick={() => setAuguresOpen(true)}
+      >
+        <Icon name="chevron-down" size={12} className="rotate-180" />
+        Tableau des augures
+      </button>
+
       <div className="live-actions relative z-10 mt-auto flex gap-2.5">
         <button
           type="button"
@@ -312,6 +327,16 @@ export function LiveScreen({
             void sendTaunt(targetId, tauntId)
           }}
           onClose={() => setTauntTargetId(null)}
+        />
+      ) : null}
+
+      {auguresOpen ? (
+        <AuguresSheet
+          state={state}
+          startedAt={startedAt}
+          serverOffset={serverOffset}
+          names={names}
+          onClose={() => setAuguresOpen(false)}
         />
       ) : null}
 
