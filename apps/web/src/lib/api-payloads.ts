@@ -151,6 +151,13 @@ const playerTitleSchema = z.object({
   title: titleIdSchema,
 })
 
+const coteEntrySchema = z.object({
+  userId: z.string(),
+  cote: z.number(),
+  games: z.number(),
+  trend: z.number(),
+})
+
 export const leaderboardPayloadSchema = z.object({
   rows: z.array(
     z.object({
@@ -241,6 +248,12 @@ export const leaderboardPayloadSchema = z.object({
       biggestCarton: countRecordSchema.nullable(),
     })
     .optional(),
+  /**
+   * « La Cote du guerrier » (plan 043): Elo rating in sesterces, all-time and
+   * never affected by `?period=`. Optional for old PWA-cached SSR payloads
+   * (same convention as titles / records).
+   */
+  cotes: z.array(coteEntrySchema).optional(),
 })
 
 /**

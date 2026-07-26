@@ -9,6 +9,7 @@ import { SectionTitle } from '@/components/ui/section-title'
 import { EmptyState } from '@/components/ui/empty-state'
 import { ChampionsStrip } from './champions-strip'
 import { CharacterWinrateBars } from './character-winrate-bars'
+import { CoteCard } from './cote-card'
 import { MonthStepper } from './month-stepper'
 import { PeriodSegmented } from './period-segmented'
 import { Podium } from './podium'
@@ -116,6 +117,10 @@ export function LeaderboardScreen({ viewerId, initialData }: LeaderboardScreenPr
           {leaderboard.records ? <RecordsCard records={leaderboard.records} /> : null}
 
           {tableRows.length > 0 ? <RankingTable rows={tableRows} viewerId={viewerId} /> : null}
+
+          {leaderboard.cotes ? (
+            <CoteCard cotes={leaderboard.cotes} rows={leaderboard.rows} viewerId={viewerId} />
+          ) : null}
 
           {leaderboard.characterWinrates.length > 0 ? (
             <CharacterWinrateBars winrates={leaderboard.characterWinrates} />
