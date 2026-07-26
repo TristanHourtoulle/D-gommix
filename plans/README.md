@@ -30,7 +30,10 @@ requested. Execution order: wave 0 = 038 (the test bench for the whole round);
 wave A = 034, 035, 036 in parallel (classement, minor overlaps rebase); wave B =
 030 → 029 → 037 serialized (live-screen files); wave C = 032 → 033 serialized
 (profile surfaces, 033 carries migration 0005); wave D = 031 last (consumes
-030's stamps).
+030's stamps). Round 5 fully shipped 2026-07-26 (PRs #63-#73), plus two fixes
+found during shipping: PR #74 (Date bounds in raw sql fragments — classement
+month views 500) and PR #75 (seal career queries bounded by the replayed game;
+prod seals re-backfilled per runbook).
 
 ## Execution order & status
 
@@ -64,16 +67,16 @@ wave A = 034, 035, 036 in parallel (classement, minor overlaps rebase); wave B =
 | 026 | « Palmarès » all-time records card on /classement | P2 | M | — | DONE (merged `736cf30` as PR #56, per-PR e2e ship-gate 2026-07-26) |
 | 027 | Season archive: browsable past months + « champion du mois » + SPECS §7 amendment | P2 | M | 026 (soft — payload rebase) | DONE (merged `697e00a` as PR #57, per-PR e2e ship-gate 2026-07-26) |
 | 028 | Personal stats: « dégommages subis » + per-character winrate per player | P3 | M | 026, 027 (soft — payload rebase) | DONE (merged `c50adf4` as PR #58, per-PR e2e ship-gate 2026-07-26) |
-| 029 | Provocations en direct — taunt picker, room broadcast, cooldown 60s | P2 | M | — (rebase vs 030/037/038 on live files) | TODO |
-| 030 | Moments forts tamponnés — Premier sang, Vengeance !, Triplé !, Remontada, Carnage, Sans pitié | P2 | M | 038 (soft — foldJournal extraction) | TODO |
-| 031 | La Gazette du Village — deterministic parchment recap per game | P2 | M-L | 030 (soft — stamps in briefs) | TODO |
-| 032 | Titres gaulois évolutifs — rarity-based epithets under pseudos | P2 | M | — | TODO |
-| 033 | Sceaux hauts faits — achievements table (migration 0005), Banquet unlocks, backfill | P2 | M-L | — (execute after 032: same profile surfaces) | TODO |
-| 034 | Le Duel — règle tes comptes depuis les Rivalités + bannière lobby | P3 | S-M | — | TODO |
-| 035 | Le Barde du soir — anti-champion mensuel (Assurancetourix ligoté) | P3 | S | — | TODO |
-| 036 | L'Almanach des stats absurdes — page parodique liée aux Lauriers | P3 | M | — | TODO |
-| 037 | Bruitages d'arène — opt-in, Web Audio, 3 samples | P3 | S-M | — (execute after 029/030 on live files) | TODO |
-| 038 | Simulation de partie (mode dev) — timeline seedée dans le vrai réducteur | P2 | M | — (EXECUTE FIRST: wave 0) | TODO |
+| 029 | Provocations en direct — taunt picker, room broadcast, cooldown 60s | P2 | M | — (rebase vs 030/037/038 on live files) | DONE (merged `7bffb1a` as PR #69, phantom-tap risk closed by a reviewer 2-context Playwright run, e2e ship-gate green) |
+| 030 | Moments forts tamponnés — Premier sang, Vengeance !, Triplé !, Remontada, Carnage, Sans pitié | P2 | M | 038 (soft — foldJournal extraction) | DONE (merged `1b620af` as PR #68, TDD detector 30 tests, e2e stamp assertions green) |
+| 031 | La Gazette du Village — deterministic parchment recap per game | P2 | M-L | 030 (soft — stamps in briefs) | DONE (merged `bc63d65` as PR #72, Step 6b stamps wired at ship; its gate also found+fixed a Date-in-raw-sql 500 — see PR #74) |
+| 032 | Titres gaulois évolutifs — rarity-based epithets under pseudos | P2 | M | — | DONE (merged `1f10f58` as PR #67, titles ride the payload top level — import-cycle note honored) |
+| 033 | Sceaux hauts faits — achievements table (migration 0005), Banquet unlocks, backfill | P2 | M-L | — (execute after 032: same profile surfaces) | DONE (merged `3b5cef6` as PR #71, migration 0005; prod backfill run + fidelity fix PR #75 + prod remediation 2026-07-26; 3 guards awaiting owner validation — see PR body) |
+| 034 | Le Duel — règle tes comptes depuis les Rivalités + bannière lobby | P3 | S-M | — | DONE (merged `92c4640` as PR #65) |
+| 035 | Le Barde du soir — anti-champion mensuel (Assurancetourix ligoté) | P3 | S | — | DONE (merged `a695f2d` as PR #64, Assurancetourix naming per revoked album-names rule) |
+| 036 | L'Almanach des stats absurdes — page parodique liée aux Lauriers | P3 | M | — | DONE (merged `3fec223` as PR #66, SQL exercised against a seeded DB) |
+| 037 | Bruitages d'arène — opt-in, Web Audio, 3 samples | P3 | S-M | — (execute after 029/030 on live files) | DONE (merged `1d32b9f` as PR #73, owner-supplied ouch ×3 drawn per hit; LISTENING PASS = owner's in prod — sounds OFF by default) |
+| 038 | Simulation de partie (mode dev) — timeline seedée dans le vrai réducteur | P2 | M | — (EXECUTE FIRST: wave 0) | DONE (merged `3a0112f` as PR #70, executed first as wave 0; zero-persistence proven by network trace) |
 
 Status values: TODO | IN PROGRESS | DONE | BLOCKED (with one-line reason) | REJECTED (with one-line rationale — finding fixed independently or approach abandoned)
 
@@ -152,3 +155,8 @@ Status values: TODO | IN PROGRESS | DONE | BLOCKED (with one-line reason) | REJE
   backlog — the owner-run reset-link alternative is recorded for when it's
   wanted); Web Push: measure first — check at the next playtest whether the
   durable-invitation banner suffices, then record « not needed » or plan it."
+- "2026-07-26 round 5 shipping: pre-existing shared-test-DB truncation flake
+  surfaced during full-suite runs (db/ws-server, `expected [Array(3)] to have
+  length 1`) — verified NOT caused by any round-5 diff (3× clean runs on main
+  and branch); left as a known flake, fix = per-suite throwaway DBs if it
+  worsens."
