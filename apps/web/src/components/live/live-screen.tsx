@@ -8,6 +8,7 @@ import { useToast } from '@/components/ui/toast'
 import { useGame } from '@/hooks/use-game'
 import { useInvalidateTabData } from '@/hooks/use-tab-data'
 import { useWakeLock } from '@/hooks/use-wake-lock'
+import type { InvitesPayload } from '@/lib/api-payloads'
 import { ackErrorMessage } from '@/lib/ws-errors'
 import { takenByTarget } from '@/lib/rivalries'
 import { EndRequestSheet } from './end-request-sheet'
@@ -33,6 +34,8 @@ interface LiveScreenProps {
   /** DB timestamps, fallback anchors when the event log is not replayed. */
   fallbackStartedAt: string | null
   fallbackEndedAt: string | null
+  /** SSR payload of the `invites` query, consumed by the rematch prompt. */
+  initialInvites: InvitesPayload
 }
 
 /** Fullscreen live screen of `/partie/[gameId]` — design §5.2 Live + Résumé. */
@@ -43,6 +46,7 @@ export function LiveScreen({
   players,
   fallbackStartedAt,
   fallbackEndedAt,
+  initialInvites,
 }: LiveScreenProps) {
   const game = useGame(gameId)
   const { state, startedAt, serverOffset, connected } = game
@@ -70,7 +74,7 @@ export function LiveScreen({
   useEffect(() => {
     if (!shouldInvalidateOnFinish(state?.status, gameId, invalidatedGameIdRef.current)) return
     invalidatedGameIdRef.current = gameId
-    invalidate('home', 'leaderboard')
+    invalidate('home', 'leaderboard', 'invites')
   }, [state?.status, gameId, invalidate])
 
   const run = async (command: Promise<Ack<{ seq: number }>>): Promise<void> => {
@@ -106,6 +110,7 @@ export function LiveScreen({
         viewerId={viewerId}
         startedAt={startedAt ?? fallbackStartedAt}
         endedAt={journal.lastEventAt ?? fallbackEndedAt}
+        initialInvites={initialInvites}
       />
     )
   }

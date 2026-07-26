@@ -332,3 +332,48 @@ describe('avatar ids on the wire', () => {
     expect(parsed.lastGames[0]?.participants[1]?.avatarId).toBeNull()
   })
 })
+
+/**
+ * `lastSeenAt` is `.nullable().optional()` for the same reason as the avatar
+ * ids above: payloads cached before the field shipped must still parse.
+ */
+describe('last seen on the wire', () => {
+  it('accepts a friends payload carrying a lastSeenAt timestamp', () => {
+    const fresh = {
+      received: [],
+      sent: [],
+      friends: [
+        {
+          id: 'u2',
+          username: 'Asterix',
+          initialPresence: 'offline',
+          lastSeenAt: '2026-07-25T18:47:12.000Z',
+        },
+      ],
+      myLobbyId: null,
+    }
+    expect(friendsPayloadSchema.parse(fresh).friends[0]?.lastSeenAt).toBe(
+      '2026-07-25T18:47:12.000Z'
+    )
+  })
+
+  it('accepts a friends payload without lastSeenAt — old cached shape', () => {
+    const legacy = {
+      received: [],
+      sent: [],
+      friends: [{ id: 'u2', username: 'Asterix', initialPresence: 'offline' }],
+      myLobbyId: null,
+    }
+    expect(friendsPayloadSchema.safeParse(legacy).success).toBe(true)
+  })
+
+  it('accepts an explicit null lastSeenAt — friend never connected', () => {
+    const neverSeen = {
+      received: [],
+      sent: [],
+      friends: [{ id: 'u2', username: 'Asterix', initialPresence: 'offline', lastSeenAt: null }],
+      myLobbyId: null,
+    }
+    expect(friendsPayloadSchema.safeParse(neverSeen).success).toBe(true)
+  })
+})

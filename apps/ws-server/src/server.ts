@@ -70,7 +70,13 @@ export function createWsServer(deps: WsServerDeps): WsServer {
     io,
     onFinished: (gameId, state) => {
       hostTransfer.clearGame(gameId)
-      for (const userId of state.seats) void presence.setInGame(userId, false)
+      for (const userId of state.seats) {
+        void presence.setInGame(userId, false)
+        // Pushed to the user room (not the game room): every tab of every
+        // seated player refreshes its stats payloads, even the ones not on
+        // the live screen when the game closed.
+        io.to(`user:${userId}`).emit('stats:invalidate', { scope: 'game_finished' })
+      }
     },
   })
   const zombie = createZombieJob({
@@ -149,6 +155,11 @@ async function pushPendingInvites(
   socket: AppSocket,
   memberships: ActiveMembership[]
 ): Promise<void> {
+  // A user seated in an ACTIVE game cannot act on invitations: pushing them
+  // would only paint a banner they cannot answer (accepting throws
+  // ALREADY_IN_GAME). A `joined` seat parked in a never-started lobby does not
+  // suppress the push — accepting evacuates that stale seat instead.
+  if (memberships.some((m) => m.player.status === 'joined' && m.game.status === 'active')) return
   const pending = memberships.filter(
     (m) => m.player.status === 'invited' && m.game.status === 'lobby'
   )
@@ -176,6 +187,9 @@ async function onSocketConnected(
   const presenceAtHandshake = ctx.presence.capture()
   try {
     ctx.hostTransfer.onUserOnline(userId)
+    // Stamped at connect too: a server crash before the disconnect handler runs
+    // would otherwise leave a stale value from the previous session.
+    await ctx.db.update(user).set({ lastSeenAt: new Date() }).where(eq(user.id, userId))
     const memberships = await findActiveMemberships(ctx.db, userId)
     const seated = memberships.find((m) => m.player.status === 'joined')
     ctx.presence.syncInGameFlag(userId, seated?.game.status === 'active')
@@ -217,6 +231,8 @@ async function onSocketDisconnected(
   const userId = socket.data.userId
   try {
     if (!wentOffline) return
+    // Persisted before the broadcast so it carries the fresh timestamp.
+    await ctx.db.update(user).set({ lastSeenAt: new Date() }).where(eq(user.id, userId))
     await ctx.presence.broadcast(userId)
     await ctx.hostTransfer.onUserOffline(userId)
   } catch (error) {

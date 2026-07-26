@@ -149,6 +149,7 @@ export function Playground() {
               viewerId={stage === 'winner' ? HERO_ID : RIVAL_ID}
               startedAt={DEMO_STARTED_AT}
               endedAt={DEMO_ENDED_AT}
+              initialInvites={{ invites: [] }}
             />
           </div>
         ) : null}

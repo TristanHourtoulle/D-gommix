@@ -10,6 +10,7 @@ import { Button } from '@/components/ui/button'
 import { CharacterBadge } from '@/components/ui/character-badge'
 import { Pill } from '@/components/ui/pill'
 import { StatTile } from '@/components/ui/stat-tile'
+import type { InvitesPayload } from '@/lib/api-payloads'
 import { CHARACTER_META } from '@/lib/characters'
 import { formatChrono } from '@/lib/chrono'
 import {
@@ -27,6 +28,7 @@ import {
   EndgameRays,
   EndgameVeil,
 } from './endgame-decor'
+import { RematchPrompt } from './rematch-prompt'
 import { displayName, type NameMap } from './types'
 
 interface SummaryProps {
@@ -37,6 +39,8 @@ interface SummaryProps {
   viewerId: string
   startedAt: string | null
   endedAt: string | null
+  /** SSR payload of the `invites` query, handed to the rematch prompt. */
+  initialInvites: InvitesPayload
 }
 
 const FORMAT_LABELS = { 2: '1v1', 3: '3J', 4: '4J' } as const
@@ -47,7 +51,15 @@ const FORMAT_LABELS = { 2: '1v1', 3: '3J', 4: '4J' } as const
  * `winnerId === viewerId`, both playing on this very screen. The rest state is
  * the final image, so a tap (or `prefers-reduced-motion`) simply skips to it.
  */
-export function Summary({ gameId, state, names, viewerId, startedAt, endedAt }: SummaryProps) {
+export function Summary({
+  gameId,
+  state,
+  names,
+  viewerId,
+  startedAt,
+  endedAt,
+  initialInvites,
+}: SummaryProps) {
   const router = useRouter()
 
   const winner = state.winnerId ? state.players[state.winnerId] : undefined
@@ -249,6 +261,7 @@ export function Summary({ gameId, state, names, viewerId, startedAt, endedAt }: 
       </div>
 
       <div className="live-actions relative mt-auto flex flex-col gap-2">
+        <RematchPrompt currentGameId={gameId} initialInvites={initialInvites} />
         {variant === 'loser' ? (
           <>
             <span className="eg-action" style={{ '--i': 0 } as CSSProperties}>

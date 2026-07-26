@@ -1,4 +1,5 @@
 import type { ReactNode } from 'react'
+import { InviteEventsBridge } from '@/components/invite-events-bridge'
 import { SocketProvider } from '@/components/socket-provider'
 import { QueryProvider } from '@/lib/query-client'
 import { requireOnboardedSession } from '@/lib/session'
@@ -9,14 +10,20 @@ import { requireOnboardedSession } from '@/lib/session'
  * provider hands back the same browser-singleton client as the tabs, so the
  * end-of-game invalidation reaches the Accueil and Classement caches. Toasts
  * come from the root layout, which is what keeps them alive when « Revanche ! »
- * leaves this route for /lobby.
+ * leaves this route for /lobby. The invite bridge (mounted in the tabs layout
+ * everywhere else) must also live here so `invite:received` — notably a
+ * rematch invitation caught by the summary's RematchPrompt — keeps patching
+ * the invites cache while the player is on this route.
  */
 export default async function PartieLayout({ children }: Readonly<{ children: ReactNode }>) {
   await requireOnboardedSession()
 
   return (
     <QueryProvider>
-      <SocketProvider>{children}</SocketProvider>
+      <SocketProvider>
+        <InviteEventsBridge />
+        {children}
+      </SocketProvider>
     </QueryProvider>
   )
 }

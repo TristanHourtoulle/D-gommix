@@ -10,7 +10,7 @@ interface CharacterWinrateBarsProps {
 /** Per-character winrate bars, camp-colored, maquette `.char-bar-row` structure. */
 export function CharacterWinrateBars({ winrates }: CharacterWinrateBarsProps) {
   return (
-    <div>
+    <div className="flex flex-col gap-2">
       <p className="sec-label">Victoires par personnage</p>
       <div className="flex flex-col gap-2">
         {winrates.map(({ character, winrate, games }) => (

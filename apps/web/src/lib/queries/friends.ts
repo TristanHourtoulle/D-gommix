@@ -34,6 +34,8 @@ export interface FriendEntry {
   avatarId?: string | null
   /** SSR seed: 'in_game' when an active game exists in db, 'offline' otherwise. */
   initialPresence: Presence
+  /** ISO timestamp of the last ws connection, null before the first one. */
+  lastSeenAt: string | null
 }
 
 export interface FriendsPageData {
@@ -103,7 +105,12 @@ export async function getFriendsPageData(userId: string): Promise<FriendsPageDat
       .where(and(eq(friendRequests.senderId, userId), eq(friendRequests.status, 'pending')))
       .orderBy(sql`${friendRequests.createdAt} desc`),
     db
-      .select({ id: user.id, username: user.username, avatarId: user.avatarId })
+      .select({
+        id: user.id,
+        username: user.username,
+        avatarId: user.avatarId,
+        lastSeenAt: user.lastSeenAt,
+      })
       .from(friendships)
       .innerJoin(
         user,
@@ -163,6 +170,7 @@ export async function getFriendsPageData(userId: string): Promise<FriendsPageDat
       username: row.username ?? '',
       avatarId: row.avatarId,
       initialPresence: inGameIds.has(row.id) ? ('in_game' as const) : ('offline' as const),
+      lastSeenAt: row.lastSeenAt?.toISOString() ?? null,
     })),
     myLobbyId: lobbyRows[0]?.gameId ?? null,
   }

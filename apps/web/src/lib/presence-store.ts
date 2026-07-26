@@ -23,16 +23,27 @@ import type { AppSocket } from './realtime-types'
 /** Latest known presence per userId; a missing entry means « offline ». */
 export type PresenceMap = Readonly<Record<string, Presence>>
 
+/**
+ * Latest `lastSeenAt` (ISO) per userId, delivered by the ws-server alongside
+ * `offline` transitions only. Fresher than the SSR seed by construction, so
+ * readers prefer an entry here over the query value when both exist.
+ */
+export type LastSeenMap = Readonly<Record<string, string>>
+
 type Listener = () => void
 
 const EMPTY: PresenceMap = Object.freeze({})
+const EMPTY_SEEN: LastSeenMap = Object.freeze({})
 
 /** Framework-agnostic store behind `usePresence` — see the module doc. */
 export class PresenceStore {
   private readonly listeners = new Set<Listener>()
   private snapshot: PresenceMap = EMPTY
+  private lastSeen: LastSeenMap = EMPTY_SEEN
 
   readonly getSnapshot = (): PresenceMap => this.snapshot
+
+  readonly getLastSeen = (): LastSeenMap => this.lastSeen
 
   readonly subscribe = (listener: Listener): (() => void) => {
     this.listeners.add(listener)
@@ -41,10 +52,13 @@ export class PresenceStore {
     }
   }
 
-  /** Records one `presence:update`. Re-stating a known value changes nothing. */
-  readonly set = (userId: string, presence: Presence): void => {
-    if (this.snapshot[userId] === presence) return
-    this.snapshot = { ...this.snapshot, [userId]: presence }
+  /** Records one `presence:update`. Re-stating known values changes nothing. */
+  readonly set = (userId: string, presence: Presence, lastSeenAt?: string): void => {
+    const presenceChanged = this.snapshot[userId] !== presence
+    const seenChanged = lastSeenAt !== undefined && this.lastSeen[userId] !== lastSeenAt
+    if (!presenceChanged && !seenChanged) return
+    if (presenceChanged) this.snapshot = { ...this.snapshot, [userId]: presence }
+    if (seenChanged) this.lastSeen = { ...this.lastSeen, [userId]: lastSeenAt }
     this.publish()
   }
 
@@ -57,8 +71,9 @@ export class PresenceStore {
    * who went offline during the outage fall back to the `offline` default.
    */
   readonly clear = (): void => {
-    if (Object.keys(this.snapshot).length === 0) return
+    if (Object.keys(this.snapshot).length === 0 && Object.keys(this.lastSeen).length === 0) return
     this.snapshot = EMPTY
+    this.lastSeen = EMPTY_SEEN
     this.publish()
   }
 
@@ -95,8 +110,8 @@ let attachedTo: AppSocket | null = null
 export function attachPresenceStore(socket: AppSocket): void {
   if (attachedTo === socket) return
   attachedTo = socket
-  socket.on('presence:update', ({ userId, presence }) => {
-    presenceStore.set(userId, presence)
+  socket.on('presence:update', ({ userId, presence, lastSeenAt }) => {
+    presenceStore.set(userId, presence, lastSeenAt)
   })
   socket.on('disconnect', () => {
     presenceStore.clear()

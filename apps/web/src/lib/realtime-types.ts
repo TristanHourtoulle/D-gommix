@@ -31,6 +31,13 @@ export interface InviteReceivedPayload {
   gameId: string
   hostUsername: string
   format: GameFormat
+  /**
+   * Id of the finished game this invitation is a rematch of. Only set on the
+   * live `replay:create` broadcast — the reconnect re-push and the invites
+   * endpoint cannot derive it (no db column), so consumers must treat it as a
+   * hint, not a guarantee.
+   */
+  rematchOf?: string
 }
 
 export interface InviteCanceledPayload {
@@ -48,6 +55,8 @@ export interface FriendsEventPayload {
 export interface PresenceUpdatePayload {
   userId: string
   presence: Presence
+  /** ISO timestamp of the last connection; only set when `presence` is `offline`. */
+  lastSeenAt?: string
 }
 
 export interface GameStateSnapshotPayload {
@@ -65,6 +74,15 @@ export interface KickedPayload {
   gameId: string
 }
 
+/**
+ * Server-side hint that persisted stats changed and the tab payloads
+ * (home, leaderboard) must be revalidated. Carries no data on purpose:
+ * clients refetch through their session-authenticated endpoints.
+ */
+export interface StatsInvalidatePayload {
+  scope: 'game_finished'
+}
+
 /** Broadcasts pushed by the ws-server (rooms `user:{id}` / `game:{id}`). */
 export interface ServerToClientEvents {
   'game:event': (event: GameEvent) => void
@@ -76,6 +94,7 @@ export interface ServerToClientEvents {
   'invite:canceled': (payload: InviteCanceledPayload) => void
   'friends:event': (payload: FriendsEventPayload) => void
   'presence:update': (payload: PresenceUpdatePayload) => void
+  'stats:invalidate': (payload: StatsInvalidatePayload) => void
 }
 
 /** Client → server commands: event name → payload and ack result shapes. */

@@ -7,12 +7,16 @@ interface TopDegommeurTileProps {
   top: TopDegommeur
 }
 
-/** Highlighted « Fléau des Gaules » spotlight card. */
+/**
+ * Highlighted « Fléau des Gaules » spotlight card: bronze-tint gradient with
+ * the ceremony's conic rays behind the avatar (`.lb-rays`).
+ */
 export function TopDegommeurTile({ top }: TopDegommeurTileProps) {
   return (
-    <Card className="flex flex-col gap-2 px-4 py-3">
-      <p className="sec-label">Fléau des Gaules</p>
-      <div className="flex items-center gap-3">
+    <Card className="lb-fleau flex flex-col gap-2 px-4 py-3">
+      <span className="lb-rays" aria-hidden />
+      <p className="sec-label relative">Fléau des Gaules</p>
+      <div className="relative flex items-center gap-3">
         <PlayerAvatar username={top.username} size={40} avatarId={top.avatarId ?? null} />
         <div className="min-w-0 flex-1">
           <p className="m-0 truncate text-sm font-bold">{top.username}</p>

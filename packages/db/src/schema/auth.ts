@@ -11,6 +11,7 @@ export const user = pgTable(
     image: text('image'),
     username: text('username'), // NULL until onboarding is done; max 20 chars enforced by Zod
     avatarId: text('avatar_id'), // NULL = fall back to the pseudo initial; allowlist enforced by Zod
+    lastSeenAt: timestamp('last_seen_at', { withTimezone: true }), // NULL until the first ws connection
     createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
     updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
   },

@@ -1,6 +1,5 @@
 import { Card } from '@/components/ui/card'
 import { Icon } from '@/components/icons'
-import { PlayerAvatar } from '@/components/ui/player-avatar'
 import type { RivalrySpotlight } from '@/lib/queries/rivalries'
 
 interface RivalryTileProps {
@@ -18,48 +17,38 @@ function dealtLabel(count: number): string {
   return `${count} dégommage${count > 1 ? 's' : ''}`
 }
 
-/** « Qui dégomme qui » spotlight: my nemesis and my favourite victim. */
+/**
+ * « Qui dégomme qui » spotlight, condensed into a single two-column card:
+ * nemesis on the left, favourite victim on the right.
+ */
 export function RivalryTile({ rivalry }: RivalryTileProps) {
   const { nemesis, favoriteVictim } = rivalry
   if (nemesis === null && favoriteVictim === null) return null
 
+  const hasBoth = nemesis !== null && favoriteVictim !== null
+
   return (
-    <Card className="flex flex-col gap-2 px-4 py-3">
-      <p className="sec-label">Rivalités</p>
-      <div className="flex flex-col gap-3">
-        {nemesis ? (
-          <div className="flex items-center gap-3">
-            <PlayerAvatar username={nemesis.username} size={32} avatarId={nemesis.avatarId ?? null} />
-            <div className="min-w-0 flex-1">
-              <p className="m-0 text-xs uppercase" style={{ color: 'var(--ink-faint)' }}>
-                Ta bête noire
-              </p>
-              <p className="m-0 truncate text-sm font-bold">
-                {nemesis.username} · {sufferedLabel(nemesis.count)}
-              </p>
-            </div>
-            <Icon name="sword" size={16} className="text-bronze" />
-          </div>
-        ) : null}
-        {favoriteVictim ? (
-          <div className="flex items-center gap-3">
-            <PlayerAvatar
-              username={favoriteVictim.username}
-              size={32}
-              avatarId={favoriteVictim.avatarId ?? null}
-            />
-            <div className="min-w-0 flex-1">
-              <p className="m-0 text-xs uppercase" style={{ color: 'var(--ink-faint)' }}>
-                Ta victime préférée
-              </p>
-              <p className="m-0 truncate text-sm font-bold">
-                {favoriteVictim.username} · {dealtLabel(favoriteVictim.count)}
-              </p>
-            </div>
-            <Icon name="sword" size={16} className="text-bronze" />
-          </div>
-        ) : null}
-      </div>
+    <Card className={`grid gap-3 px-4 py-3 ${hasBoth ? 'grid-cols-2' : 'grid-cols-1'}`}>
+      {nemesis ? (
+        <div className="lb-riv-cell">
+          <p className="sec-label flex items-center gap-1.5">
+            <Icon name="sword" size={13} className="shrink-0 text-bronze" />
+            Ta bête noire
+          </p>
+          <p className="m-0 truncate text-sm font-bold">{nemesis.username}</p>
+          <p className="m-0 text-xs text-ink-soft">{sufferedLabel(nemesis.count)}</p>
+        </div>
+      ) : null}
+      {favoriteVictim ? (
+        <div className="lb-riv-cell">
+          <p className="sec-label flex items-center gap-1.5">
+            <Icon name="sword" size={13} className="shrink-0 text-bronze" />
+            Ta victime préférée
+          </p>
+          <p className="m-0 truncate text-sm font-bold">{favoriteVictim.username}</p>
+          <p className="m-0 text-xs text-ink-soft">{dealtLabel(favoriteVictim.count)}</p>
+        </div>
+      ) : null}
     </Card>
   )
 }

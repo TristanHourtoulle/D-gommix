@@ -58,7 +58,7 @@ export function FriendsScreen({ initialData }: FriendsScreenProps) {
     () => Object.fromEntries(friends.map((friend) => [friend.id, friend.initialPresence])),
     [friends]
   )
-  const { presenceOf } = usePresence(initialPresence)
+  const { presenceOf, lastSeenOf } = usePresence(initialPresence)
 
   const run = useCallback(
     async <K extends CommandName>(
@@ -100,8 +100,9 @@ export function FriendsScreen({ initialData }: FriendsScreenProps) {
   /**
    * One-tap invite: reuses the open lobby when there is one, otherwise creates
    * a lobby on demand and chains the invitation into it. The chain is not
-   * atomic — a failed invite still leaves a real lobby the user owns, which is
-   * why the navigation happens on both outcomes.
+   * atomic — when the invite fails right after the create, the fresh empty
+   * lobby is abandoned (`lobby:leave` dissolves it) and the user stays on the
+   * Amis tab instead of landing in a phantom lobby.
    */
   const inviteFriend = useCallback(
     async (friendId: string): Promise<void> => {
@@ -127,14 +128,19 @@ export function FriendsScreen({ initialData }: FriendsScreenProps) {
         friendId,
       })
       setBusyKey(null)
+      if (!invited.ok) {
+        // Fire-and-forget: the empty lobby dissolves server-side, and the
+        // zombie sweep catches it anyway if this emit is lost.
+        void emitWithAck(socket, 'lobby:leave', { gameId: created.gameId }).catch(() => undefined)
+        invalidate('home', 'friends', 'invites')
+        toast(ackErrorMessage(invited), 'error')
+        return
+      }
       // The fresh lobby is the Accueil resume banner and the `myLobbyId` the
       // Amis screen invites into; creating it may also auto-decline the user's
       // own pending invitations, so all three payloads are stale now.
       invalidate('home', 'friends', 'invites')
-      if (invited.ok) toast('Invitation envoyée !')
-      else toast(ackErrorMessage(invited), 'error')
-      // Land in the lobby either way: the user owns a real lobby now, and
-      // « Lever le camp » is the way back out.
+      toast('Invitation envoyée !')
       router.push(`/lobby/${created.gameId}`)
     },
     [myLobbyId, run, socket, toast, invalidate, router]
@@ -210,6 +216,7 @@ export function FriendsScreen({ initialData }: FriendsScreenProps) {
                 username={friend.username}
                 avatarId={friend.avatarId ?? null}
                 presence={presenceOf(friend.id)}
+                lastSeenAt={lastSeenOf(friend.id) ?? friend.lastSeenAt ?? null}
                 busy={busyKey === friend.id}
                 onInvite={() => void inviteFriend(friend.id)}
                 onRemove={() => void run(friend.id, 'friends:remove', { friendId: friend.id })}

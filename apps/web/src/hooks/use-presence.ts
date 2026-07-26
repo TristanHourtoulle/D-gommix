@@ -9,6 +9,11 @@ export interface UsePresenceResult {
   presenceMap: Readonly<Record<string, Presence>>
   /** Presence for one user, `offline` when nothing was received yet. */
   presenceOf: (userId: string) => Presence
+  /**
+   * Live `lastSeenAt` (ISO) delivered with an `offline` transition on this
+   * socket, null when none arrived — callers fall back to their SSR seed.
+   */
+  lastSeenOf: (userId: string) => string | null
 }
 
 /**
@@ -27,6 +32,12 @@ export function usePresence(initial?: Record<string, Presence>): UsePresenceResu
     presenceStore.getSnapshot
   )
 
+  const liveLastSeen = useSyncExternalStore(
+    presenceStore.subscribe,
+    presenceStore.getLastSeen,
+    presenceStore.getLastSeen
+  )
+
   const presenceMap = useMemo(() => mergePresence(initial, live), [initial, live])
 
   const presenceOf = useCallback(
@@ -34,5 +45,10 @@ export function usePresence(initial?: Record<string, Presence>): UsePresenceResu
     [presenceMap]
   )
 
-  return { presenceMap, presenceOf }
+  const lastSeenOf = useCallback(
+    (userId: string): string | null => liveLastSeen[userId] ?? null,
+    [liveLastSeen]
+  )
+
+  return { presenceMap, presenceOf, lastSeenOf }
 }

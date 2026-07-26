@@ -4,13 +4,14 @@ import type { NextConfig } from 'next'
 const nextConfig: NextConfig = {
   transpilePackages: ['@degommix/game-core', '@degommix/db'],
   experimental: {
-    // Client-side Router Cache only (not the `use cache` data cache): every tab
-    // is a dynamic route, and Next 15 ships `dynamic: 0`, so each tap on the
-    // tab bar paid a full RSC round-trip even when coming back one second
-    // later. The screen data no longer lives in that payload — it is owned by
-    // TanStack Query and invalidated by websocket events — so reusing the
-    // rendered shell for 30 s is safe and makes tab switches instant.
-    staleTimes: { dynamic: 30, static: 180 },
+    // Client-side Router Cache only (not the `use cache` data cache). The tab
+    // pages still run their queries server-side (getLeaderboard & co feed
+    // `initialData`), so a `dynamic` staleTime would replay a pre-game RSC
+    // payload after a game finished — a second cache layer fighting the
+    // websocket invalidation. `dynamic: 0` keeps every tab tap fresh; switches
+    // stay instant anyway because TanStack Query paints from its client cache
+    // while the RSC payload streams in.
+    staleTimes: { dynamic: 0, static: 180 },
   },
 }
 

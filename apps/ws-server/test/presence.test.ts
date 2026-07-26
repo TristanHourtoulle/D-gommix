@@ -12,6 +12,7 @@ import {
 interface PresenceUpdate {
   userId: string
   presence: string
+  lastSeenAt?: string
 }
 
 describe('presence', () => {
@@ -50,7 +51,14 @@ describe('presence', () => {
 
     const offline = waitForEvent<PresenceUpdate>(s2, 'presence:update')
     s1b.disconnect()
-    expect(await offline).toEqual({ userId: 'u1', presence: 'offline' })
+    const payload = await offline
+    expect(payload).toEqual({
+      userId: 'u1',
+      presence: 'offline',
+      lastSeenAt: expect.any(String),
+    })
+    // Round-trips through Date unchanged, i.e. a valid ISO 8601 string.
+    expect(new Date(payload.lastSeenAt ?? '').toISOString()).toBe(payload.lastSeenAt)
   })
 
   it('does not notify non-friends', async () => {

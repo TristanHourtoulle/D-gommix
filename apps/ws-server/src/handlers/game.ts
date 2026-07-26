@@ -2,11 +2,11 @@ import { and, eq, inArray, ne } from 'drizzle-orm'
 import { z } from 'zod'
 import { gamePlayers, games, user } from '@degommix/db'
 import type { Command } from '@degommix/game-core'
-import { CommandError, withAck } from '../ack'
+import { CommandError, isUniqueViolation, withAck } from '../ack'
 import type { AppContext } from '../context'
 import { createLobby, inviteSeat } from './lobby'
 import { broadcastLobbyState } from '../lobby-state'
-import { assertNotJoinedElsewhere, getSeat } from '../lobby-shared'
+import { assertNotJoinedElsewhere, getSeat, type GamePlayerRow } from '../lobby-shared'
 import type { AppSocket } from '../socket-types'
 
 const commandSchema: z.ZodType<Command> = z.discriminatedUnion('type', [
@@ -31,6 +31,32 @@ const replaySchema = z.object({ finishedGameId: z.uuid() })
 
 const GAME_COMMAND_RATE_LIMIT = 20
 const GAME_COMMAND_RATE_WINDOW_MS = 1_000
+
+/**
+ * Best-effort copy of a player's character from the finished game onto their
+ * seat in the rematch lobby. The seed targets the NEW game's row only — the
+ * source seats are frozen in the finished game and untouched by the stale-lobby
+ * evacuations of `assertNotJoinedElsewhere`. A valid source game cannot trip
+ * the per-game unique index (`game_players_character_unique`), but the seed is
+ * purely cosmetic: on a unique violation the seat simply stays null instead of
+ * failing the rematch.
+ */
+async function seedCharacter(
+  db: AppContext['db'],
+  gameId: string,
+  userId: string,
+  character: GamePlayerRow['character']
+): Promise<void> {
+  if (character === null) return
+  try {
+    await db
+      .update(gamePlayers)
+      .set({ character })
+      .where(and(eq(gamePlayers.gameId, gameId), eq(gamePlayers.userId, userId)))
+  } catch (error) {
+    if (!isUniqueViolation(error)) throw error
+  }
+}
 
 export function registerGameHandlers(socket: AppSocket, ctx: AppContext): void {
   const { db, io, manager, limiter } = ctx
@@ -78,13 +104,16 @@ export function registerGameHandlers(socket: AppSocket, ctx: AppContext): void {
           )
         )
       const { gameId, code } = await createLobby(ctx, userId, finished.format as 2 | 3 | 4)
+      await seedCharacter(db, gameId, userId, mySeat.character)
       const [me] = await db.select({ username: user.username }).from(user).where(eq(user.id, userId))
       for (const former of formerPlayers) {
         await inviteSeat(ctx, gameId, former.userId)
+        await seedCharacter(db, gameId, former.userId, former.character)
         io.to(`user:${former.userId}`).emit('invite:received', {
           gameId,
           hostUsername: me?.username ?? '',
           format: finished.format,
+          rematchOf: finishedGameId,
         })
       }
       await socket.join(`game:${gameId}`)
