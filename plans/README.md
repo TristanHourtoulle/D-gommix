@@ -38,7 +38,8 @@ prod seals re-backfilled per runbook).
 Plans 039–044 = the 2026-07-26 round 6: seals wave 2 (S1-S10) plus the owner's
 R-verdict (R1 optionnelle, R5, R6, R8, R10; R3 deferred « pas maintenant »;
 R2/R4/R7/R9 rejected). Execution: 039 in flight; 040/043 independent; live
-chain merges serialized 041 → 044 → 042.
+chain merges serialized 041 → 044 → 042. Round 6 fully shipped 2026-07-26
+(PRs #79-#86).
 
 ## Execution order & status
 
@@ -82,12 +83,12 @@ chain merges serialized 041 → 044 → 042.
 | 036 | L'Almanach des stats absurdes — page parodique liée aux Lauriers | P3 | M | — | DONE (merged `3fec223` as PR #66, SQL exercised against a seeded DB) |
 | 037 | Bruitages d'arène — opt-in, Web Audio, 3 samples | P3 | S-M | — (execute after 029/030 on live files) | DONE (merged `1d32b9f` as PR #73, owner-supplied ouch ×3 drawn per hit; LISTENING PASS = owner's in prod — sounds OFF by default) |
 | 038 | Simulation de partie (mode dev) — timeline seedée dans le vrai réducteur | P2 | M | — (EXECUTE FIRST: wave 0) | DONE (merged `3a0112f` as PR #70, executed first as wave 0; zero-persistence proven by network trace) |
-| 039 | Sceaux vague 2 (S1–S10) | P2 | L | — | IN PROGRESS (executor running) |
-| 040 | « L'Oracle du village » — optional secret pre-game prediction, revealed and scored at the Banquet | P2 | M | — (carries migration 0006) | TODO |
-| 041 | « Tableau des augures » — live, purely-derived stats panel on the game screen | P2 | M | — (live chain: merges first, before 044 → 042) | TODO |
-| 042 | Coups signés — the dégommage animation takes the hitter's character | P2 | M | — (live chain: merges last, after 041 → 044) | TODO |
-| 043 | « La Cote du guerrier » — an Elo-like rating in sesterces, recomputed at read time | P2 | M-L | — | TODO |
-| 044 | Le Barde commente — ambient Assurancetourix lines at game milestones, in the live journal only | P3 | S-M | — (live chain: merges after 041, before 042) | TODO |
+| 039 | Sceaux vague 2 (S1–S10) | P2 | L | — | DONE (merged `bdeb09b` as PR #83, e2e ship-gate; prod backfill re-run additive 2026-07-26; 3 guards + circle-scoping awaiting owner validation — see PR body) |
+| 040 | « L'Oracle du village » — optional secret pre-game prediction, revealed and scored at the Banquet | P2 | M | — (carries migration 0006) | DONE (merged `963c191` as PR #82, migration 0006, e2e incl. oracle assertions; SOUFFRE_MIN_HITS=1 + 2 UX choices awaiting owner validation) |
+| 041 | « Tableau des augures » — live, purely-derived stats panel on the game screen | P2 | M | — (live chain: merges first, before 044 → 042) | DONE (merged `dcc1be3` as PR #84, actorRuns refactor kept all 30 stamp tests + 5 parity fixtures green) |
+| 042 | Coups signés — the dégommage animation takes the hitter's character | P2 | M | — (live chain: merges last, after 041 → 044) | DONE (merged `e553ae4` as PR #86, 4 signature variants, Astérix byte-identical; 2-phone visual pass reviewer-owed at round close; PAF per-camp re-sync deferred) |
+| 043 | « La Cote du guerrier » — an Elo-like rating in sesterces, recomputed at read time | P2 | M-L | — | DONE (merged `564b7ee` as PR #81, pure Elo fold on the (ended_at,id) total order — also fixed latent fold tie non-determinism) |
+| 044 | Le Barde commente — ambient Assurancetourix lines at game milestones, in the live journal only | P3 | S-M | — (live chain: merges after 041, before 042) | DONE (merged `f227ae5` as PR #85, 15 catalog lines awaiting owner retouche — see PR body) |
 
 Status values: TODO | IN PROGRESS | DONE | BLOCKED (with one-line reason) | REJECTED (with one-line rationale — finding fixed independently or approach abandoned)
 
