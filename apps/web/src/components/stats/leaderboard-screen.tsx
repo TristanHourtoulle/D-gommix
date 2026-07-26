@@ -4,9 +4,12 @@ import { useState } from 'react'
 import Link from 'next/link'
 import type { LeaderboardPayload } from '@/lib/api-payloads'
 import { useLeaderboardData, type LeaderboardPeriod } from '@/hooks/use-tab-data'
+import { currentParisMonthKey } from '@/lib/season'
 import { SectionTitle } from '@/components/ui/section-title'
 import { EmptyState } from '@/components/ui/empty-state'
+import { ChampionsStrip } from './champions-strip'
 import { CharacterWinrateBars } from './character-winrate-bars'
+import { MonthStepper } from './month-stepper'
 import { PeriodSegmented } from './period-segmented'
 import { Podium } from './podium'
 import { RankingTable } from './ranking-table'
@@ -26,10 +29,31 @@ interface LeaderboardScreenProps {
  */
 export function LeaderboardScreen({ viewerId, initialData }: LeaderboardScreenProps) {
   const [period, setPeriod] = useState<LeaderboardPeriod>('all')
-  const { data } = useLeaderboardData(initialData, period)
+  const [monthKey, setMonthKey] = useState<string | null>(null)
+  const { data } = useLeaderboardData(initialData, period, monthKey)
   // `keepPreviousData` keeps the previous window during a fetch; the SSR
   // payload is the last-resort fallback and matches the initial 'all' period.
   const leaderboard = data ?? initialData
+  const season = leaderboard.season ?? initialData.season
+
+  const selectPeriod = (next: LeaderboardPeriod): void => {
+    setPeriod(next)
+    setMonthKey(null)
+  }
+
+  const browseMonth = (key: string): void => {
+    setPeriod('month')
+    setMonthKey(key === currentParisMonthKey() ? null : key)
+  }
+
+  // Archived months only (plan 027 decision 5): the month-to-date view keeps
+  // plan 019's zeroed rows; an archive month nobody played renders an empty
+  // state instead of a podium of zeros.
+  const monthIsEmpty =
+    monthKey !== null &&
+    leaderboard.rows.every(
+      (row) => row.wins === 0 && row.villageGames === 0 && row.degommages === 0
+    )
 
   if (leaderboard.friendCount === 0) {
     return (
@@ -54,24 +78,51 @@ export function LeaderboardScreen({ viewerId, initialData }: LeaderboardScreenPr
     <main className="tab-page">
       <SectionTitle sub="Toute la tribu, du premier au dernier">Lauriers</SectionTitle>
 
-      <PeriodSegmented value={period} onChange={setPeriod} />
+      <PeriodSegmented value={period} onChange={selectPeriod} />
 
-      {leaderboard.topDegommeur ? <TopDegommeurTile top={leaderboard.topDegommeur} /> : null}
+      {period === 'month' ? (
+        <MonthStepper
+          monthKey={monthKey}
+          earliestMonth={season?.earliestMonth ?? null}
+          onChange={setMonthKey}
+        />
+      ) : null}
 
-      <RivalryTile rivalry={leaderboard.rivalry} pairs={leaderboard.rivalryPairs} />
+      {season !== undefined && season.pastChampions.length > 0 ? (
+        <ChampionsStrip
+          champions={season.pastChampions}
+          activeMonth={monthKey}
+          onSelect={browseMonth}
+        />
+      ) : null}
 
-      <Podium rows={podiumRows} viewerId={viewerId} />
-
-      {leaderboard.records ? <RecordsCard records={leaderboard.records} /> : null}
-
-      {tableRows.length > 0 ? <RankingTable rows={tableRows} viewerId={viewerId} /> : null}
-
-      {leaderboard.characterWinrates.length > 0 ? (
-        <CharacterWinrateBars winrates={leaderboard.characterWinrates} />
+      {monthIsEmpty ? (
+        <EmptyState
+          icon="trophy"
+          title="Aucune partie ce mois-là"
+          description="Personne du village n'a terminé de partie sur ce mois."
+        />
       ) : (
-        <p className="m-0 text-center text-sm text-ink-soft">
-          Les winrates par personnage apparaîtront après vos premières parties menées au village.
-        </p>
+        <>
+          {leaderboard.topDegommeur ? <TopDegommeurTile top={leaderboard.topDegommeur} /> : null}
+
+          <RivalryTile rivalry={leaderboard.rivalry} pairs={leaderboard.rivalryPairs} />
+
+          <Podium rows={podiumRows} viewerId={viewerId} />
+
+          {leaderboard.records ? <RecordsCard records={leaderboard.records} /> : null}
+
+          {tableRows.length > 0 ? <RankingTable rows={tableRows} viewerId={viewerId} /> : null}
+
+          {leaderboard.characterWinrates.length > 0 ? (
+            <CharacterWinrateBars winrates={leaderboard.characterWinrates} />
+          ) : (
+            <p className="m-0 text-center text-sm text-ink-soft">
+              Les winrates par personnage apparaîtront après vos premières parties menées au
+              village.
+            </p>
+          )}
+        </>
       )}
     </main>
   )

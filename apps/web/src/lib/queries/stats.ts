@@ -82,15 +82,20 @@ export async function getCircleMemberIds(userId: string): Promise<string[]> {
 export interface LeaderboardRange {
   /** Count only games with `ended_at >= from`. Omit for all-time. */
   from?: Date
+  /** Exclusive upper bound: `ended_at < to`. Omit for month-to-date/all-time. */
+  to?: Date
 }
 
 /** `ended_at` window filters for a leaderboard range (empty for all-time). */
 function endedInWindow(range: LeaderboardRange) {
-  return range.from === undefined ? [] : [sql`${games.endedAt} >= ${range.from}`]
+  return [
+    ...(range.from === undefined ? [] : [sql`${games.endedAt} >= ${range.from}`]),
+    ...(range.to === undefined ? [] : [sql`${games.endedAt} < ${range.to}`]),
+  ]
 }
 
 /** One circle member's aggregate line, before ranks are assigned. */
-interface CircleStanding {
+export interface CircleStanding {
   userId: string
   username: string
   avatarId: string | null
@@ -104,7 +109,7 @@ interface CircleStanding {
  * Ranking order of the village (design §5.3), shared by the full leaderboard
  * and the viewer's rank chip so the two can never disagree.
  */
-function compareStandings(a: CircleStanding, b: CircleStanding): number {
+export function compareStandings(a: CircleStanding, b: CircleStanding): number {
   return (
     b.wins - a.wins ||
     b.winrate - a.winrate ||

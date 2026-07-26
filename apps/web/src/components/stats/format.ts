@@ -34,6 +34,20 @@ export function formatDayTime(date: Date): string {
   return dayTimeFormatter.format(date)
 }
 
+const monthYearFormatter = new Intl.DateTimeFormat('fr-FR', {
+  month: 'long',
+  year: 'numeric',
+  timeZone: 'Europe/Paris',
+})
+
+/** "juillet 2026" from a 'YYYY-MM' month key (mid-month day dodges tz edges). */
+export function formatMonthKey(monthKey: string): string {
+  const year = Number(monthKey.slice(0, 4))
+  const month = Number(monthKey.slice(5, 7))
+  if (!Number.isInteger(year) || !Number.isInteger(month)) return monthKey
+  return monthYearFormatter.format(new Date(Date.UTC(year, month - 1, 15)))
+}
+
 const clockTimeFormatter = new Intl.DateTimeFormat('fr-FR', {
   hour: '2-digit',
   minute: '2-digit',

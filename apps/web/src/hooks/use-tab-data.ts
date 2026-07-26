@@ -123,17 +123,28 @@ export type LeaderboardPeriod = 'all' | 'month'
 
 /**
  * Classement of the friends circle. `period` selects the window server-side;
- * only the all-time variant is SSR-seeded, so the month variant fetches on
- * first use while `keepPreviousData` keeps the previous window on screen.
- * Invalidations target the `queryKeys.leaderboard` prefix and hit both.
+ * `monthKey` ('YYYY-MM', plan 027) browses an archived month and gets its own
+ * cache entry under the same `leaderboard` prefix, so every existing
+ * invalidation hits all variants. Only the all-time variant is SSR-seeded;
+ * `keepPreviousData` keeps the previous window on screen while fetching.
  */
 export function useLeaderboardData(
   initialData: LeaderboardPayload,
-  period: LeaderboardPeriod = 'all'
+  period: LeaderboardPeriod = 'all',
+  monthKey: string | null = null
 ): UseQueryResult<LeaderboardPayload, Error> {
+  const archived = period === 'month' && monthKey !== null
   return useQuery({
-    queryKey: [...queryKeys.leaderboard, period] as const,
-    queryFn: () => fetchPayload(`/api/leaderboard?period=${period}`, leaderboardPayloadSchema),
+    queryKey: archived
+      ? ([...queryKeys.leaderboard, 'month', monthKey] as const)
+      : ([...queryKeys.leaderboard, period] as const),
+    queryFn: () =>
+      fetchPayload(
+        archived
+          ? `/api/leaderboard?period=month&month=${monthKey}`
+          : `/api/leaderboard?period=${period}`,
+        leaderboardPayloadSchema
+      ),
     initialData: period === 'all' ? initialData : undefined,
     ...STALE_INITIAL_DATA,
     placeholderData: keepPreviousData,

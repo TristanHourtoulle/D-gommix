@@ -170,6 +170,25 @@ export const leaderboardPayloadSchema = z.object({
     z.object({ character: characterSchema, winrate: z.number(), games: z.number() })
   ),
   /**
+   * Season archive meta (plan 027): earliest playable month plus the champion
+   * of every completed Paris month. Optional for old PWA-cached SSR payloads
+   * (same convention as lastSeenAt / currentStreak).
+   */
+  season: z
+    .object({
+      earliestMonth: z.string().nullable(),
+      pastChampions: z.array(
+        z.object({
+          month: z.string(),
+          userId: z.string(),
+          username: z.string(),
+          avatarId: z.string().nullable().optional(),
+          wins: z.number(),
+        })
+      ),
+    })
+    .optional(),
+  /**
    * All-time « Palmarès » records — never affected by `?period=` (plan 026).
    * Optional for old PWA-cached SSR payloads (same convention as
    * currentStreak / lastSeenAt).
