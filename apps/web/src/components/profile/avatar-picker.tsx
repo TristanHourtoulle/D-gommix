@@ -2,9 +2,10 @@
 
 import { useRouter } from 'next/navigation'
 import { useState } from 'react'
+import { Button } from '@/components/ui/button'
 import { PlayerAvatar } from '@/components/ui/player-avatar'
 import { useToast } from '@/components/ui/toast'
-import { AVATAR_BOARDS, AVATAR_BOARD_LABELS, avatarsOfBoard } from '@/lib/avatars'
+import { AVATAR_BOARDS, AVATAR_BOARD_LABELS, AVATARS, avatarsOfBoard } from '@/lib/avatars'
 
 interface AvatarPickerProps {
   username: string
@@ -17,6 +18,8 @@ export function AvatarPicker({ username, currentAvatarId }: AvatarPickerProps) {
   const { toast } = useToast()
   const [selected, setSelected] = useState<string | null>(currentAvatarId)
   const [pending, setPending] = useState(false)
+  // Expanded by default only when the player has never picked an avatar.
+  const [open, setOpen] = useState(currentAvatarId === null)
 
   const save = async (avatarId: string | null): Promise<void> => {
     if (pending) return
@@ -35,7 +38,30 @@ export function AvatarPicker({ username, currentAvatarId }: AvatarPickerProps) {
       return
     }
     toast('Avatar mis à jour')
+    setOpen(false)
     router.refresh()
+  }
+
+  if (!open) {
+    const selectedLabel =
+      AVATARS.find((avatar) => avatar.id === selected)?.label ?? 'Aucun (initiale)'
+    return (
+      <div className="flex items-center gap-3">
+        <PlayerAvatar username={username} size={56} avatarId={selected} />
+        <span className="flex-1 text-sm font-semibold" style={{ color: 'var(--ink)' }}>
+          {selectedLabel}
+        </span>
+        <Button
+          variant="ghost"
+          fullWidth={false}
+          onClick={() => {
+            setOpen(true)
+          }}
+        >
+          Changer d&apos;avatar
+        </Button>
+      </div>
+    )
   }
 
   return (
