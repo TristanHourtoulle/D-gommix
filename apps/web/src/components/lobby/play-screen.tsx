@@ -30,7 +30,7 @@ import { sortByAvailability } from './invitable-order'
 const CONNECTING_MESSAGE = 'Connexion en cours, réessaie dans un instant'
 
 interface PlayScreenProps {
-  /** SSR payload of the `invites` query: the « Invitations reçues » list. */
+  /** SSR payload of the `invites` query: the « Convocations » list. */
   initialInvites: InvitesPayload
   /** SSR payload of the `friends` query: the « Amis » invite strip. */
   initialFriends: FriendsPayload
@@ -168,7 +168,7 @@ export function PlayScreen({ initialInvites, initialFriends }: PlayScreenProps) 
 
       <section className="flex flex-col gap-2">
         <div className="flex items-center justify-between">
-          <p className="sec-label">Invitations reçues</p>
+          <p className="sec-label">Convocations</p>
           {invites.length > 0 ? <Pill variant="bronze">{invites.length}</Pill> : null}
         </div>
         {invites.length === 0 ? (
