@@ -90,6 +90,23 @@ test('two-player 1v1 happy path (design §7.3)', async ({ browser }) => {
     await expect(p1.getByRole('button', { name: `Obélix, pris par ${J2.username}` })).toBeVisible()
     await shot(p1, '08-lobby')
 
+    // Plan 040: J1 consults the Oracle, J2 deliberately does not — the launch
+    // must work either way (« optionnelle, pas obligatoire ! »).
+    await p1.getByRole('button', { name: 'Consulter l’Oracle' }).click()
+    await p1
+      .getByTestId('oracle-winner-options')
+      .getByRole('button', { name: new RegExp(`^${J2.username}`) })
+      .click()
+    await p1
+      .getByTestId('oracle-souffre-options')
+      .getByRole('button', { name: new RegExp(`^${J2.username}`) })
+      .click()
+    await p1.getByRole('button', { name: 'Sceller ma prédiction' }).click()
+    await expect(p1.getByTestId('oracle-sealed')).toBeVisible()
+    await expect(p2.getByTestId('oracle-card')).toBeVisible()
+    await expect(p2.getByTestId('oracle-sealed')).toHaveCount(0)
+    await shot(p1, '08b-oracle')
+
     await p1.getByRole('button', { name: 'Lancer la partie' }).click()
     await p1.waitForURL(`**/partie/${gameId}`)
     await p2.waitForURL(`**/partie/${gameId}`)
@@ -156,12 +173,22 @@ test('two-player 1v1 happy path (design §7.3)', async ({ browser }) => {
     await expect(p2.getByTestId('seal-unlocks')).toContainText('Sceau débloqué')
     await expect(p2.getByTestId('seal-unlocks')).toContainText('Premier de cordée')
     await expect(p1.getByTestId('seal-unlocks')).toHaveCount(0)
+
+    // Plan 040: J1 predicted J2 as winner AND as souffre-douleur. J2 won and
+    // took the only surviving dégommage (J1 tapped twice, one was undone), so
+    // J1 scores ORACLE_WINNER_POINTS + ORACLE_SOUFFRE_DOULEUR_POINTS = 3.
+    await expect(p1.getByTestId('oracle-reveal')).toContainText('L’Oracle a parlé')
+    await expect(p1.getByTestId('oracle-reveal')).toContainText(J1.username)
+    await expect(p1.getByTestId('oracle-reveal')).toContainText('+3')
+    await expect(p2.getByTestId('oracle-reveal')).toContainText('+3')
     await shot(p2, '13-resume')
 
     // — Step 8b: J1's leaderboard shows J2 ranked with 1 win —
     await p1.goto('/classement')
     await expect(p1.getByTestId(`ranking-row-${J2.username}`)).toContainText('1 v · 100%')
     await expect(p1.getByTestId(`ranking-row-${J1.username}`)).toContainText('0 v')
+    // Plan 040: the only prophet of the circle is J1, with the 3 points above.
+    await expect(p1.getByTestId('prophets-tile')).toContainText(J1.username)
     await shot(p1, '14-classement')
 
     // Plan 033: the seal is permanent — it is on J2's profile board too.
