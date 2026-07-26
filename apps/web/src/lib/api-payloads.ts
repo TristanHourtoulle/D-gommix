@@ -107,6 +107,14 @@ const rivalryPeerSchema = z.object({
   count: z.number(),
 })
 
+const rivalryPairSchema = z.object({
+  userId: z.string(),
+  username: z.string(),
+  avatarId: z.string().nullable().optional(),
+  dealt: z.number(),
+  taken: z.number(),
+})
+
 export const leaderboardPayloadSchema = z.object({
   rows: z.array(
     z.object({
@@ -136,6 +144,8 @@ export const leaderboardPayloadSchema = z.object({
     nemesis: rivalryPeerSchema.nullable(),
     favoriteVictim: rivalryPeerSchema.nullable(),
   }),
+  /** Optional for old PWA-cached SSR payloads (same convention as currentStreak). */
+  rivalryPairs: z.array(rivalryPairSchema).optional(),
   characterWinrates: z.array(
     z.object({ character: characterSchema, winrate: z.number(), games: z.number() })
   ),

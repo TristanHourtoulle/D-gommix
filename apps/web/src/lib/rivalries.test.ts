@@ -3,6 +3,7 @@ import {
   aggregatePairCounts,
   pickFavoriteVictim,
   pickNemesis,
+  sortRivalryPairs,
   takenByTarget,
   type PairCount,
   type RivalryEventRow,
@@ -131,6 +132,41 @@ describe('pickFavoriteVictim', () => {
     expect(pickFavoriteVictim([pair('obelix', 3, 2), pair('asterix', 3, 2)])).toEqual(
       pair('asterix', 3, 2)
     )
+  })
+})
+
+describe('sortRivalryPairs', () => {
+  it('orders by total activity descending', () => {
+    const pairs = [
+      { username: 'A', dealt: 1, taken: 0 },
+      { username: 'B', dealt: 2, taken: 3 },
+    ]
+
+    expect(sortRivalryPairs(pairs).map((p) => p.username)).toEqual(['B', 'A'])
+  })
+
+  it('breaks ties on the French alphabetical username', () => {
+    const pairs = [
+      { username: 'Zoé', dealt: 2, taken: 1 },
+      { username: 'Éric', dealt: 1, taken: 2 },
+    ]
+
+    expect(sortRivalryPairs(pairs).map((p) => p.username)).toEqual(['Éric', 'Zoé'])
+  })
+
+  it('does not mutate the input array', () => {
+    const pairs = [
+      { username: 'A', dealt: 1, taken: 0 },
+      { username: 'B', dealt: 2, taken: 3 },
+    ]
+
+    sortRivalryPairs(pairs)
+
+    expect(pairs.map((p) => p.username)).toEqual(['A', 'B'])
+  })
+
+  it('returns an empty array for an empty input', () => {
+    expect(sortRivalryPairs([])).toEqual([])
   })
 })
 

@@ -4,6 +4,7 @@ import {
   aggregatePairCounts,
   pickFavoriteVictim,
   pickNemesis,
+  sortRivalryPairs,
   type PairCount,
   type RivalryEventRow,
 } from '@/lib/rivalries'
@@ -173,4 +174,45 @@ export async function getRivalrySpotlight(viewerId: string): Promise<RivalrySpot
     nemesis: toPeer(nemesisPair, 'taken', usernames),
     favoriteVictim: toPeer(victimPair, 'dealt', usernames),
   }
+}
+
+export interface RivalryPair {
+  userId: string
+  username: string
+  avatarId?: string | null
+  /** Non-undone degommages the viewer dealt to this opponent. */
+  dealt: number
+  /** Non-undone degommages this opponent dealt to the viewer. */
+  taken: number
+}
+
+/**
+ * Every « qui dégomme qui » pair of the viewer, most active first. Same scope
+ * rules as getRivalrySpotlight: circle members only (SPECS.md §4, a stranger
+ * met via an invite code is never named), all-time in both leaderboard period
+ * views (plan 019 decision — rivalry data is never windowed).
+ */
+export async function getRivalryPairs(viewerId: string): Promise<RivalryPair[]> {
+  const [gameIds, memberIds] = await Promise.all([
+    finishedGameIdsFor(viewerId),
+    getCircleMemberIds(viewerId),
+  ])
+
+  const rows = await loadRivalryEvents(gameIds)
+  const circle = new Set(memberIds)
+  const pairs = aggregatePairCounts(rows, viewerId).filter((pair) => circle.has(pair.opponentId))
+  const usernames = await loadUsernames(pairs.map((pair) => pair.opponentId))
+
+  return sortRivalryPairs(
+    pairs.map((pair) => {
+      const identity = usernames.get(pair.opponentId)
+      return {
+        userId: pair.opponentId,
+        username: identity?.username ?? 'Inconnu',
+        avatarId: identity?.avatarId ?? null,
+        dealt: pair.dealt,
+        taken: pair.taken,
+      }
+    })
+  )
 }

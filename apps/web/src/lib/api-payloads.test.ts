@@ -377,3 +377,48 @@ describe('last seen on the wire', () => {
     expect(friendsPayloadSchema.safeParse(neverSeen).success).toBe(true)
   })
 })
+
+describe('rivalry pairs on the wire', () => {
+  const baseLeaderboard = {
+    rows: [],
+    friendCount: 1,
+    topDegommeur: null,
+    rivalry: { nemesis: null, favoriteVictim: null },
+    characterWinrates: [],
+  }
+
+  it('accepts a leaderboard payload carrying rivalry pairs and survives a JSON round-trip', () => {
+    const fresh = {
+      ...baseLeaderboard,
+      rivalryPairs: [
+        { userId: 'u2', username: 'Asterix', avatarId: 'b-menhir', dealt: 3, taken: 5 },
+        { userId: 'u3', username: 'Obelix', avatarId: null, dealt: 1, taken: 0 },
+      ],
+    }
+
+    const parsed = leaderboardPayloadSchema.parse(JSON.parse(JSON.stringify(fresh)))
+
+    expect(parsed.rivalryPairs?.[0]).toEqual({
+      userId: 'u2',
+      username: 'Asterix',
+      avatarId: 'b-menhir',
+      dealt: 3,
+      taken: 5,
+    })
+    expect(parsed.rivalryPairs?.[1]?.avatarId).toBeNull()
+    expect(parsed.rivalryPairs?.[1]?.taken).toBe(0)
+  })
+
+  it('accepts a leaderboard payload without rivalryPairs — old cached shape', () => {
+    expect(leaderboardPayloadSchema.safeParse(baseLeaderboard).success).toBe(true)
+  })
+
+  it('rejects a rivalry pair missing its dealt counter', () => {
+    const bad = {
+      ...baseLeaderboard,
+      rivalryPairs: [{ userId: 'u2', username: 'Asterix', taken: 5 }],
+    }
+
+    expect(leaderboardPayloadSchema.safeParse(bad).success).toBe(false)
+  })
+})

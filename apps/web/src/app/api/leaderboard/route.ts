@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server'
 import { z } from 'zod'
 import { getLeaderboard } from '@/lib/queries/stats'
-import { getRivalrySpotlight } from '@/lib/queries/rivalries'
+import { getRivalryPairs, getRivalrySpotlight } from '@/lib/queries/rivalries'
 import { startOfCurrentMonthParis } from '@/lib/season'
 import type { LeaderboardPayload } from '@/lib/api-payloads'
 import { getOnboardedApiSession } from '@/lib/session'
@@ -29,10 +29,11 @@ export async function GET(request: Request) {
   const period = parsed.success ? parsed.data.period : 'all'
   const from = period === 'month' ? startOfCurrentMonthParis() : undefined
 
-  const [leaderboard, rivalry] = await Promise.all([
+  const [leaderboard, rivalry, rivalryPairs] = await Promise.all([
     getLeaderboard(session.user.id, { from }),
     getRivalrySpotlight(session.user.id),
+    getRivalryPairs(session.user.id),
   ])
-  const payload: LeaderboardPayload = { ...leaderboard, rivalry }
+  const payload: LeaderboardPayload = { ...leaderboard, rivalry, rivalryPairs }
   return NextResponse.json(payload, { headers: PRIVATE_HEADERS })
 }

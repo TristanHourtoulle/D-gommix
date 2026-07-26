@@ -57,7 +57,7 @@ export function LeaderboardScreen({ viewerId, initialData }: LeaderboardScreenPr
 
       {leaderboard.topDegommeur ? <TopDegommeurTile top={leaderboard.topDegommeur} /> : null}
 
-      <RivalryTile rivalry={leaderboard.rivalry} />
+      <RivalryTile rivalry={leaderboard.rivalry} pairs={leaderboard.rivalryPairs} />
 
       <Podium rows={podiumRows} viewerId={viewerId} />
 
