@@ -59,3 +59,15 @@ const clockTimeFormatter = new Intl.DateTimeFormat('fr-FR', {
 export function formatEventTime(date: Date): string {
   return clockTimeFormatter.format(date)
 }
+
+const editionDateFormatter = new Intl.DateTimeFormat('fr-FR', {
+  day: 'numeric',
+  month: 'long',
+  year: 'numeric',
+  timeZone: 'Europe/Paris',
+})
+
+/** "26 juillet 2026" — the Gazette masthead's edition date. */
+export function formatEditionDate(date: Date): string {
+  return editionDateFormatter.format(date)
+}
