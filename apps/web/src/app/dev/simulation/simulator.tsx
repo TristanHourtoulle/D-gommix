@@ -261,6 +261,9 @@ export function Simulator() {
           <p className="helper-text m-0">
             Événement {player.cursor}/{timeline.events.length} · graine « {seed} »
           </p>
+          <p className="helper-text m-0">
+            À 4 joueurs, les quatre coups signés passent à l’écran.
+          </p>
         </Card>
 
         <div className="relative mx-auto flex w-full max-w-md flex-col gap-3">

@@ -1,4 +1,4 @@
-import type { DegommageEntry, GameState } from '@degommix/game-core'
+import type { CharacterId, DegommageEntry, GameState } from '@degommix/game-core'
 import type { NameMap } from '@/components/live/types'
 
 /**
@@ -33,6 +33,19 @@ export const DEMO_LOG: readonly DegommageEntry[] = [
   { seq: 40, actorId: RIVAL_ID, targetId: HERO_ID },
   { seq: 46, actorId: RIVAL_ID, targetId: HERO_ID },
 ]
+
+/**
+ * Actor map fed to `hitByTarget` by the playground. The demo log's only actor
+ * is `RIVAL_ID`, so overriding that seat's character is what switches the hit
+ * variant on the demo card — the exact mechanism a real game uses, minus the
+ * game.
+ */
+export function demoActors(camp: CharacterId): Record<string, { character: CharacterId }> {
+  return {
+    [RIVAL_ID]: { character: camp },
+    [HERO_ID]: { character: 'asterix' },
+  }
+}
 
 /** Finished 1v1 won by the hero at the village — the input of both endgame demos. */
 export const DEMO_FINISHED: GameState = {
