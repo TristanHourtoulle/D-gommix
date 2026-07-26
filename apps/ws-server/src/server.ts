@@ -176,6 +176,9 @@ async function onSocketConnected(
   const presenceAtHandshake = ctx.presence.capture()
   try {
     ctx.hostTransfer.onUserOnline(userId)
+    // Stamped at connect too: a server crash before the disconnect handler runs
+    // would otherwise leave a stale value from the previous session.
+    await ctx.db.update(user).set({ lastSeenAt: new Date() }).where(eq(user.id, userId))
     const memberships = await findActiveMemberships(ctx.db, userId)
     const seated = memberships.find((m) => m.player.status === 'joined')
     ctx.presence.syncInGameFlag(userId, seated?.game.status === 'active')
@@ -217,6 +220,8 @@ async function onSocketDisconnected(
   const userId = socket.data.userId
   try {
     if (!wentOffline) return
+    // Persisted before the broadcast so it carries the fresh timestamp.
+    await ctx.db.update(user).set({ lastSeenAt: new Date() }).where(eq(user.id, userId))
     await ctx.presence.broadcast(userId)
     await ctx.hostTransfer.onUserOffline(userId)
   } catch (error) {

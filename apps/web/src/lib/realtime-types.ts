@@ -48,6 +48,8 @@ export interface FriendsEventPayload {
 export interface PresenceUpdatePayload {
   userId: string
   presence: Presence
+  /** ISO timestamp of the last connection; only set when `presence` is `offline`. */
+  lastSeenAt?: string
 }
 
 export interface GameStateSnapshotPayload {

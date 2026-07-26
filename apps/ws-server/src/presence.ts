@@ -76,9 +76,15 @@ export class PresenceTracker {
       .from(friendships)
       .where(or(eq(friendships.userLow, userId), eq(friendships.userHigh, userId)))
     const presence = this.getPresence(userId)
+    // The disconnect handler stamps `user.lastSeenAt` right before calling us,
+    // so "now" matches the persisted value without an extra query.
+    const payload =
+      presence === 'offline'
+        ? { userId, presence, lastSeenAt: new Date().toISOString() }
+        : { userId, presence }
     for (const row of rows) {
       const friendId = row.userLow === userId ? row.userHigh : row.userLow
-      this.io.to(`user:${friendId}`).emit('presence:update', { userId, presence })
+      this.io.to(`user:${friendId}`).emit('presence:update', payload)
     }
   }
 
