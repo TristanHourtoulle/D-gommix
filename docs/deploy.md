@@ -106,6 +106,28 @@ git add packages/db/drizzle && git commit -m "feat(db): <migration>"
 Le service `ws-server` n'exécute **aucune** migration : `web` est le seul migrateur, pour éviter
 deux runners concurrents sur la même base.
 
+### Backfill rétroactif des sceaux (one-shot manuel)
+
+La migration `0005` crée la table `seals` **vide**. Les hauts faits déjà mérités dans les parties
+passées sont rejoués par un script manuel, à lancer **une fois**, après le déploiement qui embarque
+`0005` :
+
+```bash
+DATABASE_URL="$RAILWAY_POSTGRES_URL" pnpm --filter @degommix/ws-server backfill:seals
+```
+
+La valeur est lue depuis les variables du service `postgres` sur Railway. Elle contient le mot de
+passe : ne jamais la coller dans un fichier, un commit, un ticket ou un log.
+
+Le script n'est pas branché sur le pre-deploy : `web` est le seul migrateur (§ 3) et ce backfill a
+besoin de `game-core`. Il est **idempotent** — la clé primaire `(user_id, seal_id)` et les inserts
+`ON CONFLICT DO NOTHING` font qu'un second passage n'insère rien (`"sealsInserted":0`). On peut donc
+le relancer sans risque, à n'importe quel moment.
+
+Si un bug de détection est livré : corriger `detectSeals`, puis `TRUNCATE TABLE seals;` et relancer
+le backfill reconstruit la table à l'identique — c'est un cache d'une fonction pure du journal
+d'événements, rien d'autre dans l'app n'en dépend.
+
 ## 4. Domaine
 
 - Domaine public : `https://degommix.tristanhourtoulle.fr` → service `web`, port cible `3000`.
