@@ -150,8 +150,14 @@ export function Playground() {
         <section className="flex flex-col gap-2">
           <p className="sec-label">Sons</p>
           <Card className="flex flex-col gap-3 p-4">
-            <Button variant="ghost" onClick={() => playArenaSound('ouch')}>
-              Ouch
+            <Button variant="ghost" onClick={() => playArenaSound('ouch-1')}>
+              Ouch 1
+            </Button>
+            <Button variant="ghost" onClick={() => playArenaSound('ouch-2')}>
+              Ouch 2
+            </Button>
+            <Button variant="ghost" onClick={() => playArenaSound('ouch-3')}>
+              Ouch 3
             </Button>
             <Button variant="ghost" onClick={() => playArenaSound('paf')}>
               PAF
@@ -160,8 +166,10 @@ export function Playground() {
               Fanfare
             </Button>
             <p className="helper-text m-0">
-              Il faut avoir activé « Sons » dans Ta hutte : sans ça rien n’est téléchargé, donc
-              rien ne sort. Sur iPhone, le bouton silencieux coupe tout.
+              En partie, le « ouch » est tiré parmi les trois à chaque dégommage — le même sur
+              tous les téléphones pour un coup donné. Il faut avoir activé « Sons » dans Ta
+              hutte : sans ça rien n’est téléchargé, donc rien ne sort. Sur iPhone, le bouton
+              silencieux coupe tout.
             </p>
           </Card>
         </section>

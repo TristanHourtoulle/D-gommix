@@ -4,10 +4,10 @@
  *
  * Run with: pnpm --filter @degommix/web sounds
  *
- * The third sample, `ouch.m4a`, is NOT generated here: the owner asked for a
- * real « ouch », so it is a sourced CC0 voice recording. Its provenance and the
- * exact commands that produced it live in `public/sounds/LICENSE.txt`. Running
- * this script never touches it.
+ * The three dégommage yelps, `ouch-1..3.m4a`, are NOT generated here: they are
+ * owner-supplied recordings. Their provenance and the exact commands that
+ * conditioned them live in `public/sounds/LICENSE.txt`. Running this script
+ * never touches them.
  *
  * Why synthesis for the other two: the licence question disappears. Both are
  * arithmetic written here, so their provenance is this file and their licence

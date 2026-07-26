@@ -32,7 +32,8 @@ let armed = false
 let visibilityBound = false
 
 const buffers = new Map<ArenaSoundId, AudioBuffer>()
-const lastPlayedAt = new Map<ArenaSoundId, number>()
+/** Keyed by `throttleKey`, so the three « ouch » variants share one clock. */
+const lastPlayedAt = new Map<string, number>()
 
 function createContext(): AudioContext | null {
   const scope = window as WindowWithWebkitAudio
@@ -161,8 +162,9 @@ export function playArenaSound(id: ArenaSoundId, delayMs = 0): void {
   if (buffer === undefined) return
 
   const now = Date.now()
-  if (!shouldPlay(id, now, lastPlayedAt.get(id) ?? null)) return
-  lastPlayedAt.set(id, now)
+  const key = ARENA_SOUNDS[id].throttleKey
+  if (!shouldPlay(id, now, lastPlayedAt.get(key) ?? null)) return
+  lastPlayedAt.set(key, now)
 
   try {
     const source = ctx.createBufferSource()

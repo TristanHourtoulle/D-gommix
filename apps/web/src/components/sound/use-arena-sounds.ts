@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useSyncExternalStore } from 'react'
 import type { GameState } from '@degommix/game-core'
-import { PAF_DELAY_MS, soundCue, type ArenaSnapshot } from './arena-sounds'
+import { PAF_DELAY_MS, pickOuch, soundCue, type ArenaSnapshot } from './arena-sounds'
 import { armAudioUnlock, playArenaSound, releaseArenaAudio } from './sound-player'
 import { getSoundServerSnapshot, getSoundSnapshot, subscribeSound } from './sound-preference'
 
@@ -14,7 +14,7 @@ import { getSoundServerSnapshot, getSoundSnapshot, subscribeSound } from './soun
  * flipping the toggle in « Ta hutte » takes effect on the next render of an
  * already-open arena, without a reload.
  */
-export function useArenaSounds(state: GameState | null): void {
+export function useArenaSounds(gameId: string, state: GameState | null): void {
   const preference = useSyncExternalStore(
     subscribeSound,
     getSoundSnapshot,
@@ -33,8 +33,9 @@ export function useArenaSounds(state: GameState | null): void {
 
   useEffect(() => {
     if (state === null) return
+    const log = state.degommageLog
     const current: ArenaSnapshot = {
-      hitCount: state.degommageLog.length,
+      hitCount: log.length,
       finished: state.status === 'finished',
       winnerId: state.winnerId,
     }
@@ -46,10 +47,14 @@ export function useArenaSounds(state: GameState | null): void {
     if (preference === 'off') return
 
     if (cue === 'hit') {
-      playArenaSound('ouch')
+      // Seeded on the `seq` of the dégommage that just landed, so the yelp
+      // varies from hit to hit while every phone plays the SAME one for a given
+      // hit — the rule every derived-presentation choice in this app follows.
+      const lastSeq = log[log.length - 1]?.seq ?? 0
+      playArenaSound(pickOuch(gameId, lastSeq))
       playArenaSound('paf', PAF_DELAY_MS)
       return
     }
     if (cue === 'endgame') playArenaSound('fanfare')
-  }, [state, preference])
+  }, [gameId, state, preference])
 }

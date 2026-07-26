@@ -3,7 +3,9 @@ import {
   ARENA_SOUNDS,
   ARENA_SOUND_IDS,
   MASTER_GAIN,
+  OUCH_IDS,
   PAF_DELAY_MS,
+  pickOuch,
   soundCue,
   shouldPlay,
   type ArenaSnapshot,
@@ -14,8 +16,8 @@ function snapshot(hitCount: number, finished: boolean, winnerId: string | null):
 }
 
 describe('ARENA_SOUNDS', () => {
-  it('ships exactly three sounds', () => {
-    expect(ARENA_SOUND_IDS).toEqual(['ouch', 'paf', 'fanfare'])
+  it('ships the three ouch variants plus the paf and the fanfare', () => {
+    expect(ARENA_SOUND_IDS).toEqual(['ouch-1', 'ouch-2', 'ouch-3', 'paf', 'fanfare'])
   })
 
   it('points every sound at a public /sounds/*.m4a file', () => {
@@ -52,7 +54,38 @@ describe('shouldPlay', () => {
   })
 
   it('holds the ouch longer than the paf', () => {
-    expect(ARENA_SOUNDS.ouch.minIntervalMs).toBeGreaterThan(ARENA_SOUNDS.paf.minIntervalMs)
+    expect(ARENA_SOUNDS['ouch-1'].minIntervalMs).toBeGreaterThan(ARENA_SOUNDS.paf.minIntervalMs)
+  })
+})
+
+describe('pickOuch', () => {
+  const GAME = 'e4d0f7aa-1111-4222-8333-444455556666'
+
+  it('only ever returns one of the three shipped variants', () => {
+    for (let seq = 0; seq < 200; seq += 1) {
+      expect(OUCH_IDS).toContain(pickOuch(GAME, seq))
+    }
+  })
+
+  it('is deterministic — every phone picks the same yelp for the same hit', () => {
+    for (let seq = 0; seq < 50; seq += 1) {
+      expect(pickOuch(GAME, seq)).toBe(pickOuch(GAME, seq))
+    }
+  })
+
+  it('varies from hit to hit rather than repeating one variant forever', () => {
+    const drawn = new Set(Array.from({ length: 60 }, (_, seq) => pickOuch(GAME, seq)))
+    expect(drawn.size).toBe(3)
+  })
+
+  it('gives two different games their own sequence of yelps', () => {
+    const a = Array.from({ length: 40 }, (_, seq) => pickOuch(GAME, seq)).join()
+    const b = Array.from({ length: 40 }, (_, seq) => pickOuch('99990000-2222-4333-8444-555566667777', seq)).join()
+    expect(a).not.toBe(b)
+  })
+
+  it('throttles the three variants on one shared clock', () => {
+    for (const id of OUCH_IDS) expect(ARENA_SOUNDS[id].throttleKey).toBe('ouch')
   })
 })
 

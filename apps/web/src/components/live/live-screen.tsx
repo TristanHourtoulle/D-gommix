@@ -65,7 +65,7 @@ export function LiveScreen({
   // this is the only place that observes both a growing dégommage log and the
   // transition into « finished » — `Summary` mounts already finished, so a hook
   // inside it would never see the village fall.
-  useArenaSounds(state)
+  useArenaSounds(gameId, state)
 
   const names = useMemo<NameMap>(
     () => Object.fromEntries(players.map((p) => [p.userId, p.username])),
