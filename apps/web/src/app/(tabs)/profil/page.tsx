@@ -9,13 +9,18 @@ import { UsernameForm } from '@/components/profile/username-form'
 import { AvatarPicker } from '@/components/profile/avatar-picker'
 import { ThemeSegmented } from '@/components/theme/theme-segmented'
 import { DevMenuGesture } from '@/components/dev/dev-menu-gesture'
+import { PerCharacterBlock } from '@/components/stats/per-character-block'
 import { getAvatarId } from '@/lib/queries/profile'
+import { getPlayerCharacterStats } from '@/lib/queries/stats'
 
 export default async function ProfilePage() {
   const session = await requireSession()
   const { username, email } = session.user
   if (!username) redirect('/onboarding')
-  const avatarId = await getAvatarId(session.user.id)
+  const [avatarId, perCharacter] = await Promise.all([
+    getAvatarId(session.user.id),
+    getPlayerCharacterStats(session.user.id),
+  ])
 
   return (
     <main className="tab-page">
@@ -39,6 +44,8 @@ export default async function ProfilePage() {
           </div>
         </DevMenuGesture>
       </header>
+
+      <PerCharacterBlock perCharacter={perCharacter} />
 
       <section className="flex flex-col gap-2">
         <p className="sec-label">Pseudo</p>
