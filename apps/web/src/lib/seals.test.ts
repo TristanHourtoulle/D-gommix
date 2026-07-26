@@ -23,6 +23,17 @@ describe('seal catalog', () => {
       'Décurion',
       'Marée montante',
       'Bouclier arverne',
+      // Plan 039 — validated verbatim in French by the owner on 2026-07-26.
+      'Le Menhir',
+      'L’Éclair de Toutatis',
+      'Le Marathonien',
+      'Tombeur de champion',
+      'Le Collectionneur',
+      'Centurion',
+      'Le Vengeur',
+      'Chef de camp émérite',
+      'L’Invaincu',
+      'Le Sanglier d’or',
     ])
   })
 

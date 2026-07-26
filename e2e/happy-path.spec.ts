@@ -166,12 +166,14 @@ test('two-player 1v1 happy path (design §7.3)', async ({ browser }) => {
     await expect(p2.getByTestId(`summary-row-${J1.username}`)).toContainText('1')
     await expect(p1.getByText('Le banquet')).toBeVisible()
 
-    // Plan 033: J2's first ever win engraves « Premier de cordée ». No
-    // Imperator — J1 dégommed J2 once (asserted above), and no seal at all for
-    // J1 (1v1 fails both the Tour-du-village seat guard and the Bouclier-arverne
-    // activity guard).
-    await expect(p2.getByTestId('seal-unlocks')).toContainText('Sceau débloqué')
+    // Plans 033 + 039: J2's first ever win engraves « Premier de cordée », and
+    // the run lasts seconds so « L’Éclair de Toutatis » lands with it — hence
+    // the plural heading. No Imperator (J1 dégommed J2 once, asserted above)
+    // and nothing at all for J1: a 1v1 loss with one dégommage taken and one
+    // game hosted meets no threshold.
+    await expect(p2.getByTestId('seal-unlocks')).toContainText('Sceaux débloqués')
     await expect(p2.getByTestId('seal-unlocks')).toContainText('Premier de cordée')
+    await expect(p2.getByTestId('seal-unlocks')).toContainText('L’Éclair de Toutatis')
     await expect(p1.getByTestId('seal-unlocks')).toHaveCount(0)
 
     // Plan 040: J1 predicted J2 as winner AND as souffre-douleur. J2 won and
@@ -194,7 +196,7 @@ test('two-player 1v1 happy path (design §7.3)', async ({ browser }) => {
     // Plan 033: the seal is permanent — it is on J2's profile board too.
     await p2.goto('/profil')
     await expect(p2.getByTestId('seals-board')).toContainText('Premier de cordée')
-    await expect(p2.getByTestId('seals-board')).toContainText('1/6')
+    await expect(p2.getByTestId('seals-board')).toContainText('2/16')
 
     // — Step 8c: game detail shows the full journal —
     await p1.goto(`/parties/${gameId}`)

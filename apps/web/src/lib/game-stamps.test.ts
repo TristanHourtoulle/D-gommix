@@ -1,3 +1,9 @@
+import {
+  buildGameState,
+  countVengeancesByActor,
+  type GameEvent,
+  type SeatSnapshot,
+} from '@degommix/game-core'
 import { describe, expect, it } from 'vitest'
 import {
   CARNAGE_THRESHOLD,
@@ -314,5 +320,132 @@ describe('STAMP_META', () => {
       expect(STAMP_META[id].id).toBe(id)
       expect(STAMP_META[id].hint.length).toBeGreaterThan(0)
     }
+  })
+})
+
+/**
+ * Plan 039 — « Le Vengeur » counts the vengeances the table actually SAW
+ * printed, and its rule lives in `@degommix/game-core` because the ws-server
+ * awards the seal and cannot import from `apps/web`. `apps/web` is the only
+ * workspace that can import both, so the two implementations are pinned here.
+ *
+ * If this block goes red, the printed-stamp rule and the seal rule have
+ * drifted: fix BOTH, never weaken the assertion.
+ */
+describe('vengeance parity with game-core', () => {
+  const SEATS: SeatSnapshot[] = [
+    { userId: 'u1', character: 'asterix' },
+    { userId: 'u2', character: 'obelix' },
+    { userId: 'u3', character: 'caius_bonus' },
+    { userId: 'u4', character: 'caligula_minus' },
+  ]
+
+  /**
+   * A 4-seat game log, built one event at a time. `test-helpers.ts` is not
+   * exported from game-core's index, so the events are constructed here.
+   */
+  function gameLog() {
+    let seq = 0
+    const events: GameEvent[] = []
+    const at = (): string => new Date(T0 + seq * 1000).toISOString()
+    const push = (event: GameEvent): GameEvent => {
+      events.push(event)
+      return event
+    }
+    push({
+      seq: ++seq,
+      createdAt: at(),
+      type: 'GAME_STARTED',
+      actorId: 'u1',
+      targetId: null,
+      payload: { players: SEATS, format: 4 },
+    })
+    return {
+      events,
+      hit: (actorId: string, targetId: string): GameEvent =>
+        push({ seq: ++seq, createdAt: at(), type: 'DEGOMMAGE', actorId, targetId, payload: null }),
+      cancel: (targetSeq: number): GameEvent =>
+        push({
+          seq: ++seq,
+          createdAt: at(),
+          type: 'UNDO',
+          actorId: 'u1',
+          targetId: null,
+          payload: { targetSeq },
+        }),
+    }
+  }
+
+  /** The same log, in the two shapes the two implementations consume. */
+  const asStampEvents = (events: readonly GameEvent[]): StampEvent[] =>
+    events.map((event) => ({
+      seq: event.seq,
+      type: event.type,
+      actorId: event.actorId,
+      targetId: event.targetId,
+      payload: event.payload,
+      at: Date.parse(event.createdAt),
+    }))
+
+  const printedVengeances = (events: GameEvent[]): number =>
+    [...detectLineStamps(asStampEvents(events)).values()].filter((id) => id === 'vengeance').length
+
+  const coreVengeances = (events: GameEvent[]): number =>
+    [...countVengeancesByActor(buildGameState(events)).values()].reduce((a, b) => a + b, 0)
+
+  it('agrees on a plain back-and-forth', () => {
+    const log = gameLog()
+    log.hit('u1', 'u2')
+    log.hit('u2', 'u1')
+    log.hit('u1', 'u2')
+    log.hit('u2', 'u1')
+    expect(printedVengeances(log.events)).toBe(3)
+    expect(coreVengeances(log.events)).toBe(printedVengeances(log.events))
+  })
+
+  it('agrees when carnage masks a vengeance', () => {
+    // u2 opens on u3, so u2's fourth surviving dégommage is also a vengeance.
+    // That journal line prints « Carnage » (carnage leads LINE_STAMP_PRIORITY),
+    // so the table never read « Vengeance ! » there and « Le Vengeur » must not
+    // count it: six vengeances fire, four are printed.
+    const log = gameLog()
+    log.hit('u2', 'u3')
+    log.hit('u1', 'u2')
+    log.hit('u2', 'u1')
+    log.hit('u1', 'u2')
+    log.hit('u2', 'u1')
+    log.hit('u1', 'u2')
+    log.hit('u2', 'u1')
+    const stamps = detectLineStamps(asStampEvents(log.events))
+    expect([...stamps.values()].filter((id) => id === 'carnage')).toHaveLength(1)
+    expect(printedVengeances(log.events)).toBe(4)
+    expect(coreVengeances(log.events)).toBe(4)
+  })
+
+  it('agrees when an UNDO cancels the hit a vengeance answered', () => {
+    const log = gameLog()
+    log.hit('u1', 'u2')
+    const answered = log.hit('u2', 'u1')
+    log.hit('u1', 'u2')
+    log.hit('u2', 'u1')
+    log.cancel(answered.seq)
+    expect(printedVengeances(log.events)).toBe(1)
+    expect(coreVengeances(log.events)).toBe(1)
+  })
+
+  it('agrees that a third player’s hit breaks the chain, and ignores self-dégommages', () => {
+    const log = gameLog()
+    log.hit('u1', 'u1')
+    log.hit('u1', 'u2')
+    log.hit('u3', 'u2')
+    log.hit('u2', 'u1')
+    expect(printedVengeances(log.events)).toBe(0)
+    expect(coreVengeances(log.events)).toBe(0)
+  })
+
+  it('agrees on a game without a single dégommage', () => {
+    const log = gameLog()
+    expect(printedVengeances(log.events)).toBe(0)
+    expect(coreVengeances(log.events)).toBe(0)
   })
 })

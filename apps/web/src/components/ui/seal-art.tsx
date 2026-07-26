@@ -2,7 +2,9 @@ import type { ReactElement } from 'react'
 import type { SealId } from '@degommix/game-core'
 
 /**
- * The six haut-fait drawings. Each returns the *body* of a 0 0 100 100 SVG;
+ * Sixteen drawings since plan 039 (six from plan 033, ten added).
+ *
+ * The haut-fait drawings. Each returns the *body* of a 0 0 100 100 SVG;
  * `SealMedallion` provides the <svg> wrapper and the bronze ring — same split
  * as AvatarArt / PlayerAvatar.
  *
@@ -91,9 +93,136 @@ export function SealArt({ sealId }: { sealId: SealId }): ReactElement | null {
       return (
         <>
           {disc}
-          <path d="M50 12c14 4 24 12 24 24 0 24-11 42-24 52-13-10-24-28-24-52 0-12 10-20 24-24Z" {...engraved} />
+          <path
+            d="M50 12c14 4 24 12 24 24 0 24-11 42-24 52-13-10-24-28-24-52 0-12 10-20 24-24Z"
+            {...engraved}
+          />
           <path d="M30 40h40M50 22v58" {...engraved} />
           <circle cx="50" cy="52" r="9" {...engraved} />
+        </>
+      )
+
+    // A tall standing menhir, planted, with three impact chips on its flank.
+    case 'menhir':
+      return (
+        <>
+          {disc}
+          <path d="M38 84V32c0-10 5-16 12-16s12 6 12 16v52Z" {...engraved} />
+          <path d="M26 84h48" {...engraved} />
+          <path d="M44 40l-6 6M46 56l-6 6M46 72l-6 6" {...engraved} />
+        </>
+      )
+
+    // A jagged bolt splitting a small hourglass.
+    case 'toutatis_bolt':
+      return (
+        <>
+          {disc}
+          <path d="M30 16h40M30 84h40" {...engraved} />
+          <path d="M34 16c0 18 10 26 16 34-6 8-16 16-16 34" {...engraved} />
+          <path d="M66 16c0 18-10 26-16 34 6 8 16 16 16 34" {...engraved} />
+          <path d="M58 24 42 50h14L40 76" {...engraved} />
+        </>
+      )
+
+    // An hourglass run out, with a winding path behind it.
+    case 'marathon':
+      return (
+        <>
+          {disc}
+          <path d="M14 26c14 8 8 20 22 26s10 18 24 24" {...engraved} strokeDasharray="6 6" />
+          <path d="M40 14h36M40 86h36" {...engraved} />
+          <path d="M44 14c0 16 8 24 14 32-6 8-14 16-14 40" {...engraved} />
+          <path d="M72 14c0 16-8 24-14 32 6 8 14 16 14 40" {...engraved} />
+          <path d="M48 78h16" {...engraved} />
+        </>
+      )
+
+    // A laurel crown toppled on its side, one leaf broken off.
+    case 'champion_slayer':
+      return (
+        <>
+          {disc}
+          <path d="M28 74c-10-12-8-30 6-40 14-10 32-8 40 4" {...engraved} />
+          <path d="M28 74c14 8 32 6 42-6" {...engraved} />
+          <path d="M36 44c-5-4-6-9-4-14M50 34c-4-5-4-10-1-14M64 32c-2-6 0-10 4-13" {...engraved} />
+          <path d="M74 60l14 10M88 56 74 66" {...engraved} />
+        </>
+      )
+
+    // Four small discs in a square, linked by a ring.
+    case 'collector':
+      return (
+        <>
+          {disc}
+          <circle cx="50" cy="50" r="26" strokeDasharray="5 5" {...engraved} />
+          <circle cx="34" cy="34" r="9" {...engraved} />
+          <circle cx="66" cy="34" r="9" {...engraved} />
+          <circle cx="34" cy="66" r="9" {...engraved} />
+          <circle cx="66" cy="66" r="9" {...engraved} />
+        </>
+      )
+
+    // A crested Roman helmet in profile.
+    case 'centurion':
+      return (
+        <>
+          {disc}
+          <path d="M28 62c0-20 10-32 22-32s22 12 22 32" {...engraved} />
+          <path d="M28 62c0 12 8 22 22 22s22-10 22-22" {...engraved} />
+          <path d="M50 30c0-10 3-16 8-20 3 8 3 14 0 20" {...engraved} />
+          <path d="M50 48v24M34 60h32" {...engraved} />
+        </>
+      )
+
+    // Two crossed swords inside a circular return arrow.
+    case 'avenger':
+      return (
+        <>
+          {disc}
+          <path d="M78 44a30 30 0 1 0-4 22" {...engraved} />
+          <path d="M74 66l-2 12 12-4" {...engraved} />
+          <path d="M34 34 62 62M62 34 34 62" {...engraved} />
+          <path d="M28 40h12M60 40h12" {...engraved} />
+        </>
+      )
+
+    // A palisade gate with a standard planted beside it.
+    case 'camp_chief':
+      return (
+        <>
+          {disc}
+          <path d="M20 84V44l14-10 14 10v40Z" {...engraved} />
+          <path d="M20 56h28M34 56v28" {...engraved} />
+          <path d="M70 84V20" {...engraved} />
+          <path d="M70 26h16v14H70Z" {...engraved} />
+        </>
+      )
+
+    // An unbroken laurel ring, closed, with a full crescent inside.
+    case 'unbeaten':
+      return (
+        <>
+          {disc}
+          <circle cx="50" cy="50" r="30" {...engraved} />
+          <path d="M28 30c-6 0-10 3-12 8M22 52c-6 1-9 5-9 11" {...engraved} />
+          <path d="M72 30c6 0 10 3 12 8M78 52c6 1 9 5 9 11" {...engraved} />
+          <path d="M58 34a18 18 0 1 0 0 32 20 20 0 0 1 0-32Z" {...engraved} />
+        </>
+      )
+
+    // A boar in profile, one strong silhouette.
+    case 'golden_boar':
+      return (
+        <>
+          {disc}
+          <path
+            d="M18 58c0-12 12-20 26-20h14l12-10 4 12 10 4-8 8c2 12-6 22-20 22H36Z"
+            {...engraved}
+          />
+          <path d="M32 74v10M56 74v10" {...engraved} />
+          <path d="M76 50c4 4 4 8 0 10" {...engraved} />
+          <circle cx="66" cy="44" r="2" fill="currentColor" />
         </>
       )
   }
