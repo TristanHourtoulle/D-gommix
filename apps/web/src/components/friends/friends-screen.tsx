@@ -1,9 +1,9 @@
 'use client'
 
 import { useCallback, useMemo, useState } from 'react'
-import { useRouter } from 'next/navigation'
 import { useSocket } from '@/components/socket-provider'
 import { useFriendsEvents } from '@/hooks/use-friends-events'
+import { useInviteFriend } from '@/hooks/use-invite-friend'
 import { usePresence } from '@/hooks/use-presence'
 import { useFriendsData, useInvalidateTabData } from '@/hooks/use-tab-data'
 import { emitWithAck } from '@/lib/socket'
@@ -22,25 +22,19 @@ interface FriendsScreenProps {
 }
 
 /**
- * Smallest format, so a one-tap invite from the Amis tab never over-books
- * seats. The host raises it from the lobby screen (`lobby:set_format`).
- */
-const DEFAULT_INVITE_FORMAT = 2 as const
-
-/**
  * Client shell of the Amis screen: lists owned by the `friends` query, live
  * presence via `presence:update`, and ws commands with acks. Every mutation
  * invalidates the affected query keys instead of refetching the whole page.
  */
 export function FriendsScreen({ initialData }: FriendsScreenProps) {
   const { socket } = useSocket()
-  const router = useRouter()
   const { toast } = useToast()
   const invalidate = useInvalidateTabData()
   const [busyKey, setBusyKey] = useState<string | null>(null)
 
   const { data } = useFriendsData(initialData)
   const { received, sent, friends, myLobbyId } = data
+  const { inviteFriend, busyFriendId } = useInviteFriend(myLobbyId)
 
   // A friend request lands, is accepted or is canceled: only the Amis lists
   // change, and the circle behind the Classement when it was an acceptance.
@@ -95,55 +89,6 @@ export function FriendsScreen({ initialData }: FriendsScreenProps) {
     (receiverId: string) =>
       run(receiverId, 'friends:request', { receiverId }, 'Demande envoyée !'),
     [run]
-  )
-
-  /**
-   * One-tap invite: reuses the open lobby when there is one, otherwise creates
-   * a lobby on demand and chains the invitation into it. The chain is not
-   * atomic — when the invite fails right after the create, the fresh empty
-   * lobby is abandoned (`lobby:leave` dissolves it) and the user stays on the
-   * Amis tab instead of landing in a phantom lobby.
-   */
-  const inviteFriend = useCallback(
-    async (friendId: string): Promise<void> => {
-      if (myLobbyId) {
-        await run(friendId, 'lobby:invite', { gameId: myLobbyId, friendId }, 'Invitation envoyée !')
-        return
-      }
-      if (!socket) {
-        toast(DELIVERY_FAILED_MESSAGE, 'error')
-        return
-      }
-      setBusyKey(friendId)
-      const created = await emitWithAck(socket, 'lobby:create', {
-        format: DEFAULT_INVITE_FORMAT,
-      })
-      if (!created.ok) {
-        setBusyKey(null)
-        toast(ackErrorMessage(created), 'error')
-        return
-      }
-      const invited = await emitWithAck(socket, 'lobby:invite', {
-        gameId: created.gameId,
-        friendId,
-      })
-      setBusyKey(null)
-      if (!invited.ok) {
-        // Fire-and-forget: the empty lobby dissolves server-side, and the
-        // zombie sweep catches it anyway if this emit is lost.
-        void emitWithAck(socket, 'lobby:leave', { gameId: created.gameId }).catch(() => undefined)
-        invalidate('home', 'friends', 'invites')
-        toast(ackErrorMessage(invited), 'error')
-        return
-      }
-      // The fresh lobby is the Accueil resume banner and the `myLobbyId` the
-      // Amis screen invites into; creating it may also auto-decline the user's
-      // own pending invitations, so all three payloads are stale now.
-      invalidate('home', 'friends', 'invites')
-      toast('Invitation envoyée !')
-      router.push(`/lobby/${created.gameId}`)
-    },
-    [myLobbyId, run, socket, toast, invalidate, router]
   )
 
   return (
@@ -217,7 +162,7 @@ export function FriendsScreen({ initialData }: FriendsScreenProps) {
                 avatarId={friend.avatarId ?? null}
                 presence={presenceOf(friend.id)}
                 lastSeenAt={lastSeenOf(friend.id) ?? friend.lastSeenAt ?? null}
-                busy={busyKey === friend.id}
+                busy={busyKey === friend.id || busyFriendId === friend.id}
                 onInvite={() => void inviteFriend(friend.id)}
                 onRemove={() => void run(friend.id, 'friends:remove', { friendId: friend.id })}
               />
