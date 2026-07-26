@@ -4,11 +4,15 @@ import { Card } from '@/components/ui/card'
 import { Icon } from '@/components/icons'
 import { PlayerAvatar } from '@/components/ui/player-avatar'
 import type { LeaderboardRow } from '@/lib/queries/stats'
+import type { PlayerTitleEntry } from '@/lib/titles'
+import { PlayerTitleLine } from './player-title-line'
 
 interface PodiumProps {
   /** Top 3 leaderboard rows (fewer when the village is smaller). */
   rows: LeaderboardRow[]
   viewerId: string
+  /** Worn titles of the circle (plan 032); empty for old cached payloads. */
+  titles?: PlayerTitleEntry[]
 }
 
 const ROMAN_RANKS = ['I', 'II', 'III'] as const
@@ -48,9 +52,11 @@ function PodiumCrown() {
  * `ranking-row-*` testid and profile link contract of the plain table rows;
  * the visually hidden « N v · N% » span preserves the text the e2e asserts.
  */
-export function Podium({ rows, viewerId }: PodiumProps) {
+export function Podium({ rows, viewerId, titles }: PodiumProps) {
   const [first, second, third] = rows.slice(0, 3)
   if (!first) return null
+
+  const titleByUser = new Map((titles ?? []).map((entry) => [entry.userId, entry.title]))
 
   const columns =
     second && third ? [second, first, third] : second ? [first, second] : [first]
@@ -81,6 +87,7 @@ export function Podium({ rows, viewerId }: PodiumProps) {
               avatarId={row.avatarId ?? null}
             />
             <span className="lb-pod-name">{row.username}</span>
+            <PlayerTitleLine titleId={titleByUser.get(row.userId) ?? null} align="center" />
             <span className="sr-only">{`${row.wins} v · ${row.winrate}%`}</span>
             <span className="lb-chips" aria-hidden>
               <span className="lb-chip">{row.wins} v</span>
