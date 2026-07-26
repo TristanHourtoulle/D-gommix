@@ -30,6 +30,46 @@ export function resolveMyResult(
   return winnerId === viewerId ? 'won' : 'lost'
 }
 
+/** Win record of the viewer/friend pair over their shared finished games. */
+export interface SharedGamesRecord {
+  /** Shared finished games, aborted included. */
+  played: number
+  /** Shared games the viewer won. */
+  winsMine: number
+  /** Shared games the friend won. Wins by third players count in neither. */
+  winsTheirs: number
+}
+
+/**
+ * Reduces the viewer's finished-game rows to the pair record, over the FULL
+ * shared set (never the 20-row display cap). FFA semantics: one winner per
+ * game, so winsMine + winsTheirs can be smaller than played (third-player
+ * wins and aborted games count for nobody).
+ */
+export function computeSharedRecord<
+  T extends {
+    id: string
+    outcome: 'village_reached' | 'aborted' | null
+    winnerId: string | null
+  },
+>(
+  rows: readonly T[],
+  sharedGameIds: ReadonlySet<string>,
+  viewerId: string,
+  friendId: string
+): SharedGamesRecord {
+  let played = 0
+  let winsMine = 0
+  let winsTheirs = 0
+  for (const row of rows) {
+    if (!sharedGameIds.has(row.id)) continue
+    played += 1
+    if (resolveMyResult(row.outcome, row.winnerId, viewerId) === 'won') winsMine += 1
+    else if (resolveMyResult(row.outcome, row.winnerId, friendId) === 'won') winsTheirs += 1
+  }
+  return { played, winsMine, winsTheirs }
+}
+
 /** Whole seconds between start and end, null when either timestamp is missing. */
 export function durationSeconds(startedAt: Date | null, endedAt: Date | null): number | null {
   if (!startedAt || !endedAt) return null

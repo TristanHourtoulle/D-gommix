@@ -1,6 +1,12 @@
 import { and, eq, sql, gamePlayers, games, user } from '@degommix/db'
 import { db } from '@/lib/db'
-import { durationSeconds, filterSharedGames, resolveMyResult } from '@/lib/shared-games'
+import {
+  computeSharedRecord,
+  durationSeconds,
+  filterSharedGames,
+  resolveMyResult,
+  type SharedGamesRecord,
+} from '@/lib/shared-games'
 import { gameStarted } from './game-filters'
 import { toGameFormat, type HomeGame, type HomeGameParticipant } from './home'
 import { sharedFinishedGameIds } from './rivalries'
@@ -14,9 +20,17 @@ const SHARED_GAMES_LIMIT = 20
  * `/parties/[id]` detail page it links to is already authorized for them
  * (see getGameDetail in ./stats.ts).
  */
-export async function getSharedGames(viewerId: string, friendId: string): Promise<HomeGame[]> {
+export interface SharedGamesResult {
+  games: HomeGame[]
+  record: SharedGamesRecord
+}
+
+export async function getSharedGames(
+  viewerId: string,
+  friendId: string
+): Promise<SharedGamesResult> {
   const sharedIds = await sharedFinishedGameIds(viewerId, friendId)
-  if (sharedIds.length === 0) return []
+  if (sharedIds.length === 0) return { games: [], record: { played: 0, winsMine: 0, winsTheirs: 0 } }
 
   // The viewer's finished games, newest first — same filters as getLastGames.
   const viewerRows = await db
@@ -42,8 +56,10 @@ export async function getSharedGames(viewerId: string, friendId: string): Promis
     )
     .orderBy(sql`${games.endedAt} desc nulls last`)
 
-  const shared = filterSharedGames(viewerRows, new Set(sharedIds), SHARED_GAMES_LIMIT)
-  if (shared.length === 0) return []
+  const sharedIdSet = new Set(sharedIds)
+  const record = computeSharedRecord(viewerRows, sharedIdSet, viewerId, friendId)
+  const shared = filterSharedGames(viewerRows, sharedIdSet, SHARED_GAMES_LIMIT)
+  if (shared.length === 0) return { games: [], record }
 
   // Participants of those games only — same shape as getLastGames.
   const gameIdList = sql.join(
@@ -74,13 +90,16 @@ export async function getSharedGames(viewerId: string, friendId: string): Promis
     participantsByGame.set(row.gameId, list)
   }
 
-  return shared.map((row) => ({
-    id: row.id,
-    myResult: resolveMyResult(row.outcome, row.winnerId, viewerId),
-    winnerUsername: row.winnerUsername,
-    format: toGameFormat(row.format),
-    durationSec: durationSeconds(row.startedAt, row.endedAt),
-    endedAt: row.endedAt,
-    participants: participantsByGame.get(row.id) ?? [],
-  }))
+  return {
+    games: shared.map((row) => ({
+      id: row.id,
+      myResult: resolveMyResult(row.outcome, row.winnerId, viewerId),
+      winnerUsername: row.winnerUsername,
+      format: toGameFormat(row.format),
+      durationSec: durationSeconds(row.startedAt, row.endedAt),
+      endedAt: row.endedAt,
+      participants: participantsByGame.get(row.id) ?? [],
+    })),
+    record,
+  }
 }
