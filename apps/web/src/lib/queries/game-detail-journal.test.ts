@@ -1,0 +1,120 @@
+import { describe, expect, it } from 'vitest'
+import { renderDegommageJournal } from '@/lib/degommage-messages'
+import { buildGameJournal, deriveAbortReason, type RawEvent } from './game-detail-journal'
+
+const AT = new Date('2026-07-26T20:00:00Z')
+
+function ev(partial: Partial<RawEvent> & { seq: number; type: string }): RawEvent {
+  return { actorId: null, targetId: null, payload: null, createdAt: AT, ...partial }
+}
+
+const NAME = (id: string | null): string =>
+  id === 'a' ? 'Asterix' : id === 'o' ? 'Obelix' : 'Quelqu’un'
+
+describe('deriveAbortReason', () => {
+  it('returns zombie when a GAME_AUTO_CLOSED event exists', () => {
+    const events = [
+      ev({ seq: 1, type: 'GAME_STARTED', actorId: 'a' }),
+      ev({ seq: 2, type: 'GAME_AUTO_CLOSED', payload: { reason: 'zombie' } }),
+    ]
+    expect(deriveAbortReason(events)).toBe('zombie')
+  })
+
+  it('returns abandon_total when the last END_VALIDATED matches an abandon_total request', () => {
+    const events = [
+      ev({ seq: 1, type: 'GAME_STARTED', actorId: 'a' }),
+      ev({ seq: 2, type: 'END_REQUESTED', actorId: 'a', payload: { kind: 'abandon_total' } }),
+      ev({ seq: 3, type: 'END_VALIDATED', actorId: 'o', payload: { requestSeq: 2 } }),
+    ]
+    expect(deriveAbortReason(events)).toBe('abandon_total')
+  })
+
+  it('returns abandon_individual when the last END_VALIDATED matches an abandon_individual request', () => {
+    const events = [
+      ev({ seq: 1, type: 'GAME_STARTED', actorId: 'a' }),
+      ev({ seq: 2, type: 'END_REQUESTED', actorId: 'a', payload: { kind: 'abandon_individual' } }),
+      ev({ seq: 3, type: 'END_VALIDATED', actorId: 'o', payload: { requestSeq: 2 } }),
+      ev({ seq: 4, type: 'PLAYER_QUIT', actorId: 'a' }),
+    ]
+    expect(deriveAbortReason(events)).toBe('abandon_individual')
+  })
+
+  it('falls back to abandon_individual when only quits emptied the table', () => {
+    const events = [
+      ev({ seq: 1, type: 'GAME_STARTED', actorId: 'a' }),
+      ev({ seq: 2, type: 'PLAYER_QUIT', actorId: 'a' }),
+    ]
+    expect(deriveAbortReason(events)).toBe('abandon_individual')
+  })
+
+  it('returns null for a village-validated log', () => {
+    const events = [
+      ev({ seq: 1, type: 'GAME_STARTED', actorId: 'a' }),
+      ev({ seq: 2, type: 'END_REQUESTED', actorId: 'o', targetId: 'o', payload: { kind: 'village' } }),
+      ev({ seq: 3, type: 'END_VALIDATED', actorId: 'a', payload: { requestSeq: 2 } }),
+    ]
+    expect(deriveAbortReason(events)).toBeNull()
+  })
+
+  it('returns null for an empty log', () => {
+    expect(deriveAbortReason([])).toBeNull()
+  })
+})
+
+describe('buildGameJournal', () => {
+  const degommages = [
+    ev({ seq: 2, type: 'DEGOMMAGE', actorId: 'a', targetId: 'o' }),
+    ev({ seq: 3, type: 'DEGOMMAGE', actorId: 'a', targetId: 'o' }),
+  ]
+  const full = [
+    ev({ seq: 1, type: 'GAME_STARTED', actorId: 'a' }),
+    ...degommages,
+    ev({ seq: 4, type: 'UNDO', actorId: 'o', payload: { targetSeq: 3 } }),
+    ev({ seq: 5, type: 'END_REQUESTED', actorId: 'o', targetId: 'o', payload: { kind: 'village' } }),
+    ev({ seq: 6, type: 'END_VALIDATED', actorId: 'a', payload: { requestSeq: 5 } }),
+  ]
+
+  it('returns one entry per event, in seq order, with the event timestamp', () => {
+    const journal = buildGameJournal(full, NAME)
+    expect(journal.map((entry) => entry.seq)).toEqual([1, 2, 3, 4, 5, 6])
+    expect(journal[0]?.at).toBe(AT)
+  })
+
+  it('renders DEGOMMAGE lines identically to the live renderer', () => {
+    const journal = buildGameJournal(full, NAME)
+    const labels = renderDegommageJournal(
+      degommages.map((event) => ({ seq: event.seq, actorId: 'a', targetId: 'o' })),
+      NAME
+    )
+    expect(journal[1]?.text).toBe(labels.get(2))
+    expect(journal[2]?.text).toBe(labels.get(3))
+  })
+
+  it('renders the exact happy-path sentences for seqs 2 and 3 (golden)', () => {
+    const journal = buildGameJournal(full, NAME)
+    expect(journal[1]?.text).toBe('Asterix balaie un pion d’Obelix d’un revers')
+    expect(journal[2]?.text).toBe('Asterix dégomme un pion d’Obelix, plein sabot')
+  })
+
+  it('keeps the factual copy for every non-DEGOMMAGE event', () => {
+    const journal = buildGameJournal(full, NAME)
+    expect(journal[0]?.text).toBe('Asterix a lancé la partie')
+    expect(journal[3]?.text).toBe('Obelix a annulé le dégommage d’Asterix sur Obelix')
+    expect(journal[4]?.text).toBe(
+      'Obelix demande la fin de partie — village atteint par Obelix'
+    )
+    expect(journal[5]?.text).toBe('Asterix a validé la fin de partie')
+  })
+
+  it('keeps the sentence of an undone dégommage (UNDO never rewrites history)', () => {
+    const journal = buildGameJournal(full, NAME)
+    // seq 3 was undone by seq 4; its own line is still the seq-3 sentence.
+    expect(journal[2]?.text).toBe('Asterix dégomme un pion d’Obelix, plein sabot')
+  })
+
+  it('falls back to the elided factual sentence when a DEGOMMAGE has no ids', () => {
+    const broken = [ev({ seq: 2, type: 'DEGOMMAGE', actorId: null, targetId: 'o' })]
+    const journal = buildGameJournal(broken, NAME)
+    expect(journal[0]?.text).toBe('Quelqu’un a dégommé un pion d’Obelix')
+  })
+})
