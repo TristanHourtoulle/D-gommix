@@ -4,6 +4,7 @@ import Link from 'next/link'
 import { useMemo, useState } from 'react'
 import { buildGameState, type GameFormat } from '@degommix/game-core'
 import { Icon } from '@/components/icons'
+import { AuguresPanel } from '@/components/live/augures-panel'
 import { GameClock } from '@/components/live/game-clock'
 import { hitByTarget } from '@/components/live/hit-fx'
 import { LiveJournal } from '@/components/live/live-journal'
@@ -110,6 +111,18 @@ export function Simulator() {
   // events is free, and folding the prefix is exactly what a phone does when it
   // replays a state snapshot.
   const state = useMemo(() => buildGameState([...applied]), [applied])
+  // Simulated table time: the gap between GAME_STARTED and the last applied
+  // event. The panel takes elapsed seconds as a PROP precisely so this screen
+  // can hand it the timeline's own clock instead of the wall clock (the gap
+  // documented above `<GameClock>`).
+  const simulatedElapsedSec = useMemo(() => {
+    const last = applied[applied.length - 1]
+    if (!last) return 0
+    return Math.max(
+      0,
+      Math.round((Date.parse(last.createdAt) - Date.parse(timeline.startedAt)) / 1000)
+    )
+  }, [applied, timeline.startedAt])
 
   const names = useMemo<NameMap>(
     () => Object.fromEntries(timeline.players.map((p) => [p.userId, p.username])),
@@ -274,6 +287,10 @@ export function Simulator() {
             })}
           </section>
           <LiveJournal entries={journal.entries} state={state} />
+          <Card className="flex flex-col gap-2">
+            <p className="sec-label">Tableau des augures</p>
+            <AuguresPanel state={state} elapsedSec={simulatedElapsedSec} names={names} />
+          </Card>
         </div>
 
         {state.status === 'finished' ? (
