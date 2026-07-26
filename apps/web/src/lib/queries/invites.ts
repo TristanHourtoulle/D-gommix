@@ -7,6 +7,11 @@ export interface PendingInvite {
   hostUsername: string
   hostAvatarId?: string | null
   format: GameFormat
+  /**
+   * ISO 8601 creation time of the lobby — the closest honest proxy for the
+   * invite time. Optional: live ws patches and old caches carry none.
+   */
+  createdAt?: string | null
 }
 
 function toGameFormat(value: number): GameFormat {
@@ -45,6 +50,7 @@ export async function getPendingInvites(userId: string): Promise<PendingInvite[]
       format: games.format,
       hostUsername: user.username,
       hostAvatarId: user.avatarId,
+      createdAt: games.createdAt,
     })
     .from(gamePlayers)
     .innerJoin(games, eq(games.id, gamePlayers.gameId))
@@ -63,5 +69,6 @@ export async function getPendingInvites(userId: string): Promise<PendingInvite[]
     format: toGameFormat(row.format),
     hostUsername: row.hostUsername ?? '',
     hostAvatarId: row.hostAvatarId,
+    createdAt: row.createdAt.toISOString(),
   }))
 }

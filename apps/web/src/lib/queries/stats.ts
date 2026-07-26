@@ -81,6 +81,121 @@ export interface LeaderboardRange {
   from?: Date
 }
 
+/** `ended_at` window filters for a leaderboard range (empty for all-time). */
+function endedInWindow(range: LeaderboardRange) {
+  return range.from === undefined ? [] : [sql`${games.endedAt} >= ${range.from}`]
+}
+
+/** One circle member's aggregate line, before ranks are assigned. */
+interface CircleStanding {
+  userId: string
+  username: string
+  avatarId: string | null
+  wins: number
+  villageGames: number
+  winrate: number
+  degommages: number
+}
+
+/**
+ * Ranking order of the village (design §5.3), shared by the full leaderboard
+ * and the viewer's rank chip so the two can never disagree.
+ */
+function compareStandings(a: CircleStanding, b: CircleStanding): number {
+  return (
+    b.wins - a.wins ||
+    b.winrate - a.winrate ||
+    b.degommages - a.degommages ||
+    a.username.localeCompare(b.username, 'fr')
+  )
+}
+
+/** Finished, actually-started games of the circle, phantom lobbies excluded. */
+function circleFinishedStarted(memberIds: string[], range: LeaderboardRange = {}) {
+  return and(
+    inList(gamePlayers.userId, memberIds),
+    eq(games.status, 'finished'),
+    gameStarted,
+    sql`${gamePlayers.status} in ('joined', 'left')`,
+    ...endedInWindow(range)
+  )
+}
+
+function queryCircleMembers(memberIds: string[]) {
+  return db
+    .select({ id: user.id, username: user.username, avatarId: user.avatarId })
+    .from(user)
+    .where(inList(user.id, memberIds))
+}
+
+function queryCircleStats(memberIds: string[], range: LeaderboardRange = {}) {
+  return db
+    .select({
+      userId: gamePlayers.userId,
+      wins: sql`count(*) filter (where ${games.winnerId} = ${gamePlayers.userId})`.mapWith(Number),
+      villageGames: sql`count(*) filter (where ${games.outcome} = 'village_reached')`.mapWith(
+        Number
+      ),
+      degommages: sql`coalesce(sum(${gamePlayers.degommages}), 0)`.mapWith(Number),
+    })
+    .from(gamePlayers)
+    .innerJoin(games, eq(games.id, gamePlayers.gameId))
+    .where(circleFinishedStarted(memberIds, range))
+    .groupBy(gamePlayers.userId)
+}
+
+type CircleMemberRow = Awaited<ReturnType<typeof queryCircleMembers>>[number]
+type CircleStatRow = Awaited<ReturnType<typeof queryCircleStats>>[number]
+
+/** Merges members with their aggregates and sorts them into village order. */
+function buildStandings(members: CircleMemberRow[], statRows: CircleStatRow[]): CircleStanding[] {
+  const statsById = new Map(statRows.map((row) => [row.userId, row]))
+  const standings = members.map((member) => {
+    const stats = statsById.get(member.id)
+    const wins = stats?.wins ?? 0
+    const villageGames = stats?.villageGames ?? 0
+    return {
+      userId: member.id,
+      username: member.username ?? 'Inconnu',
+      avatarId: member.avatarId ?? null,
+      wins,
+      villageGames,
+      winrate: villageGames > 0 ? Math.round((wins / villageGames) * 100) : 0,
+      degommages: stats?.degommages ?? 0,
+    }
+  })
+  standings.sort(compareStandings)
+  return standings
+}
+
+export interface ViewerRank {
+  /** 1-based position in the friends-circle leaderboard. */
+  rank: number
+  /** Percentage 0-100, over village_reached games only (aborted excluded) */
+  winrate: number
+}
+
+/**
+ * Viewer's standing chip on the Accueil hero header: rank within the friends
+ * circle (exact `getLeaderboard` ordering) plus personal winrate. Null when
+ * the viewer has no finished started game yet — the chips hide instead of
+ * showing a meaningless « 0 % ».
+ */
+export async function getViewerRank(userId: string): Promise<ViewerRank | null> {
+  const memberIds = await getCircleMemberIds(userId)
+  const [members, statRows] = await Promise.all([
+    queryCircleMembers(memberIds),
+    queryCircleStats(memberIds),
+  ])
+  if (!statRows.some((row) => row.userId === userId)) return null
+
+  const standings = buildStandings(members, statRows)
+  const index = standings.findIndex((row) => row.userId === userId)
+  const viewer = index === -1 ? undefined : standings[index]
+  if (!viewer) return null
+  return { rank: index + 1, winrate: viewer.winrate }
+}
+
 /** Friends-circle leaderboard (me + my friends), stats per design §5.3. */
 export async function getLeaderboard(
   userId: string,
@@ -88,35 +203,11 @@ export async function getLeaderboard(
 ): Promise<Leaderboard> {
   const memberIds = await getCircleMemberIds(userId)
 
-  const endedInWindow =
-    range.from === undefined ? [] : [sql`${games.endedAt} >= ${range.from}`]
-
-  const finishedStarted = and(
-    inList(gamePlayers.userId, memberIds),
-    eq(games.status, 'finished'),
-    gameStarted,
-    sql`${gamePlayers.status} in ('joined', 'left')`,
-    ...endedInWindow
-  )
+  const finishedStarted = circleFinishedStarted(memberIds, range)
 
   const [members, statRows, characterRows, seatRows, streakRows] = await Promise.all([
-    db
-      .select({ id: user.id, username: user.username, avatarId: user.avatarId })
-      .from(user)
-      .where(inList(user.id, memberIds)),
-    db
-      .select({
-        userId: gamePlayers.userId,
-        wins: sql`count(*) filter (where ${games.winnerId} = ${gamePlayers.userId})`.mapWith(Number),
-        villageGames: sql`count(*) filter (where ${games.outcome} = 'village_reached')`.mapWith(
-          Number
-        ),
-        degommages: sql`coalesce(sum(${gamePlayers.degommages}), 0)`.mapWith(Number),
-      })
-      .from(gamePlayers)
-      .innerJoin(games, eq(games.id, gamePlayers.gameId))
-      .where(finishedStarted)
-      .groupBy(gamePlayers.userId),
+    queryCircleMembers(memberIds),
+    queryCircleStats(memberIds, range),
     db
       .select({
         userId: gamePlayers.userId,
@@ -146,7 +237,7 @@ export async function getLeaderboard(
           gameStarted,
           sql`${gamePlayers.status} in ('joined', 'left')`,
           sql`${gamePlayers.character} is not null`,
-          ...endedInWindow
+          ...endedInWindow(range)
         )
       )
       .groupBy(gamePlayers.character),
@@ -191,32 +282,12 @@ export async function getLeaderboard(
 
   const streaks = computeCurrentStreaks(streakRows)
 
-  const statsById = new Map(statRows.map((row) => [row.userId, row]))
-  const unranked = members.map((member) => {
-    const stats = statsById.get(member.id)
-    const wins = stats?.wins ?? 0
-    const villageGames = stats?.villageGames ?? 0
-    return {
-      userId: member.id,
-      username: member.username ?? 'Inconnu',
-      avatarId: member.avatarId ?? null,
-      wins,
-      villageGames,
-      winrate: villageGames > 0 ? Math.round((wins / villageGames) * 100) : 0,
-      degommages: stats?.degommages ?? 0,
-      currentStreak: streaks.get(member.id) ?? 0,
-      favoriteCharacter: favorites.get(member.id)?.character ?? null,
-    }
-  })
-
-  unranked.sort(
-    (a, b) =>
-      b.wins - a.wins ||
-      b.winrate - a.winrate ||
-      b.degommages - a.degommages ||
-      a.username.localeCompare(b.username, 'fr')
-  )
-  const rows: LeaderboardRow[] = unranked.map((row, index) => ({ ...row, rank: index + 1 }))
+  const rows: LeaderboardRow[] = buildStandings(members, statRows).map((row, index) => ({
+    ...row,
+    currentStreak: streaks.get(row.userId) ?? 0,
+    favoriteCharacter: favorites.get(row.userId)?.character ?? null,
+    rank: index + 1,
+  }))
 
   const best = [...rows].sort((a, b) => b.degommages - a.degommages)[0]
   const topDegommeur =
