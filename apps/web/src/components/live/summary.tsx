@@ -8,11 +8,14 @@ import { Icon } from '@/components/icons'
 import { RematchButton } from '@/components/rematch-button'
 import { Button } from '@/components/ui/button'
 import { CharacterBadge } from '@/components/ui/character-badge'
+import { MomentStamp } from '@/components/ui/moment-stamp'
 import { Pill } from '@/components/ui/pill'
 import { StatTile } from '@/components/ui/stat-tile'
 import type { InvitesPayload } from '@/lib/api-payloads'
 import { CHARACTER_META } from '@/lib/characters'
 import { formatChrono } from '@/lib/chrono'
+import { detectSummaryStamp } from '@/lib/game-stamps'
+import { takenByTarget } from '@/lib/rivalries'
 import {
   COUNTER_ROLL_MS,
   ENDGAME_TIMINGS,
@@ -63,6 +66,12 @@ export function Summary({
   const router = useRouter()
 
   const winner = state.winnerId ? state.players[state.winnerId] : undefined
+  // Derived, never stored — the archive recomputes the same verdict from the
+  // persisted log (buildSummaryStamp in queries/game-detail-journal.ts).
+  const summaryStamp = useMemo(
+    () => detectSummaryStamp(new Map(Object.entries(takenByTarget(state))), state.winnerId),
+    [state]
+  )
   const durationSec =
     startedAt !== null && endedAt !== null
       ? Math.max(0, Math.round((Date.parse(endedAt) - Date.parse(startedAt)) / 1000))
@@ -142,6 +151,7 @@ export function Summary({
           />
           <div className="relative flex flex-col items-start gap-2">
             <Pill variant="win">Victoire</Pill>
+            {summaryStamp ? <MomentStamp stamp={summaryStamp} size="lg" /> : null}
             <CharacterBadge character={winner.character} size="lg" />
             <p className="m-0 text-lg font-extrabold">{displayName(names, winner.userId)}</p>
             <p className="eg-subtitle m-0 text-xs" style={{ color: 'var(--ink-soft)' }}>
