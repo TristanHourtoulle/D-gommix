@@ -47,7 +47,7 @@ export function SelfStrip({ player, username, avatarId, isHost, taken, hit }: Se
         <p className="m-0 flex items-center gap-1 truncate text-sm font-bold">
           <span className="truncate">{username}</span>
           {isHost ? (
-            <Icon name="crown" size={13} className="shrink-0" title="Hôte de la partie" />
+            <Icon name="crown" size={13} className="shrink-0" title="Chef de camp" />
           ) : null}
         </p>
         <p className="m-0 text-[0.68rem]" style={{ color: 'var(--ink-soft)' }}>

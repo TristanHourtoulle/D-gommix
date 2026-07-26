@@ -91,7 +91,7 @@ export function OpponentCard({
           <span className="opp-name">
             <span className="truncate">{username}</span>
             {isHost ? (
-              <Icon name="crown" size={16} className="shrink-0" title="Hôte de la partie" />
+              <Icon name="crown" size={16} className="shrink-0" title="Chef de camp" />
             ) : null}
           </span>
           <span className="opp-meta">

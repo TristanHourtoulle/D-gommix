@@ -8,7 +8,7 @@ const MESSAGES: Record<ErrorCode, string> = {
   AUTH_FAILED: 'Session expirée, reconnecte-toi',
   NOT_FOUND: 'Introuvable — la partie ou la demande n’existe plus',
   NOT_MEMBER: 'Tu ne fais pas partie de cette partie',
-  NOT_HOST: 'Seul l’hôte peut faire ça',
+  NOT_HOST: 'Seul le chef de camp peut faire ça',
   ALREADY_IN_GAME: 'Tu as déjà une partie en cours',
   LOBBY_FULL: 'Le lobby est complet',
   LOBBY_ALREADY_STARTED: 'La partie a déjà été lancée',

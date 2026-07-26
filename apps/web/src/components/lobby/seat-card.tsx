@@ -41,7 +41,7 @@ export function SeatCard({
           {isMe ? ' (toi)' : ''}
         </span>
         {isRowHost ? (
-          <Icon name="crown" size={14} strokeWidth={1.8} title="Hôte" className="shrink-0" />
+          <Icon name="crown" size={14} strokeWidth={1.8} title="Chef de camp" className="shrink-0" />
         ) : null}
       </span>
 

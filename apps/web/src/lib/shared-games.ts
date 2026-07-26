@@ -1,7 +1,7 @@
 import type { HomeGameResult } from './queries/home'
 
 /**
- * Pure pieces of the « Vos parties ensemble » query, kept db-free so they are
+ * Pure pieces of the « Vieilles querelles » query, kept db-free so they are
  * unit-testable (apps/web/vitest.config.ts runs with no database, no env vars).
  */
 

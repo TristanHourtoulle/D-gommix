@@ -210,7 +210,7 @@ export function LiveScreen({
           style={{ borderColor: 'var(--bronze)' }}
         >
           <p className="m-0 text-xs font-semibold">
-            {describeEndRequest(pending, names)} — en attente de la décision de l’hôte.
+            {describeEndRequest(pending, names)} — en attente de la décision du chef de camp.
           </p>
           {pending.requesterId === viewerId ? (
             <Button

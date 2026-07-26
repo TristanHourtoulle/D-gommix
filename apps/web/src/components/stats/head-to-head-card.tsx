@@ -15,13 +15,13 @@ function playedLabel(played: number): string {
   return `${played} partie${played > 1 ? 's' : ''} ensemble`
 }
 
-/** « Face à face » card: pair win record plus « qui dégomme qui ». */
+/** « Duel » card: pair win record plus « qui dégomme qui ». */
 export function HeadToHeadCard({ username, headToHead, record }: HeadToHeadCardProps) {
   const noDegommage = headToHead.dealt === 0 && headToHead.taken === 0
 
   return (
     <Card className="flex flex-col gap-2 px-4 py-3">
-      <p className="sec-label">Face à face</p>
+      <p className="sec-label">Duel</p>
       {record.played === 0 ? (
         <p className="m-0 text-sm" style={{ color: 'var(--ink-soft)' }}>
           Aucune partie ensemble pour l’instant.

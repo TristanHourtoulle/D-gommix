@@ -157,7 +157,7 @@ test('two-player 1v1 happy path (design §7.3)', async ({ browser }) => {
 
     // Accueil with history, light + dark.
     await p1.goto('/')
-    await expect(p1.getByText('Historique récent')).toBeVisible()
+    await expect(p1.getByText('Chronique')).toBeVisible()
     await expect(p1.getByText(/1 dégommage/)).toBeVisible()
     await shot(p1, '16-accueil')
     await p1.emulateMedia({ colorScheme: 'dark' })
