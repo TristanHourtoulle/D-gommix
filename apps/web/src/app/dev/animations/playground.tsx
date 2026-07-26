@@ -78,6 +78,18 @@ export function Playground() {
         </section>
 
         <section className="flex flex-col gap-2">
+          <p className="sec-label">Simulation de partie</p>
+          <Card className="flex flex-col gap-3 p-4">
+            <p className="m-0 text-xs" style={{ color: 'var(--ink-soft)' }}>
+              Rejoue une fausse partie complète dans le vrai écran live. Rien n’est enregistré.
+            </p>
+            <Link href="/dev/simulation" className="cta no-underline">
+              Ouvrir le simulateur
+            </Link>
+          </Card>
+        </section>
+
+        <section className="flex flex-col gap-2">
           <p className="sec-label">Dégommage</p>
           <Card className="flex flex-col gap-3 p-4">
             <div className="flex flex-col gap-3">

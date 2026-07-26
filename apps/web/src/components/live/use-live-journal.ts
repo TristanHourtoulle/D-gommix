@@ -76,6 +76,75 @@ function describeEvent(
 }
 
 /**
+ * Pure fold behind {@link useLiveJournal}: the two latest journal lines of a
+ * game, derived from its ordered raw events plus — as a fallback for the
+ * resync-only case — the reduced state. Exported so a non-socket caller (the
+ * dev simulator, `plans/038-simulateur-de-partie.md`) renders the exact same
+ * French sentences as the live screen instead of restating `describeEvent`.
+ *
+ * `events` must be sorted by `seq`.
+ */
+export function foldJournal(
+  gameId: string,
+  events: GameEvent[],
+  state: GameState | null,
+  names: NameMap
+): LiveJournal {
+  const eventRefs: DegommageRef[] = []
+  for (const event of events) {
+    if (event.type === 'DEGOMMAGE') {
+      eventRefs.push({ seq: event.seq, actorId: event.actorId, targetId: event.targetId })
+    }
+  }
+  const fallbackRefs: DegommageRef[] = state ? state.degommageLog : []
+  const degommageLabels = renderDegommageJournal(
+    gameId,
+    eventRefs.length > 0 ? eventRefs : fallbackRefs,
+    (userId) => displayName(names, userId)
+  )
+  const stampRows: StampEvent[] = events.map((event) => ({
+    seq: event.seq,
+    type: event.type,
+    actorId: event.actorId,
+    targetId: event.targetId,
+    payload: event.payload,
+    at: Date.parse(event.createdAt),
+  }))
+  const stamps = detectLineStamps(stampRows)
+  const entries: JournalEntry[] = []
+  for (const event of events) {
+    const label = describeEvent(event, events, names, degommageLabels)
+    if (label)
+      entries.push({
+        seq: event.seq,
+        actorId: event.actorId,
+        label,
+        stamp: stamps.get(event.seq) ?? null,
+      })
+  }
+  if (entries.length === 0 && state) {
+    for (const entry of state.degommageLog) {
+      if (state.undoneSeqs.has(entry.seq)) continue
+      entries.push({
+        seq: entry.seq,
+        actorId: entry.actorId,
+        label:
+          degommageLabels.get(entry.seq) ??
+          `${displayName(names, entry.actorId)} a dégommé un pion ${deName(displayName(names, entry.targetId))}`,
+        // No stamp on this path: `DegommageEntry` carries no timestamp and
+        // the reduced state holds no UNDO rows, so nothing can be derived.
+        stamp: null,
+      })
+    }
+  }
+  const last = events[events.length - 1]
+  return {
+    entries: entries.slice(-JOURNAL_LENGTH).reverse(),
+    lastEventAt: last?.createdAt ?? null,
+  }
+}
+
+/**
  * Collects the raw `game:event` broadcasts (plus the full history replayed by
  * `game:state_snapshot` on reconnection) to derive the two latest journal
  * lines with their French labels. When no raw event is available (edge case:
@@ -113,57 +182,6 @@ export function useLiveJournal(
   return useMemo(() => {
     void version
     const events = [...eventsRef.current.values()].sort((a, b) => a.seq - b.seq)
-    const eventRefs: DegommageRef[] = []
-    for (const event of events) {
-      if (event.type === 'DEGOMMAGE') {
-        eventRefs.push({ seq: event.seq, actorId: event.actorId, targetId: event.targetId })
-      }
-    }
-    const fallbackRefs: DegommageRef[] = state ? state.degommageLog : []
-    const degommageLabels = renderDegommageJournal(
-      gameId,
-      eventRefs.length > 0 ? eventRefs : fallbackRefs,
-      (userId) => displayName(names, userId)
-    )
-    const stampRows: StampEvent[] = events.map((event) => ({
-      seq: event.seq,
-      type: event.type,
-      actorId: event.actorId,
-      targetId: event.targetId,
-      payload: event.payload,
-      at: Date.parse(event.createdAt),
-    }))
-    const stamps = detectLineStamps(stampRows)
-    const entries: JournalEntry[] = []
-    for (const event of events) {
-      const label = describeEvent(event, events, names, degommageLabels)
-      if (label)
-        entries.push({
-          seq: event.seq,
-          actorId: event.actorId,
-          label,
-          stamp: stamps.get(event.seq) ?? null,
-        })
-    }
-    if (entries.length === 0 && state) {
-      for (const entry of state.degommageLog) {
-        if (state.undoneSeqs.has(entry.seq)) continue
-        entries.push({
-          seq: entry.seq,
-          actorId: entry.actorId,
-          label:
-            degommageLabels.get(entry.seq) ??
-            `${displayName(names, entry.actorId)} a dégommé un pion ${deName(displayName(names, entry.targetId))}`,
-          // No stamp on this path: `DegommageEntry` carries no timestamp and
-          // the reduced state holds no UNDO rows, so nothing can be derived.
-          stamp: null,
-        })
-      }
-    }
-    const last = events[events.length - 1]
-    return {
-      entries: entries.slice(-JOURNAL_LENGTH).reverse(),
-      lastEventAt: last?.createdAt ?? null,
-    }
+    return foldJournal(gameId, events, state, names)
   }, [version, state, names, gameId])
 }
