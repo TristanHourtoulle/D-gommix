@@ -16,17 +16,65 @@
  * §3) and this needs game-core, so it is a manual one-shot. See the runbook
  * subsection in docs/deploy.md.
  */
+import { pathToFileURL } from 'node:url'
 import { asc, eq, sql } from 'drizzle-orm'
-import { createDb, gameEvents, games } from '@degommix/db'
+import { createDb, gameEvents, games, type Db } from '@degommix/db'
 import { buildGameState } from '@degommix/game-core'
 import { rowToGameEvent } from './game-manager'
 import { awardSeals } from './seals'
 
-interface BackfillSummary {
+export interface BackfillSummary {
   games: number
   skipped: number
   failed: number
   sealsInserted: number
+}
+
+/**
+ * The replay itself, separated from the CLI wrapper so the integration suite
+ * can run the real thing against a seeded database instead of a copy of it.
+ */
+export async function backfillSeals(db: Db): Promise<BackfillSummary> {
+  const summary: BackfillSummary = { games: 0, skipped: 0, failed: 0, sealsInserted: 0 }
+
+  // `started_at is not null` drops the phantom lobbies (a burned-code registry
+  // row, not a game) — same predicate as every stats surface. The (ended_at,
+  // id) order is the one apps/ws-server/src/seals.ts bounds its career queries
+  // by: change one and you must change the other.
+  const rows = await db
+    .select({ id: games.id })
+    .from(games)
+    .where(sql`${games.status} = 'finished' and ${games.startedAt} is not null`)
+    .orderBy(asc(games.endedAt), asc(games.id))
+
+  for (const { id: gameId } of rows) {
+    try {
+      const eventRows = await db
+        .select()
+        .from(gameEvents)
+        .where(eq(gameEvents.gameId, gameId))
+        .orderBy(asc(gameEvents.seq))
+      if (eventRows.length === 0) {
+        summary.skipped += 1
+        continue
+      }
+      const state = buildGameState(eventRows.map(rowToGameEvent))
+      if (state.status !== 'finished') {
+        summary.skipped += 1
+        continue
+      }
+      // One transaction per game: a failure rolls back that game only.
+      const earned = await db.transaction((tx) => awardSeals(tx, gameId, state))
+      summary.games += 1
+      for (const sealIds of earned.values()) summary.sealsInserted += sealIds.length
+    } catch (error) {
+      // A single corrupt log must not stop the run.
+      summary.failed += 1
+      console.error(`game ${gameId} failed:`, error instanceof Error ? error.message : error)
+    }
+  }
+
+  return summary
 }
 
 async function main(): Promise<void> {
@@ -36,43 +84,9 @@ async function main(): Promise<void> {
     process.exit(1)
   }
   const db = createDb(url)
-  const summary: BackfillSummary = { games: 0, skipped: 0, failed: 0, sealsInserted: 0 }
-
+  let summary: BackfillSummary
   try {
-    // `started_at is not null` drops the phantom lobbies (a burned-code registry
-    // row, not a game) — same predicate as every stats surface.
-    const rows = await db
-      .select({ id: games.id })
-      .from(games)
-      .where(sql`${games.status} = 'finished' and ${games.startedAt} is not null`)
-      .orderBy(asc(games.endedAt), asc(games.id))
-
-    for (const { id: gameId } of rows) {
-      try {
-        const eventRows = await db
-          .select()
-          .from(gameEvents)
-          .where(eq(gameEvents.gameId, gameId))
-          .orderBy(asc(gameEvents.seq))
-        if (eventRows.length === 0) {
-          summary.skipped += 1
-          continue
-        }
-        const state = buildGameState(eventRows.map(rowToGameEvent))
-        if (state.status !== 'finished') {
-          summary.skipped += 1
-          continue
-        }
-        // One transaction per game: a failure rolls back that game only.
-        const earned = await db.transaction((tx) => awardSeals(tx, gameId, state))
-        summary.games += 1
-        for (const sealIds of earned.values()) summary.sealsInserted += sealIds.length
-      } catch (error) {
-        // A single corrupt log must not stop the run.
-        summary.failed += 1
-        console.error(`game ${gameId} failed:`, error instanceof Error ? error.message : error)
-      }
-    }
+    summary = await backfillSeals(db)
   } finally {
     await db.$client.end({ timeout: 5 })
   }
@@ -81,4 +95,8 @@ async function main(): Promise<void> {
   process.exit(summary.failed > 0 ? 1 : 0)
 }
 
-void main()
+// `pnpm backfill:seals` runs the script; importing it (the tests) must not.
+const entrypoint = process.argv[1]
+if (entrypoint !== undefined && import.meta.url === pathToFileURL(entrypoint).href) {
+  void main()
+}
