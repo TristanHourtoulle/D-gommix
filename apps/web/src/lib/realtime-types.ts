@@ -83,12 +83,26 @@ export interface StatsInvalidatePayload {
   scope: 'game_finished'
 }
 
+/**
+ * A taunt slammed by one player onto another, relayed to the whole game room
+ * (the sender included). Ephemeral decoration: it is never persisted, never
+ * part of the event log, and carries an id — not text — so the wire can never
+ * transport player-authored strings. Clients ignore ids they do not know.
+ */
+export interface TauntPayload {
+  gameId: string
+  fromId: string
+  targetId: string
+  tauntId: string
+}
+
 /** Broadcasts pushed by the ws-server (rooms `user:{id}` / `game:{id}`). */
 export interface ServerToClientEvents {
   'game:event': (event: GameEvent) => void
   'game:state_snapshot': (payload: GameStateSnapshotPayload) => void
   'game:host_changed': (payload: HostChangedPayload) => void
   'game:kicked': (payload: KickedPayload) => void
+  'game:taunt': (payload: TauntPayload) => void
   'lobby:state': (state: LobbyState) => void
   'invite:received': (payload: InviteReceivedPayload) => void
   'invite:canceled': (payload: InviteCanceledPayload) => void
@@ -162,6 +176,10 @@ export interface CommandMap {
   'game:resync': {
     payload: { gameId: string; lastSeq: number }
     result: { events: GameEvent[]; serverNow: number }
+  }
+  'game:send_taunt': {
+    payload: { gameId: string; targetId: string; tauntId: string }
+    result: Record<never, never>
   }
   'replay:create': {
     payload: { finishedGameId: string }

@@ -93,6 +93,7 @@ export function Playground() {
                   isLocked={false}
                   isPending={false}
                   onTap={() => setHitCount((n) => (n >= DEMO_LOG.length ? 1 : n + 1))}
+                  onLongPress={() => undefined}
                 />
               ) : null}
               {rival ? (
@@ -106,6 +107,7 @@ export function Playground() {
                   isLocked={false}
                   isPending={false}
                   onTap={() => undefined}
+                  onLongPress={() => undefined}
                 />
               ) : null}
             </div>

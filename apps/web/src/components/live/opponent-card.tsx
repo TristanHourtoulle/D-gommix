@@ -1,13 +1,15 @@
 'use client'
 
 import Image from 'next/image'
-import type { CSSProperties } from 'react'
+import { useRef, type CSSProperties } from 'react'
 import type { PlayerState } from '@degommix/game-core'
+import { useLongPress } from '@/components/dev/use-long-press'
 import { Icon } from '@/components/icons'
 import { PlayerAvatar } from '@/components/ui/player-avatar'
 import { CHARACTER_META } from '@/lib/characters'
 import { HitBurst } from './hit-burst'
 import { hitPhase, type TargetHit } from './hit-fx'
+import { TAUNT_LONG_PRESS_MS } from './taunts'
 
 interface OpponentCardProps {
   player: PlayerState
@@ -26,6 +28,8 @@ interface OpponentCardProps {
   /** Degommage still awaiting the server ack. */
   isPending: boolean
   onTap: (targetId: string) => void
+  /** Long press (600 ms) — opens the taunt picker for that opponent. */
+  onLongPress: (targetId: string) => void
 }
 
 /** Star exit vectors, sized for the full-width arcade card. */
@@ -48,6 +52,12 @@ const STARS = [
  * The hit combo (shake, stars, stamp, tally pop) plays on the outer slot — the
  * same `.player-card` hooks as before the redesign — so the press translation
  * of the button and the shake of the card never fight over one transform.
+ *
+ * A 600 ms hold opens the taunt picker (« Balance une vanne ») instead of
+ * dégommant, and the click it would otherwise emit on release is swallowed.
+ * Because the button is `disabled` during the 1.2 s tap lock — and for a
+ * player who left or a viewer who cannot act — it emits no pointer events
+ * then, so no taunt is possible during the lock either.
  */
 export function OpponentCard({
   player,
@@ -60,11 +70,22 @@ export function OpponentCard({
   isLocked,
   isPending,
   onTap,
+  onLongPress,
 }: OpponentCardProps) {
   const meta = CHARACTER_META[player.character]
   const phase = hitPhase(hit)
   const out = !player.inGame
   const state = out ? 'out' : isPending ? 'confirming' : isLocked ? 'locked' : 'idle'
+
+  // The long press fires while the finger is still down, so the `click` that
+  // follows the lift would send a dégommage on top of the taunt. The flag
+  // swallows exactly that click, and every new press clears it so a hold that
+  // ends without a click (finger dragged off) cannot eat the next real tap.
+  const suppressClickRef = useRef(false)
+  const longPress = useLongPress(() => {
+    suppressClickRef.current = true
+    onLongPress(player.userId)
+  }, TAUNT_LONG_PRESS_MS)
 
   return (
     <div
@@ -79,7 +100,20 @@ export function OpponentCard({
         disabled={out || !canAct || isLocked}
         aria-busy={isPending}
         data-state={state}
+        onPointerDown={(event) => {
+          suppressClickRef.current = false
+          longPress.onPointerDown(event)
+        }}
+        onPointerMove={longPress.onPointerMove}
+        onPointerUp={longPress.onPointerUp}
+        onPointerCancel={longPress.onPointerCancel}
+        onPointerLeave={longPress.onPointerLeave}
+        onContextMenu={longPress.onContextMenu}
         onClick={() => {
+          if (suppressClickRef.current) {
+            suppressClickRef.current = false
+            return
+          }
           onTap(player.userId)
         }}
       >

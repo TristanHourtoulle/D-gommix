@@ -695,6 +695,10 @@ a {
   border-radius: 14px;
   cursor: pointer;
   user-select: none;
+  /* A 600 ms hold opens the taunt picker — iOS must not pop its callout, and
+     the double-tap zoom delay must not eat the gesture. */
+  -webkit-touch-callout: none;
+  touch-action: manipulation;
   -webkit-tap-highlight-color: transparent;
   margin-bottom: var(--key-depth);
   box-shadow: 0 var(--key-depth) 0 var(--key-lip);
@@ -1224,6 +1228,79 @@ body[data-toast-anchor='live'] .toast-zone {
   .player-card[data-hit='b'] .hit-tally { animation: hit-tally-fade-b 420ms ease both; }
 }
 
+/* ---------- Taunts (« Balance une vanne ») ---------- */
+
+/**
+ * Taunt stamp — the plan 011 hit stamp, promoted to a fullscreen slam. Fixed
+ * overlay, `pointer-events: none`: it never blocks a tap on the board beneath.
+ * Unlike `.hit-stamp` there is no a/b keyframe duplication — the React overlay
+ * is remounted with a new `key` on every taunt, which restarts the animation
+ * for free (no `next/image` to tear down).
+ */
+.taunt-zone {
+  position: fixed;
+  inset: 0;
+  z-index: 45;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  pointer-events: none;
+}
+
+.taunt-stamp {
+  max-width: 88vw;
+  text-align: center;
+  font-family: var(--font-display);
+  font-size: clamp(1.25rem, 6.5vw, 2rem);
+  font-weight: 700;
+  line-height: 1.15;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+  color: var(--asterix);
+  text-shadow:
+    -2px -2px 0 var(--surface-2), 2px -2px 0 var(--surface-2),
+    -2px 2px 0 var(--surface-2), 2px 2px 0 var(--surface-2),
+    -3px 0 0 var(--surface-2), 3px 0 0 var(--surface-2),
+    0 -3px 0 var(--surface-2), 0 3px 0 var(--surface-2),
+    3px 3px 0 var(--ink);
+  will-change: transform, opacity;
+  animation: taunt-slam 1600ms cubic-bezier(0.2, 0.8, 0.3, 1) both;
+}
+
+/* Who taunted whom, under the stamp. */
+.taunt-from {
+  display: block;
+  margin-top: 0.5rem;
+  font-family: var(--font-body);
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--ink-soft);
+  text-shadow: none;
+}
+
+@keyframes taunt-slam {
+  0% { opacity: 0; transform: scale(2.6) rotate(-22deg); }
+  14% { opacity: 1; transform: scale(0.94) rotate(-7deg); }
+  22% { opacity: 1; transform: scale(1.06) rotate(-9.5deg); }
+  34% { opacity: 1; transform: scale(1) rotate(-8deg); }
+  82% { opacity: 1; transform: scale(1) rotate(-8deg); }
+  100% { opacity: 0; transform: scale(1.1) rotate(-8deg); }
+}
+
+/* Reduced motion: the stamp still lands, it just does not slam. */
+@keyframes taunt-hold {
+  0% { opacity: 0; }
+  10% { opacity: 1; }
+  82% { opacity: 1; }
+  100% { opacity: 0; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .taunt-stamp { transform: rotate(-8deg); animation: taunt-hold 1600ms ease both; }
+}
+
 /* ---------- End-of-game sequence (summary screen) ---------- */
 
 /**
@@ -1614,6 +1691,7 @@ body[data-toast-anchor='live'] .toast-zone {
 [data-motion='reduced'] .hit-fx { display: none; }
 [data-motion='reduced'] .player-card[data-hit='a'] .hit-tally { animation: hit-tally-fade-a 420ms ease both; }
 [data-motion='reduced'] .player-card[data-hit='b'] .hit-tally { animation: hit-tally-fade-b 420ms ease both; }
+[data-motion='reduced'] .taunt-stamp { transform: rotate(-8deg); animation: taunt-hold 1600ms ease both; }
 
 [data-motion='reduced'] .eg-play,
 [data-motion='reduced'] .eg-play *,

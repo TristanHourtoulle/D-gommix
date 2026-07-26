@@ -2,12 +2,18 @@ import { and, eq, inArray, ne } from 'drizzle-orm'
 import { z } from 'zod'
 import { gamePlayers, games, user } from '@degommix/db'
 import type { Command } from '@degommix/game-core'
-import { CommandError, isUniqueViolation, withAck } from '../ack'
+import { CommandError, isUniqueViolation, OK, withAck } from '../ack'
 import type { AppContext } from '../context'
 import { createLobby, inviteSeat } from './lobby'
 import { broadcastLobbyState } from '../lobby-state'
-import { assertNotJoinedElsewhere, getSeat, type GamePlayerRow } from '../lobby-shared'
+import {
+  assertNotJoinedElsewhere,
+  getGameOrThrow,
+  getSeat,
+  type GamePlayerRow,
+} from '../lobby-shared'
 import type { AppSocket } from '../socket-types'
+import { TAUNT_COOLDOWN_MS, TAUNT_IDS } from '../taunts'
 
 const commandSchema: z.ZodType<Command> = z.discriminatedUnion('type', [
   z.object({ type: z.literal('degommage'), targetId: z.string().min(1) }),
@@ -28,6 +34,11 @@ const gameCommandSchema = z.object({
 })
 const resyncSchema = z.object({ gameId: z.uuid(), lastSeq: z.number().int().nonnegative() })
 const replaySchema = z.object({ finishedGameId: z.uuid() })
+const tauntSchema = z.object({
+  gameId: z.uuid(),
+  targetId: z.string().min(1),
+  tauntId: z.enum(TAUNT_IDS),
+})
 
 const GAME_COMMAND_RATE_LIMIT = 20
 const GAME_COMMAND_RATE_WINDOW_MS = 1_000
@@ -82,6 +93,32 @@ export function registerGameHandlers(socket: AppSocket, ctx: AppContext): void {
       await socket.join(`game:${gameId}`)
       const events = await manager.getEventsSince(gameId, lastSeq)
       return { ok: true, events, serverNow: Date.now() }
+    })
+  )
+
+  /**
+   * « Balance une vanne » — pure decoration relayed to the game room. NOT a
+   * game command: no `seq`, no `game_events` row, no reducer, no idempotency
+   * key. The room emit reaches the sender too, so the whole table sees the
+   * stamp at the same instant.
+   *
+   * The cooldown is keyed by USER, not by socket, unlike the flood guards
+   * above: one taunt per minute is a game rule, and a socket-keyed window
+   * would be defeated by a second tab. It is asserted BEFORE the DB reads so
+   * a flood costs no queries; a taunt rejected afterwards still burns the
+   * minute, which is harmless (the caller was not entitled to it anyway).
+   */
+  socket.on(
+    'game:send_taunt',
+    withAck(tauntSchema, async ({ gameId, targetId, tauntId }) => {
+      limiter.assert(`${userId}:game:taunt`, 1, TAUNT_COOLDOWN_MS)
+      const seat = await getSeat(db, gameId, userId)
+      if (!seat || seat.status !== 'joined') throw new CommandError('NOT_MEMBER')
+      const game = await getGameOrThrow(db, gameId)
+      if (game.status !== 'active') throw new CommandError('GAME_NOT_ACTIVE')
+      if (targetId === userId) throw new CommandError('INVALID_TARGET')
+      io.to(`game:${gameId}`).emit('game:taunt', { gameId, fromId: userId, targetId, tauntId })
+      return OK
     })
   )
 
