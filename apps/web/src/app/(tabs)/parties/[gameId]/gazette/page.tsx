@@ -4,6 +4,7 @@ import { STAMP_META } from '@/lib/game-stamps'
 import type { GazetteStamp } from '@/lib/gazette/facts'
 import { buildGazette } from '@/lib/gazette/render'
 import { getTitleHolder } from '@/lib/queries/gazette'
+import { getGameProphet } from '@/lib/queries/oracle'
 import { getGameDetail, type GameDetail } from '@/lib/queries/stats'
 import { requireOnboardedSession } from '@/lib/session'
 
@@ -57,7 +58,14 @@ export default async function GazettePage({ params }: GazettePageProps) {
   // players at the same table must read the same parchment, and a past game's
   // gazette must never rewrite itself when somebody plays a new game.
   const titleHolder = await getTitleHolder(detail.players, detail.endedAt)
-  const facts = { ...detail.gazetteFacts, titleHolder, stamps: gazetteStamps(detail) }
+  // « L'Oracle » (plan 040): not derivable from the event log, so it is injected
+  // like titleHolder. Null — and therefore absent from the parchment — for every
+  // game played before the Oracle shipped; predictions cannot be backfilled.
+  const oracle = await getGameProphet(gameId, {
+    winnerId: detail.winner?.userId ?? null,
+    takenCounts: detail.gazetteFacts.takenCounts,
+  })
+  const facts = { ...detail.gazetteFacts, titleHolder, oracle, stamps: gazetteStamps(detail) }
   const gazette = buildGazette(detail.id, facts)
 
   return (

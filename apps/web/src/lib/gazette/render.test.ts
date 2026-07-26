@@ -153,6 +153,7 @@ function onlyFacts(present: readonly GazetteFactKey[], family: GazetteFamily = '
     quitters: has('quitters') ? [{ userId: 'p', username: 'Panoramix' }] : [],
     cleanSheet: has('cleanSheet') ? { userId: 'o', username: 'Obélix' } : null,
     titleHolder: has('titleHolder') ? { userId: 'a', username: 'Astérix', count: 42 } : null,
+    oracle: has('oracle') ? { userId: 'b', username: 'Bonemine', count: 3 } : null,
     stamps: has('stamps') ? [{ id: 'triple', label: 'le Triplé', userId: 'o' }] : [],
   }
 }
@@ -168,6 +169,7 @@ const ALL_FACT_KEYS: readonly GazetteFactKey[] = [
   'quitters',
   'cleanSheet',
   'titleHolder',
+  'oracle',
   'stamps',
 ]
 
