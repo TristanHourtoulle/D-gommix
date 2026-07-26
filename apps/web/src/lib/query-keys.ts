@@ -13,7 +13,8 @@ export const queryKeys = {
   /**
    * GET /api/leaderboard — friends-circle ranking and character winrates.
    * Invalidation root: `useLeaderboardData` appends the period ('all' |
-   * 'month'); `invalidateQueries` prefix-matches both variants.
+   * 'month'), and archived months append their 'YYYY-MM' key;
+   * `invalidateQueries` prefix-matches every variant.
    */
   leaderboard: ['leaderboard'] as const,
 }
