@@ -64,30 +64,30 @@ describe('serializeHomePayload', () => {
   }
 
   it('produces a body accepted by the wire schema', () => {
-    const payload = serializeHomePayload(stats, activeGame, [game(), game({ endedAt: null })])
+    const payload = serializeHomePayload(stats, activeGame, [game(), game({ endedAt: null })], { rank: 2, winrate: 43 })
     expect(homePayloadSchema.parse(payload)).toEqual(payload)
   })
 
   it('survives a JSON round-trip without losing the history dates', () => {
-    const payload = serializeHomePayload(stats, null, [game()])
+    const payload = serializeHomePayload(stats, null, [game()], null)
     const overTheWire = homePayloadSchema.parse(JSON.parse(JSON.stringify(payload)))
     expect(parseHomeGames(overTheWire.lastGames)[0]?.endedAt).toEqual(game().endedAt)
   })
 
   it('serializes an empty history', () => {
-    expect(serializeHomePayload(stats, null, []).lastGames).toEqual([])
+    expect(serializeHomePayload(stats, null, [], null).lastGames).toEqual([])
   })
 })
 
 describe('wire schemas', () => {
   it('rejects an unknown character id', () => {
-    const payload = serializeHomePayload(stats, null, [])
+    const payload = serializeHomePayload(stats, null, [], null)
     const corrupted = { ...payload, stats: { ...stats, favoriteCharacter: 'panoramix' } }
     expect(homePayloadSchema.safeParse(corrupted).success).toBe(false)
   })
 
   it('rejects an unsupported game format', () => {
-    const payload = serializeHomePayload(stats, null, [game({ format: 5 as 2 })])
+    const payload = serializeHomePayload(stats, null, [game({ format: 5 as 2 })], null)
     expect(homePayloadSchema.safeParse(payload).success).toBe(false)
   })
 
@@ -326,7 +326,7 @@ describe('avatar ids on the wire', () => {
           { username: 'Obelix', avatarId: null, character: 'obelix' },
         ],
       }),
-    ])
+    ], null)
     const parsed = homePayloadSchema.parse(JSON.parse(JSON.stringify(payload)))
     expect(parsed.lastGames[0]?.participants[0]?.avatarId).toBe('b-menhir')
     expect(parsed.lastGames[0]?.participants[1]?.avatarId).toBeNull()

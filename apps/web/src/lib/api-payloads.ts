@@ -1,6 +1,7 @@
 import { z } from 'zod'
 import { CHARACTERS } from '@degommix/game-core'
 import type { ActiveGame, HomeGame, HomeStats } from '@/lib/queries/home'
+import type { ViewerRank } from '@/lib/queries/stats'
 
 /**
  * Wire shapes of the tab data endpoints (`/api/home`, `/api/invites`,
@@ -49,6 +50,11 @@ export const homePayloadSchema = z.object({
   stats: homeStatsSchema,
   activeGame: activeGameSchema.nullable(),
   lastGames: z.array(serializedHomeGameSchema),
+  /**
+   * Rank chip of the hero header, null when the viewer never finished a game.
+   * Optional so pre-redesign caches keep parsing (legacy-cache convention).
+   */
+  viewerRank: z.object({ rank: z.number(), winrate: z.number() }).nullable().optional(),
 })
 
 export const invitesPayloadSchema = z.object({
@@ -58,6 +64,8 @@ export const invitesPayloadSchema = z.object({
       hostUsername: z.string(),
       hostAvatarId: z.string().nullable().optional(),
       format: formatSchema,
+      /** ISO 8601 lobby creation; optional for old caches and live ws patches. */
+      createdAt: z.string().nullable().optional(),
     })
   ),
 })
@@ -149,13 +157,14 @@ export function parseHomeGame(game: SerializedHomeGame): HomeGame {
   return { ...game, endedAt: game.endedAt === null ? null : new Date(game.endedAt) }
 }
 
-/** Assembles the `/api/home` body from the three server queries. */
+/** Assembles the `/api/home` body from the four server queries. */
 export function serializeHomePayload(
   stats: HomeStats,
   activeGame: ActiveGame | null,
-  lastGames: HomeGame[]
+  lastGames: HomeGame[],
+  viewerRank: ViewerRank | null
 ): HomePayload {
-  return { stats, activeGame, lastGames: lastGames.map(serializeHomeGame) }
+  return { stats, activeGame, lastGames: lastGames.map(serializeHomeGame), viewerRank }
 }
 
 /** Revives the history rows of a home payload, newest first as sent. */

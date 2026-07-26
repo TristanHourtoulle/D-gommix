@@ -1,8 +1,20 @@
 import type { GameFormat } from '@degommix/game-core'
+import { formatLastSeen } from '@/components/friends/last-seen'
 
 /** « 1v1 » or « FFA · N joueurs ». */
 export function formatLabel(format: GameFormat): string {
   return format === 2 ? '1v1' : `FFA · ${format} joueurs`
+}
+
+/**
+ * Meta line of an invitation card: « 1v1 · il y a 2 min ». A live-pushed
+ * invite carries no timestamp yet — it just arrived, so « à l’instant » is
+ * the honest label until the refetch fills the real one. Ages beyond what
+ * `formatLastSeen` covers fall back to the format alone.
+ */
+export function inviteMeta(format: GameFormat, createdAt: string | null | undefined): string {
+  const age = createdAt === null || createdAt === undefined ? 'à l’instant' : formatLastSeen(createdAt)
+  return age === null ? formatLabel(format) : `${formatLabel(format)} · ${age}`
 }
 
 /** Compact duration: « < 1 min », « 14 min », « 1 h 05 ». */
