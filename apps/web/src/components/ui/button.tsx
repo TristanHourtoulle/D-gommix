@@ -5,6 +5,8 @@ interface ButtonProps {
   variant?: 'primary' | 'ghost'
   type?: 'button' | 'submit'
   fullWidth?: boolean
+  /** `sm` is the compact arcade key of dense rows (see `.cta.sm`). */
+  size?: 'md' | 'sm'
   disabled?: boolean
   /** Small helper line displayed under the button (e.g. why it is disabled) */
   helper?: string
@@ -20,11 +22,12 @@ export function Button({
   variant = 'primary',
   type = 'button',
   fullWidth = true,
+  size = 'md',
   disabled = false,
   helper,
   onClick,
 }: ButtonProps) {
-  const className = ['cta', variant === 'ghost' && 'ghost', !fullWidth && 'auto']
+  const className = ['cta', variant === 'ghost' && 'ghost', !fullWidth && 'auto', size === 'sm' && 'sm']
     .filter(Boolean)
     .join(' ')
 

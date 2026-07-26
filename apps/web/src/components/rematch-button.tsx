@@ -13,13 +13,15 @@ interface RematchButtonProps {
   /** A finished game the viewer played in (SPECS.md §« Rejouer »). */
   finishedGameId: string
   variant?: 'primary' | 'ghost'
+  /** Small inline key (« Revanche » on the latest history row) instead of the full-width bar. */
+  compact?: boolean
 }
 
 /**
  * « Revanche ! » — asks the server for a fresh lobby at the same format with every
  * former player re-invited, then lands the caller in it as host.
  */
-export function RematchButton({ finishedGameId, variant = 'ghost' }: RematchButtonProps) {
+export function RematchButton({ finishedGameId, variant = 'ghost', compact = false }: RematchButtonProps) {
   const router = useRouter()
   const { socket } = useSocket()
   const { toast } = useToast()
@@ -44,12 +46,14 @@ export function RematchButton({ finishedGameId, variant = 'ghost' }: RematchButt
   return (
     <Button
       variant={variant}
+      size={compact ? 'sm' : 'md'}
+      fullWidth={!compact}
       disabled={pending}
       onClick={() => {
         void rematch()
       }}
     >
-      Revanche !
+      {compact ? 'Revanche' : 'Revanche !'}
     </Button>
   )
 }

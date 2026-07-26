@@ -953,6 +953,28 @@ a {
   100% { transform: scale(1, 1); }
 }
 
+/*
+ * Pending-invitations count riding the Arène tab. It lives INSIDE `.tab-item`
+ * (already `position: relative; z-index: 1`, above the bubble layer), so the
+ * sliding water bubble underneath keeps its own transform untouched.
+ */
+.tab-badge {
+  position: absolute;
+  top: 0.1rem;
+  left: calc(50% + 0.35rem);
+  min-width: 16px;
+  height: 16px;
+  padding: 0 4px;
+  border-radius: 999px;
+  background: var(--bad);
+  color: #fff;
+  font-size: 0.58rem;
+  font-weight: 700;
+  line-height: 16px;
+  text-align: center;
+  pointer-events: none;
+}
+
 @media (prefers-reduced-motion: reduce) {
   .tab-bubble { transition: none; }
   .tab-bubble-water { animation: none; }
@@ -1885,3 +1907,31 @@ body[data-toast-anchor='live'] .toast-zone {
     animation: none !important;
   }
 }
+
+/* ---------- Place du village (Accueil + Arène redesign) ---------- */
+
+/*
+ * Small arcade key for dense rows (inline « Revanche », invitation cards,
+ * « Inviter » on the Arène friends strip): same lip mechanics as `.cta`,
+ * everything reads `--key-depth` so the shallower 4px lip follows for free.
+ */
+.cta.sm {
+  --key-depth: 4px;
+  padding: 0.5rem 0.7rem;
+  font-size: 0.68rem;
+  border-radius: 11px;
+  gap: 0.3rem;
+}
+
+/* Hero-header chips: bronze standing (« 2ᵉ du village ») and quiet outlined stat. */
+.pill.bronze { background: var(--bronze-tint); color: var(--bronze-strong); }
+.pill.plain {
+  background: var(--surface-2);
+  border: 1px solid var(--parchment-line);
+  color: var(--ink-soft);
+}
+
+/* Form guide: one square dot per recent game — victory full, defeat dimmed. */
+.form-dot { width: 10px; height: 10px; border-radius: 3px; flex: none; }
+.form-dot.v { background: var(--good); }
+.form-dot.d { background: var(--bad); opacity: 0.55; }
