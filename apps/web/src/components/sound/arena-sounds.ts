@@ -4,7 +4,7 @@
  * while `sound-player.ts` keeps every Web Audio call.
  */
 
-export const ARENA_SOUND_IDS = ['carnyx', 'paf', 'fanfare'] as const
+export const ARENA_SOUND_IDS = ['ouch', 'paf', 'fanfare'] as const
 
 export type ArenaSoundId = (typeof ARENA_SOUND_IDS)[number]
 
@@ -28,7 +28,9 @@ export const MASTER_GAIN = 0.35
 export const PAF_DELAY_MS = 40
 
 export const ARENA_SOUNDS: Readonly<Record<ArenaSoundId, ArenaSound>> = {
-  carnyx: { url: '/sounds/carnyx.m4a', gain: 0.9, minIntervalMs: 700 },
+  // The dégommage yelp. `gain: 1` because it is a voice recording whose RMS
+  // sits well under the synthesised samples even at the same peak level.
+  ouch: { url: '/sounds/ouch.m4a', gain: 1, minIntervalMs: 700 },
   paf: { url: '/sounds/paf.m4a', gain: 1, minIntervalMs: 200 },
   fanfare: { url: '/sounds/fanfare.m4a', gain: 0.8, minIntervalMs: 5000 },
 }

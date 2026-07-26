@@ -46,7 +46,7 @@ export function useArenaSounds(state: GameState | null): void {
     if (preference === 'off') return
 
     if (cue === 'hit') {
-      playArenaSound('carnyx')
+      playArenaSound('ouch')
       playArenaSound('paf', PAF_DELAY_MS)
       return
     }

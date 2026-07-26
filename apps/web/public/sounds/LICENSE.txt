@@ -1,0 +1,29 @@
+Provenance of the arena samples (apps/web/public/sounds/)
+=========================================================
+
+ouch.m4a  — SOURCED, public domain
+  Source file : "LL-Q1860 (eng)-Grendelkhan-ouch.wav"
+  Source URL  : https://commons.wikimedia.org/wiki/File:LL-Q1860_(eng)-Grendelkhan-ouch.wav
+  Author      : Grendelkhan (speaker and recorder), own work via Lingua Libre
+  Recorded    : 2024-05-21
+  Licence     : CC0-1.0 (Creative Commons Zero, Public Domain Dedication)
+                https://creativecommons.org/publicdomain/zero/1.0/
+  Downloaded  : 2026-07-26
+
+  Processing applied (reproducible from the source file above):
+    sox ouch-src.wav -r 44100 -c 1 -b 16 ouch-trim.wav \
+        silence 1 0.02 1% reverse silence 1 0.02 1% reverse gain -n -3
+    sox ouch-trim.wav ouch-proc.wav gain -n -3 fade t 0.005 0 0.005
+    afconvert -f m4af -d aac -b 96000 ouch-proc.wav ouch.m4a
+
+  That is: leading and trailing silence trimmed, resampled 48 kHz -> 44.1 kHz,
+  peak-normalised to -3 dBFS, 5 ms fade in and out, encoded AAC-LC ~96 kbps
+  mono. All source metadata is dropped by the re-encode; the shipped file
+  carries container atoms only.
+
+  No pitch or time manipulation was applied — the yelp is the original
+  recording, only trimmed and levelled.
+
+paf.m4a, fanfare.m4a — GENERATED, no third-party material
+  Synthesised from arithmetic by ../../scripts/generate-sounds.mjs
+  (run: pnpm --filter @degommix/web sounds). Licence: this repository's.

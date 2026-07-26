@@ -150,8 +150,8 @@ export function Playground() {
         <section className="flex flex-col gap-2">
           <p className="sec-label">Sons</p>
           <Card className="flex flex-col gap-3 p-4">
-            <Button variant="ghost" onClick={() => playArenaSound('carnyx')}>
-              Carnyx
+            <Button variant="ghost" onClick={() => playArenaSound('ouch')}>
+              Ouch
             </Button>
             <Button variant="ghost" onClick={() => playArenaSound('paf')}>
               PAF

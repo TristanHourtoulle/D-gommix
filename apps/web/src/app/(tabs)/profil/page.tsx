@@ -92,7 +92,7 @@ export default async function ProfilePage() {
         <Card className="flex flex-col gap-3 p-4">
           <SoundSegmented />
           <p className="m-0 text-xs" style={{ color: 'var(--ink-soft)' }}>
-            Trois bruitages courts pendant la partie : le carnyx et le « PAF ! » à chaque
+            Trois bruitages courts pendant la partie : un « ouch » et un « PAF ! » à chaque
             dégommage, une fanfare quand le village tombe. Rien en dehors de l’arène. Sur
             iPhone, le bouton silencieux coupe tout.
           </p>

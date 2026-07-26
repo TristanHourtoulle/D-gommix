@@ -1,12 +1,18 @@
 /**
- * Regenerates the three committed arena samples of `public/sounds/`.
+ * Regenerates the two SYNTHESISED arena samples of `public/sounds/` — `paf` and
+ * `fanfare`.
  *
  * Run with: pnpm --filter @degommix/web sounds
  *
- * Why synthesis rather than sourcing: the licence question disappears. Every
- * sample is arithmetic written here, so its provenance is this file and its
- * licence is the repository's — no CC-BY attribution surface to build, no
- * marketplace terms to read, no downloaded metadata to sanitise.
+ * The third sample, `ouch.m4a`, is NOT generated here: the owner asked for a
+ * real « ouch », so it is a sourced CC0 voice recording. Its provenance and the
+ * exact commands that produced it live in `public/sounds/LICENSE.txt`. Running
+ * this script never touches it.
+ *
+ * Why synthesis for the other two: the licence question disappears. Both are
+ * arithmetic written here, so their provenance is this file and their licence
+ * is the repository's — no CC-BY attribution surface to build, no marketplace
+ * terms to read, no downloaded metadata to sanitise.
  *
  * Four invariants this script exists to guarantee:
  *
@@ -177,33 +183,9 @@ function renderBrass(samples, freqAt, gainAt, cutoffAt, detuneCents, offsetSampl
 }
 
 /**
- * `carnyx`, 700 ms — the Gaulish war horn. G3 (196 Hz) bent up to B♭3 (233 Hz)
- * over the first 180 ms, through a low-pass sweeping 900 → 2600 Hz, with a
- * second voice detuned by 8 cents for the brassy beating. 25 ms attack, 120 ms
- * plateau, exponential release.
- */
-function renderCarnyx() {
-  const samples = allocate(700)
-  const freqAt = (t) => {
-    const bend = Math.min(1, t / 0.18)
-    return 196 + (233 - 196) * (bend * bend * (3 - 2 * bend))
-  }
-  const cutoffAt = (t) => 900 + (2600 - 900) * Math.min(1, t / 0.18)
-  const gainAt = (t) => {
-    if (t < 0.025) return t / 0.025
-    if (t < 0.145) return 1
-    return Math.exp(-(t - 0.145) / 0.19)
-  }
-  renderBrass(samples, freqAt, gainAt, cutoffAt, 0, 0)
-  renderBrass(samples, freqAt, (t) => gainAt(t) * 0.7, cutoffAt, 8, 0)
-  for (let i = 0; i < samples.length; i += 1) samples[i] = softClip(samples[i] * 0.9)
-  return finish(samples)
-}
-
-/**
- * `fanfare`, 1200 ms — three notes, G3 → C4 → E4, 220 ms apart, same timbre as
- * the carnyx, the last held 600 ms with a 4 Hz vibrato of ±6 cents. Short and
- * celebratory: it marks the village falling, it is not a jingle.
+ * `fanfare`, 1200 ms — three brass notes, G3 → C4 → E4, 220 ms apart, the last
+ * held 600 ms with a 4 Hz vibrato of ±6 cents. Short and celebratory: it marks
+ * the village falling, it is not a jingle.
  */
 function renderFanfare() {
   const samples = allocate(1200)
@@ -274,7 +256,6 @@ async function encode(wavPath, outPath) {
 
 async function main() {
   const recipes = [
-    ['carnyx', renderCarnyx],
     ['paf', renderPaf],
     ['fanfare', renderFanfare],
   ]

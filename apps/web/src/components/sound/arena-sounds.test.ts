@@ -15,7 +15,7 @@ function snapshot(hitCount: number, finished: boolean, winnerId: string | null):
 
 describe('ARENA_SOUNDS', () => {
   it('ships exactly three sounds', () => {
-    expect(ARENA_SOUND_IDS).toEqual(['carnyx', 'paf', 'fanfare'])
+    expect(ARENA_SOUND_IDS).toEqual(['ouch', 'paf', 'fanfare'])
   })
 
   it('points every sound at a public /sounds/*.m4a file', () => {
@@ -51,8 +51,8 @@ describe('shouldPlay', () => {
     expect(shouldPlay('paf', 1_000 + ARENA_SOUNDS.paf.minIntervalMs, 1_000)).toBe(true)
   })
 
-  it('holds the carnyx longer than the paf', () => {
-    expect(ARENA_SOUNDS.carnyx.minIntervalMs).toBeGreaterThan(ARENA_SOUNDS.paf.minIntervalMs)
+  it('holds the ouch longer than the paf', () => {
+    expect(ARENA_SOUNDS.ouch.minIntervalMs).toBeGreaterThan(ARENA_SOUNDS.paf.minIntervalMs)
   })
 })
 
