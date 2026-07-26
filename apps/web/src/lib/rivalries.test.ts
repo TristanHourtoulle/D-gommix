@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import {
   aggregatePairCounts,
+  aggregateTakenCounts,
   pickFavoriteVictim,
   pickNemesis,
   sortRivalryPairs,
@@ -92,6 +93,59 @@ describe('aggregatePairCounts', () => {
   it('returns an empty array when there are no degommages', () => {
     expect(aggregatePairCounts([], ME)).toEqual([])
     expect(aggregatePairCounts([undo('g1', 1, { targetSeq: 0 })], ME)).toEqual([])
+  })
+})
+
+describe('aggregateTakenCounts', () => {
+  it('counts non-undone degommages per target across games', () => {
+    const rows = [
+      degommage('g1', 1, ME, 'obelix'),
+      degommage('g1', 2, 'asterix', 'obelix'),
+      degommage('g1', 3, 'obelix', ME),
+      degommage('g2', 1, ME, 'obelix'),
+    ]
+
+    expect(aggregateTakenCounts(rows)).toEqual(
+      new Map([
+        ['obelix', 3],
+        [ME, 1],
+      ])
+    )
+  })
+
+  it('excludes a degommage cancelled by an UNDO targeting its seq', () => {
+    const rows = [
+      degommage('g1', 1, ME, 'obelix'),
+      degommage('g1', 2, ME, 'obelix'),
+      undo('g1', 3, { targetSeq: 2 }),
+    ]
+
+    expect(aggregateTakenCounts(rows)).toEqual(new Map([['obelix', 1]]))
+  })
+
+  it('scopes undo exclusion to its own game', () => {
+    const rows = [
+      degommage('g1', 1, ME, 'obelix'),
+      undo('g1', 2, { targetSeq: 1 }),
+      degommage('g2', 1, ME, 'obelix'),
+    ]
+
+    expect(aggregateTakenCounts(rows)).toEqual(new Map([['obelix', 1]]))
+  })
+
+  it('ignores self-degommages and rows with a null actor or target', () => {
+    const rows = [
+      degommage('g1', 1, ME, ME),
+      degommage('g1', 2, null, ME),
+      degommage('g1', 3, ME, null),
+    ]
+
+    expect(aggregateTakenCounts(rows)).toEqual(new Map())
+  })
+
+  it('returns an empty map when there are no degommages', () => {
+    expect(aggregateTakenCounts([])).toEqual(new Map())
+    expect(aggregateTakenCounts([undo('g1', 1, { targetSeq: 0 })])).toEqual(new Map())
   })
 })
 

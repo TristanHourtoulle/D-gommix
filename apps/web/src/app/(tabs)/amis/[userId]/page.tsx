@@ -2,14 +2,16 @@ import Link from 'next/link'
 import { notFound } from 'next/navigation'
 import { requireOnboardedSession } from '@/lib/session'
 import { areFriends, getPlayerStats, getPublicUser } from '@/lib/queries/friends'
-import { getHeadToHead } from '@/lib/queries/rivalries'
+import { getDegommagesTaken, getHeadToHead } from '@/lib/queries/rivalries'
 import { getSharedGames } from '@/lib/queries/shared-games'
+import { getPlayerCharacterStats } from '@/lib/queries/stats'
 import { CHARACTER_META } from '@/lib/characters'
 import { CharacterBadge } from '@/components/ui/character-badge'
 import { EmptyState } from '@/components/ui/empty-state'
 import { FriendProfileActions } from '@/components/friends/friend-profile-actions'
 import { GameHistoryItem } from '@/components/home/game-history-item'
 import { HeadToHeadCard } from '@/components/stats/head-to-head-card'
+import { PerCharacterBlock } from '@/components/stats/per-character-block'
 import { RematchButton } from '@/components/rematch-button'
 import { PlayerAvatar } from '@/components/ui/player-avatar'
 import { SectionTitle } from '@/components/ui/section-title'
@@ -43,10 +45,12 @@ export default async function FriendProfilePage({ params }: FriendProfilePagePro
     )
   }
 
-  const [stats, headToHead, sharedResult] = await Promise.all([
+  const [stats, headToHead, sharedResult, taken, perCharacter] = await Promise.all([
     getPlayerStats(userId),
     isSelf ? Promise.resolve(null) : getHeadToHead(me.id, userId),
     isSelf ? Promise.resolve(null) : getSharedGames(me.id, userId),
+    getDegommagesTaken(userId),
+    getPlayerCharacterStats(userId),
   ])
   const sharedGames = sharedResult?.games ?? []
   const winrateLabel =
@@ -75,6 +79,7 @@ export default async function FriendProfilePage({ params }: FriendProfilePagePro
         <StatTile icon="trophy" label="Victoires" value={stats.wins} />
         <StatTile icon="flag" label="Winrate" value={winrateLabel} />
         <StatTile icon="sword" label="Dégommages" value={stats.degommages} />
+        <StatTile icon="pawn" label="Subis" value={taken} />
       </div>
 
       {headToHead && sharedResult ? (
@@ -102,6 +107,8 @@ export default async function FriendProfilePage({ params }: FriendProfilePagePro
           </p>
         )}
       </section>
+
+      <PerCharacterBlock perCharacter={perCharacter} />
 
       {isSelf ? null : (
         <section className="flex flex-col gap-2">
