@@ -209,7 +209,7 @@ export function LobbyScreen({ gameId, meId, friends }: LobbyScreenProps) {
         />
       ) : (
         <p className="helper-text">
-          {startHelper ?? 'Tout le monde est prêt — en attente du lancement par l’hôte…'}
+          {startHelper ?? 'Tout le monde est prêt — en attente du lancement par le chef de camp…'}
         </p>
       )}
 

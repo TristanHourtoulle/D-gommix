@@ -51,8 +51,8 @@ export function EndRequestSheet({
         <p className="m-0 mb-1 text-center text-sm">{confirmLabel(step, names)}</p>
         <p className="m-0 mb-3 text-center text-xs" style={{ color: 'var(--ink-soft)' }}>
           {isHost
-            ? 'Tu es l’hôte : la demande sera validée immédiatement.'
-            : 'L’hôte devra valider ta demande.'}
+            ? 'Tu es le chef de camp : la demande sera validée immédiatement.'
+            : 'Le chef de camp devra valider ta demande.'}
         </p>
         <div className="flex flex-col gap-2">
           <Button
