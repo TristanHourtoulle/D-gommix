@@ -19,6 +19,14 @@ export const dynamic = 'force-dynamic'
 const RANKING_LIMIT = 6
 
 /**
+ * The pas-to-metre constant, printed in full. `formatFrenchDecimal` keeps a
+ * single decimal (it exists for the dégommages-per-minute rate) and would
+ * round 0.75 to « 0,8 », which makes the derivation stop reproducing its own
+ * result — the one thing plan 036 decision 2 forbids.
+ */
+const METERS_PER_PAS_LABEL = METERS_PER_PAS.toLocaleString('fr-FR')
+
+/**
  * « L'Almanach » — five circle-scoped, all-time statistics in absurd units,
  * every one of them arithmetic on real rows (plan 036). Reached from the
  * Lauriers screen through the « Tout voir » idiom; like /parties it is not a
@@ -75,7 +83,7 @@ export default async function AlmanachPage() {
         derivation={
           almanach.distance === null
             ? undefined
-            : `${formatFrenchNumber(almanach.distance.degommages)} dégommages × ${PAS_PER_DEGOMMAGE} pas gaulois × ${formatFrenchDecimal(METERS_PER_PAS)} m, divisés par ${METERS_PER_MENHIR} m de menhir couché — soit ${formatFrenchNumber(almanach.distance.meters)} m de retraite romaine`
+            : `${formatFrenchNumber(almanach.distance.degommages)} dégommages × ${PAS_PER_DEGOMMAGE} pas gaulois × ${METERS_PER_PAS_LABEL} m, divisés par ${METERS_PER_MENHIR} m de menhir couché — soit ${formatFrenchNumber(almanach.distance.meters)} m de retraite romaine`
         }
       />
 
