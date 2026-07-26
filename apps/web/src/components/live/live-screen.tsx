@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { activePlayers, validateCommand, type Ack, type EndKind } from '@degommix/game-core'
 import { Icon } from '@/components/icons'
+import { useArenaSounds } from '@/components/sound/use-arena-sounds'
 import { Button } from '@/components/ui/button'
 import { useToast } from '@/components/ui/toast'
 import { useGame } from '@/hooks/use-game'
@@ -60,6 +61,11 @@ export function LiveScreen({
   const taunts = useTaunts(gameId)
   const [tauntTargetId, setTauntTargetId] = useState<string | null>(null)
   useWakeLock()
+  // Opt-in arena sounds. Mounted here, above the two early returns, because
+  // this is the only place that observes both a growing dégommage log and the
+  // transition into « finished » — `Summary` mounts already finished, so a hook
+  // inside it would never see the village fall.
+  useArenaSounds(state)
 
   const names = useMemo<NameMap>(
     () => Object.fromEntries(players.map((p) => [p.userId, p.username])),

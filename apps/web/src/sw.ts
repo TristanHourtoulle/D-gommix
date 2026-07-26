@@ -65,6 +65,24 @@ const runtimeCaching: RuntimeCaching[] = [
     }),
   },
   {
+    // The samples are fetched by `fetch()` for `decodeAudioData`, whose
+    // `Request.destination` is "" — not "audio" — so the media rule above
+    // cannot claim them and they would fall through to NetworkOnly. Matching on
+    // the path is what keeps them out of the catch-all. They are immutable
+    // build-time assets, hence CacheFirst.
+    matcher: ({ sameOrigin, url: { pathname } }) => sameOrigin && pathname.startsWith('/sounds/'),
+    handler: new CacheFirst({
+      cacheName: 'arena-sounds',
+      plugins: [
+        new ExpirationPlugin({
+          maxEntries: 8,
+          maxAgeSeconds: ONE_YEAR_IN_SECONDS,
+          maxAgeFrom: 'last-used',
+        }),
+      ],
+    }),
+  },
+  {
     matcher: () => true,
     handler: networkOnly,
   },

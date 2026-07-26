@@ -7,6 +7,7 @@ import { PlayerAvatar } from '@/components/ui/player-avatar'
 import { SignOutButton } from '@/components/sign-out-button'
 import { UsernameForm } from '@/components/profile/username-form'
 import { AvatarPicker } from '@/components/profile/avatar-picker'
+import { SoundSegmented } from '@/components/sound/sound-segmented'
 import { ThemeSegmented } from '@/components/theme/theme-segmented'
 import { DevMenuGesture } from '@/components/dev/dev-menu-gesture'
 import { PerCharacterBlock } from '@/components/stats/per-character-block'
@@ -82,6 +83,18 @@ export default async function ProfilePage() {
           <ThemeSegmented />
           <p className="m-0 text-xs" style={{ color: 'var(--ink-soft)' }}>
             « Système » suit le réglage clair/sombre de ton téléphone.
+          </p>
+        </Card>
+      </section>
+
+      <section className="flex flex-col gap-2">
+        <p className="sec-label">Sons</p>
+        <Card className="flex flex-col gap-3 p-4">
+          <SoundSegmented />
+          <p className="m-0 text-xs" style={{ color: 'var(--ink-soft)' }}>
+            Trois bruitages courts pendant la partie : le carnyx et le « PAF ! » à chaque
+            dégommage, une fanfare quand le village tombe. Rien en dehors de l’arène. Sur
+            iPhone, le bouton silencieux coupe tout.
           </p>
         </Card>
       </section>
