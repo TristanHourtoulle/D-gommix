@@ -1,9 +1,23 @@
 import { expect, test, type BrowserContext } from '@playwright/test'
+import {
+  DEGOMMAGE_MESSAGES,
+  renderDegommageTemplate,
+} from '../apps/web/src/lib/degommage-messages'
 import { expectCounter, newAppContext, registerAndOnboard, shot } from './helpers'
 
 const PASSWORD = 'motdepasse-123'
 const J1 = { email: 'j1@degommix.test', username: 'Asterix' }
 const J2 = { email: 'j2@degommix.test', username: 'Obelix' }
+
+/**
+ * The 44 sentences this game could draw: the whole catalog rendered with the
+ * two pseudos of the run. The draw is seeded on the game id (see
+ * apps/web/src/lib/seq-hash.ts), which is a fresh uuid on every run, so the
+ * spec asserts membership rather than an exact sentence.
+ */
+const DEGOMMAGE_SENTENCES = DEGOMMAGE_MESSAGES.map((message) =>
+  renderDegommageTemplate(message.template, J1.username, J2.username)
+)
 
 test('two-player 1v1 happy path (design §7.3)', async ({ browser }) => {
   let c1: BrowserContext | undefined
@@ -138,15 +152,17 @@ test('two-player 1v1 happy path (design §7.3)', async ({ browser }) => {
 
     // — Step 8c: game detail shows the full journal —
     await p1.goto(`/parties/${gameId}`)
-    // The archive replays the exact seq-deterministic live sentences
-    // (apps/web/src/lib/degommage-messages.ts): this game's dégommages are
-    // seqs 2 and 3, which pick catalog indexes 8 and 3.
-    await expect(
-      p1.getByText(`${J1.username} balaie un pion d’${J2.username} d’un revers`, { exact: true })
-    ).toBeVisible()
-    await expect(
-      p1.getByText(`${J1.username} dégomme un pion d’${J2.username}, plein sabot`, { exact: true })
-    ).toBeVisible()
+    await expect(p1.getByText('Journal de partie')).toBeVisible()
+    // The archive replays the (gameId, seq)-deterministic live sentences
+    // (apps/web/src/lib/degommage-messages.ts). The game id is drawn per run,
+    // so which of the 44 catalog entries this game lands on cannot be
+    // precomputed: assert instead that both dégommage lines ARE catalog
+    // sentences rendered with these two pseudos (a fallback or a broken
+    // élision would not be), and that the second is not the first.
+    const journalLines = await p1.locator('li:has(time) > span').allTextContents()
+    const drawn = journalLines.filter((line) => DEGOMMAGE_SENTENCES.includes(line))
+    expect(drawn).toHaveLength(2)
+    expect(drawn[0]).not.toBe(drawn[1])
     await expect(p1.getByRole('link', { name: `Voir le profil de ${J2.username}` })).toBeVisible()
     // « de Asterix » is elided to « d’Asterix » (see apps/web/src/lib/elision.ts).
     await expect(
