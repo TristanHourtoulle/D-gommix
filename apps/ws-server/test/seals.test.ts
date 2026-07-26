@@ -1,7 +1,8 @@
 import { and, eq } from 'drizzle-orm'
-import { seals } from '@degommix/db'
+import { games, seals } from '@degommix/db'
 import { migrateTestDb } from '@degommix/db/test-utils'
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest'
+import { backfillSeals } from '../src/backfill-seals'
 import { awardSeals } from '../src/seals'
 import { startGameWith, sendCommand } from './flows'
 import { expectOk, startTestServer, type TestServer } from './harness'
@@ -182,4 +183,108 @@ describe('seal awards in the finalize transaction', () => {
 
     expect(await countAll()).toBe(0)
   })
+})
+
+/**
+ * The retroactive replay (plan 033) must reconstruct history, not re-read
+ * today's totals for every past game. Regression suite for the prod backfill
+ * run, where every historical game saw the final state of the career.
+ */
+describe('retroactive backfill over a career', () => {
+  let ts: TestServer
+
+  beforeAll(async () => {
+    await migrateTestDb()
+    ts = await startTestServer()
+  })
+
+  afterAll(async () => {
+    await ts.stop()
+  })
+
+  beforeEach(async () => {
+    await ts.reset(['u1', 'u2'])
+  })
+
+  /** One clean 1v1 (no degommages) closed by the host in favour of `winnerId`. */
+  const playGame = async (winnerId: string): Promise<string> => {
+    ts.disconnectAll()
+    const { gameId, sockets } = await startGameWith(ts, ['u1', 'u2'])
+    const host = sockets.get('u1')
+    if (!host) throw new Error('missing socket')
+    expectOk(await sendCommand(host, gameId, { type: 'request_end', kind: 'village', winnerId }))
+    return gameId
+  }
+
+  /**
+   * Plays the sequence, then rewrites `ended_at` to one minute apart in play
+   * order. Games finished milliseconds apart could otherwise tie, and the
+   * (ended_at, id) tiebreak on a random uuid would scramble chronology.
+   */
+  const playCareer = async (winners: string[]): Promise<string[]> => {
+    const gameIds: string[] = []
+    for (const winnerId of winners) gameIds.push(await playGame(winnerId))
+    const base = Date.UTC(2026, 0, 1, 12, 0, 0)
+    for (const [index, gameId] of gameIds.entries()) {
+      await ts.db
+        .update(games)
+        .set({ endedAt: new Date(base + index * 60_000) })
+        .where(eq(games.id, gameId))
+    }
+    return gameIds
+  }
+
+  /** Wipes what the live path engraved, leaving the games as bare history. */
+  const replayFromScratch = async (): Promise<void> => {
+    await ts.db.delete(seals)
+    const summary = await backfillSeals(ts.db)
+    expect(summary.failed).toBe(0)
+    expect(summary.skipped).toBe(0)
+  }
+
+  const sealRow = async (
+    userId: string,
+    sealId: string
+  ): Promise<{ gameId: string } | undefined> => {
+    const [row] = await ts.db
+      .select({ gameId: seals.gameId })
+      .from(seals)
+      .where(and(eq(seals.userId, userId), eq(seals.sealId, sealId)))
+    return row
+  }
+
+  it(
+    'pins rising_tide to the game that closed the FIRST three-win run',
+    async () => {
+      // u1 wins games 2-4 and 6-8; the career ends on a loss, so a query that
+      // reads « the three most recent village games » absolutely sees a broken
+      // streak and awards nothing — the prod false negative.
+      const gameIds = await playCareer(['u2', 'u1', 'u1', 'u1', 'u2', 'u1', 'u1', 'u1', 'u2'])
+      expect(gameIds).toHaveLength(9)
+
+      await replayFromScratch()
+
+      const risingTide = await sealRow('u1', 'rising_tide')
+      expect(risingTide?.gameId).toBe(gameIds[3])
+      // u2's three wins are games 1, 5 and 9: never consecutive.
+      expect(await sealRow('u2', 'rising_tide')).toBeUndefined()
+      // Sanity: the first win is still pinned to the first win, not to game 1.
+      expect((await sealRow('u1', 'first_win'))?.gameId).toBe(gameIds[1])
+    },
+    60_000
+  )
+
+  it(
+    'pins decurion to the tenth win, not to the first game replayed',
+    async () => {
+      const gameIds = await playCareer(Array.from({ length: 10 }, () => 'u1'))
+      expect(gameIds).toHaveLength(10)
+
+      await replayFromScratch()
+
+      expect((await sealRow('u1', 'decurion'))?.gameId).toBe(gameIds[9])
+      expect((await sealRow('u1', 'rising_tide'))?.gameId).toBe(gameIds[2])
+    },
+    60_000
+  )
 })
