@@ -2120,6 +2120,36 @@ body[data-toast-anchor='live'] .toast-zone {
   .moment-stamp { animation: none; }
 }
 
+/* ---------- Le barde commente (journal ambiance) ---------- */
+
+/*
+ * The barde's ambient asides in the live journal
+ * (apps/web/src/lib/barde-milestones.ts). Deliberately quieter than an action
+ * line — muted, italic, lyre glyph — so the eye reads it as a margin note and
+ * never mistakes it for something that happened in the game. Nothing here is
+ * persisted: the line is recomputed from the event log on every render.
+ */
+.journal-barde {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-size: 0.72rem;
+  font-style: italic;
+  font-weight: 500;
+  line-height: 1.35;
+  color: var(--ink-faint);
+  animation: barde-in 260ms ease-out both;
+}
+
+@keyframes barde-in {
+  from { opacity: 0; transform: translateY(-2px); }
+  to   { opacity: 1; transform: none; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .journal-barde { animation: none; }
+}
+
 /* ---------- La Gazette du Village (parchemin de fin de partie) ---------- */
 
 /*

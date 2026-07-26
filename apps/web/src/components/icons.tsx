@@ -44,6 +44,24 @@ const paths = {
   ),
   home: <polygon points="12 2 3 10 3 21 10 21 10 15 14 15 14 21 21 21 21 10 12 2" />,
   /**
+   * A three-string lyre — the barde's ambient commentary in the live journal
+   * (plan 044). Same in-house instrument as `lyre-tied` without the rope: the
+   * TIED lyre means one specific thing in this product (the anti-champion of
+   * the month, plan 035) and must not leak into a neutral aside. Original
+   * motif drawn for this registry — never traced from official artwork:
+   * 24-grid, stroke-only, legible down to 12px.
+   */
+  lyre: (
+    <>
+      <path d="M6 6H18" />
+      <path d="M8.5 18C5 15.5 4.5 10 6 6" />
+      <path d="M15.5 18C19 15.5 19.5 10 18 6" />
+      <path d="M8 18H16" />
+      <path d="M9.5 9V15" />
+      <path d="M14.5 9V15" />
+    </>
+  ),
+  /**
    * « Le barde ligoté » — a three-string lyre bound by a rope, the mark of the
    * « Barde du soir » (plan 035). Original instrument-and-rope motif drawn for
    * this registry — never traced from official artwork: 24-grid, stroke-only,
