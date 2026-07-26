@@ -11,6 +11,18 @@ import { sql, games } from '@degommix/db'
  */
 export const gameStarted = sql`${games.startedAt} is not null`
 
+/**
+ * Parameterized `column IN (...)` for a non-empty string list. Shared by the
+ * stats and records queries (moved out of stats.ts so records.ts can use it
+ * without a stats ↔ records import cycle).
+ */
+export function inList<T>(column: T, values: string[]) {
+  return sql`${column} in (${sql.join(
+    values.map((value) => sql`${value}`),
+    sql`, `
+  )})`
+}
+
 export interface PhantomLobbyCandidate {
   status: 'lobby' | 'active' | 'finished'
   startedAt: Date | null

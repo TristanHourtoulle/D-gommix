@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { computeCurrentStreaks } from './streaks'
+import { computeCurrentStreaks, computeLongestStreaks } from './streaks'
 
 describe('computeCurrentStreaks', () => {
   it('returns an empty map for no games', () => {
@@ -46,5 +46,67 @@ describe('computeCurrentStreaks', () => {
       { userId: 'a', won: false },
     ])
     expect(streaks.has('a')).toBe(false)
+  })
+})
+
+describe('computeLongestStreaks', () => {
+  it('returns an empty map for no games', () => {
+    expect(computeLongestStreaks([]).size).toBe(0)
+  })
+
+  it('counts a single win as a streak of 1', () => {
+    const longest = computeLongestStreaks([{ userId: 'a', won: true }])
+    expect(longest.get('a')).toBe(1)
+  })
+
+  it('keeps a past run that beats the current one', () => {
+    const longest = computeLongestStreaks([
+      { userId: 'a', won: true },
+      { userId: 'a', won: false },
+      { userId: 'a', won: true },
+      { userId: 'a', won: true },
+      { userId: 'a', won: true },
+    ])
+    expect(longest.get('a')).toBe(3)
+  })
+
+  it('keeps the current run when it is the best', () => {
+    const longest = computeLongestStreaks([
+      { userId: 'a', won: true },
+      { userId: 'a', won: true },
+      { userId: 'a', won: false },
+      { userId: 'a', won: true },
+    ])
+    expect(longest.get('a')).toBe(2)
+  })
+
+  it('reports the shared max when past and current runs tie', () => {
+    const longest = computeLongestStreaks([
+      { userId: 'a', won: true },
+      { userId: 'a', won: true },
+      { userId: 'a', won: false },
+      { userId: 'a', won: true },
+      { userId: 'a', won: true },
+    ])
+    expect(longest.get('a')).toBe(2)
+  })
+
+  it('leaves a player with only losses absent', () => {
+    const longest = computeLongestStreaks([
+      { userId: 'a', won: false },
+      { userId: 'a', won: false },
+    ])
+    expect(longest.has('a')).toBe(false)
+  })
+
+  it('tracks interleaved users independently', () => {
+    const longest = computeLongestStreaks([
+      { userId: 'a', won: true },
+      { userId: 'b', won: false },
+      { userId: 'a', won: true },
+      { userId: 'b', won: true },
+    ])
+    expect(longest.get('a')).toBe(2)
+    expect(longest.get('b')).toBe(1)
   })
 })

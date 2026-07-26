@@ -10,6 +10,7 @@ import { CharacterWinrateBars } from './character-winrate-bars'
 import { PeriodSegmented } from './period-segmented'
 import { Podium } from './podium'
 import { RankingTable } from './ranking-table'
+import { RecordsCard } from './records-card'
 import { RivalryTile } from './rivalry-tile'
 import { TopDegommeurTile } from './top-degommeur-tile'
 
@@ -60,6 +61,8 @@ export function LeaderboardScreen({ viewerId, initialData }: LeaderboardScreenPr
       <RivalryTile rivalry={leaderboard.rivalry} pairs={leaderboard.rivalryPairs} />
 
       <Podium rows={podiumRows} viewerId={viewerId} />
+
+      {leaderboard.records ? <RecordsCard records={leaderboard.records} /> : null}
 
       {tableRows.length > 0 ? <RankingTable rows={tableRows} viewerId={viewerId} /> : null}
 

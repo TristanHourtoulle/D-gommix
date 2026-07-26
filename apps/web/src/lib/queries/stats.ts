@@ -19,7 +19,8 @@ import {
   type JournalEntry,
   type RawEvent,
 } from './game-detail-journal'
-import { gameStarted, isPhantomLobbyGame } from './game-filters'
+import { gameStarted, inList, isPhantomLobbyGame } from './game-filters'
+import { getCircleRecords, queryVillageResults, type CircleRecords } from './records'
 import { computeCurrentStreaks } from './streaks'
 
 export type { GameAbortReason, JournalEntry } from './game-detail-journal'
@@ -63,14 +64,8 @@ export interface Leaderboard {
   friendCount: number
   topDegommeur: TopDegommeur | null
   characterWinrates: CharacterWinrate[]
-}
-
-/** Parameterized `column IN (...)` for a non-empty string list. */
-function inList<T>(column: T, values: string[]) {
-  return sql`${column} in (${sql.join(
-    values.map((value) => sql`${value}`),
-    sql`, `
-  )})`
+  /** All-time « Palmarès » — never windowed by `range` (plan 026). */
+  records: CircleRecords
 }
 
 export async function getCircleMemberIds(userId: string): Promise<string[]> {
@@ -213,7 +208,14 @@ export async function getLeaderboard(
 
   const finishedStarted = circleFinishedStarted(memberIds, range)
 
-  const [members, statRows, characterRows, seatRows, streakRows] = await Promise.all([
+  // Single all-time scan feeding both the current-streak chips and the
+  // longest-streak record (plan 026). Never windowed by `range`. `.execute()`
+  // is load-bearing: a drizzle query builder re-runs its SQL on every `await`
+  // (QueryPromise.then calls execute each time), so only a real promise makes
+  // the two consumers share one scan.
+  const villageResults = queryVillageResults(memberIds).execute()
+
+  const [members, statRows, characterRows, seatRows, streakRows, records] = await Promise.all([
     queryCircleMembers(memberIds),
     queryCircleStats(memberIds, range),
     db
@@ -251,23 +253,8 @@ export async function getLeaderboard(
       .groupBy(gamePlayers.character),
     // Streak source: deliberately NOT windowed — the current streak is a
     // now-anchored, all-time property (plan 019, decision 3).
-    db
-      .select({
-        userId: gamePlayers.userId,
-        won: sql`${games.winnerId} = ${gamePlayers.userId}`.mapWith(Boolean),
-      })
-      .from(gamePlayers)
-      .innerJoin(games, eq(games.id, gamePlayers.gameId))
-      .where(
-        and(
-          inList(gamePlayers.userId, memberIds),
-          eq(games.status, 'finished'),
-          eq(games.outcome, 'village_reached'),
-          gameStarted,
-          sql`${gamePlayers.status} in ('joined', 'left')`
-        )
-      )
-      .orderBy(sql`${games.endedAt} desc`),
+    villageResults,
+    getCircleRecords(memberIds, villageResults),
   ])
 
   // Favorite character: most played, tie broken by most recently played
@@ -322,7 +309,7 @@ export async function getLeaderboard(
     )
     .sort((a, b) => b.winrate - a.winrate || b.games - a.games)
 
-  return { rows, friendCount: memberIds.length - 1, topDegommeur, characterWinrates }
+  return { rows, friendCount: memberIds.length - 1, topDegommeur, characterWinrates, records }
 }
 
 export interface GameDetailPlayer {
