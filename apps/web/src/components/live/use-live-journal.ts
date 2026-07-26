@@ -5,6 +5,7 @@ import type { GameEvent, GameState } from '@degommix/game-core'
 import { useSocket } from '@/components/socket-provider'
 import { renderDegommageJournal, type DegommageRef } from '@/lib/degommage-messages'
 import { deName } from '@/lib/elision'
+import { detectLineStamps, type StampEvent, type StampId } from '@/lib/game-stamps'
 import type { GameStateSnapshotPayload } from '@/lib/realtime-types'
 import { displayName, type NameMap } from './types'
 
@@ -12,6 +13,8 @@ export interface JournalEntry {
   seq: number
   actorId: string | null
   label: string
+  /** Highlight stamped on this line, `null` on an ordinary one. */
+  stamp: StampId | null
 }
 
 export interface LiveJournal {
@@ -122,10 +125,25 @@ export function useLiveJournal(
       eventRefs.length > 0 ? eventRefs : fallbackRefs,
       (userId) => displayName(names, userId)
     )
+    const stampRows: StampEvent[] = events.map((event) => ({
+      seq: event.seq,
+      type: event.type,
+      actorId: event.actorId,
+      targetId: event.targetId,
+      payload: event.payload,
+      at: Date.parse(event.createdAt),
+    }))
+    const stamps = detectLineStamps(stampRows)
     const entries: JournalEntry[] = []
     for (const event of events) {
       const label = describeEvent(event, events, names, degommageLabels)
-      if (label) entries.push({ seq: event.seq, actorId: event.actorId, label })
+      if (label)
+        entries.push({
+          seq: event.seq,
+          actorId: event.actorId,
+          label,
+          stamp: stamps.get(event.seq) ?? null,
+        })
     }
     if (entries.length === 0 && state) {
       for (const entry of state.degommageLog) {
@@ -136,6 +154,9 @@ export function useLiveJournal(
           label:
             degommageLabels.get(entry.seq) ??
             `${displayName(names, entry.actorId)} a dégommé un pion ${deName(displayName(names, entry.targetId))}`,
+          // No stamp on this path: `DegommageEntry` carries no timestamp and
+          // the reduced state holds no UNDO rows, so nothing can be derived.
+          stamp: null,
         })
       }
     }
