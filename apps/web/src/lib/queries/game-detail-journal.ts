@@ -93,13 +93,16 @@ function journalText(
 }
 
 /**
- * Full journal of a finished game. Builds the seq-deterministic dégommage
- * sentences with the SAME shared renderer as the live journal
+ * Full journal of a finished game. Builds the (gameId, seq)-deterministic
+ * dégommage sentences with the SAME shared renderer as the live journal
  * (renderDegommageJournal), over the FULL ordered dégommage list — never a
  * slice, or the no-immediate-repeat fold would diverge from what the table
- * read (plan 025; supersedes plan 010's live-only decision).
+ * read (plan 025; supersedes plan 010's live-only decision). The same `gameId`
+ * the live screen used must be passed here, or the archive would tell the game
+ * with other words than the ones the table read.
  */
 export function buildGameJournal(
+  gameId: string,
   events: readonly RawEvent[],
   name: (id: string | null) => string
 ): JournalEntry[] {
@@ -109,7 +112,7 @@ export function buildGameJournal(
       refs.push({ seq: event.seq, actorId: event.actorId, targetId: event.targetId })
     }
   }
-  const degommageLabels = renderDegommageJournal(refs, (userId) => name(userId))
+  const degommageLabels = renderDegommageJournal(gameId, refs, (userId) => name(userId))
   return events.map((event) => ({
     seq: event.seq,
     at: event.createdAt,

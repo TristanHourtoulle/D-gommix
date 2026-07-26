@@ -1,5 +1,5 @@
 import { deName } from './elision'
-import { hashSeq } from './seq-hash'
+import { hashGameSeq } from './seq-hash'
 
 /**
  * The four registers of the live journal, and the mix the owner validated:
@@ -105,15 +105,22 @@ export function renderDegommageTemplate(template: string, acteur: string, cible:
 }
 
 /**
- * Weighted walk over the catalog, seeded by the event's `seq` so every phone
- * lands on the same sentence — after a reload, after a late resync, forever.
+ * Weighted walk over the catalog, seeded by the game id *and* the event's `seq`
+ * so every phone lands on the same sentence — after a reload, after a late
+ * resync, forever — while two different games draw two different sequences
+ * (see `seq-hash.ts`: seeding on `seq` alone replayed the same few sentences
+ * game after game).
  *
  * `previousIndex` is the index picked for the *previous* dégommage of the same
  * game; when the walk lands on it again the pick shifts one slot forward, which
  * keeps the result deterministic while making an immediate repeat impossible.
  */
-export function pickDegommageIndex(seq: number, previousIndex: number | null): number {
-  let remaining = hashSeq(seq) % TOTAL_WEIGHT
+export function pickDegommageIndex(
+  gameId: string,
+  seq: number,
+  previousIndex: number | null
+): number {
+  let remaining = hashGameSeq(gameId, seq) % TOTAL_WEIGHT
   let index = DEGOMMAGE_MESSAGES.length - 1
   for (let i = 0; i < DEGOMMAGE_MESSAGES.length; i++) {
     const message = DEGOMMAGE_MESSAGES[i]
@@ -140,17 +147,22 @@ export interface DegommageRef {
  * picking per event in isolation) is what makes the no-immediate-repeat rule
  * reproducible: the same list always yields the same labels, on every device.
  *
+ * `gameId` seeds the draw together with each `seq`, so the archive of a game
+ * replays exactly what its table read live, and two games never open on the
+ * same sentence.
+ *
  * Undone dégommages keep their sentence — an `UNDO` appends its own generic
  * line, it never rewrites history.
  */
 export function renderDegommageJournal(
+  gameId: string,
   refs: readonly DegommageRef[],
   name: (userId: string) => string
 ): Map<number, string> {
   const labels = new Map<number, string>()
   let previousIndex: number | null = null
   for (const ref of refs) {
-    const index = pickDegommageIndex(ref.seq, previousIndex)
+    const index = pickDegommageIndex(gameId, ref.seq, previousIndex)
     previousIndex = index
     const message = DEGOMMAGE_MESSAGES[index]
     if (!message) continue

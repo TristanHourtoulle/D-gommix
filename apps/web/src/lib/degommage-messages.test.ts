@@ -10,6 +10,8 @@ import {
 } from './degommage-messages'
 
 const NAME = (userId: string): string => (userId === 'a' ? 'Astrid' : 'Marc')
+const GAME = '9f1b7c2e-0000-4000-8000-000000000001'
+const OTHER_GAME = '9f1b7c2e-0000-4000-8000-000000000002'
 const LONG = 'Bartholome' // 10 characters, consonant-initial: the worst case
 
 function toneSum(tone: DegommageTone): number {
@@ -126,29 +128,37 @@ describe('renderDegommageTemplate', () => {
 })
 
 describe('pickDegommageIndex', () => {
-  it('is deterministic for a given seq', () => {
+  it('is deterministic for a given game and seq', () => {
     for (const seq of [1, 2, 17, 512, 99999]) {
-      expect(pickDegommageIndex(seq, null)).toBe(pickDegommageIndex(seq, null))
+      expect(pickDegommageIndex(GAME, seq, null)).toBe(pickDegommageIndex(GAME, seq, null))
     }
   })
 
   it('always returns an index inside the catalog', () => {
     for (let seq = 1; seq <= 500; seq++) {
-      const index = pickDegommageIndex(seq, null)
+      const index = pickDegommageIndex(GAME, seq, null)
       expect(index).toBeGreaterThanOrEqual(0)
       expect(index).toBeLessThan(DEGOMMAGE_MESSAGES.length)
     }
   })
 
   it('shifts one slot when the pick equals the previous one', () => {
-    const raw = pickDegommageIndex(7, null)
-    expect(pickDegommageIndex(7, raw)).toBe((raw + 1) % DEGOMMAGE_MESSAGES.length)
+    const raw = pickDegommageIndex(GAME, 7, null)
+    expect(pickDegommageIndex(GAME, 7, raw)).toBe((raw + 1) % DEGOMMAGE_MESSAGES.length)
   })
 
   it('does not shift when the previous pick differs', () => {
-    const raw = pickDegommageIndex(7, null)
+    const raw = pickDegommageIndex(GAME, 7, null)
     const other = (raw + 3) % DEGOMMAGE_MESSAGES.length
-    expect(pickDegommageIndex(7, other)).toBe(raw)
+    expect(pickDegommageIndex(GAME, 7, other)).toBe(raw)
+  })
+
+  it('spreads the first dégommage of 500 games over most of the catalog', () => {
+    // The point of seeding on the game id: seq 2 is where a table's first
+    // dégommage lands, and it must not always draw the same sentence.
+    const seen = new Set<number>()
+    for (let i = 0; i < 500; i++) seen.add(pickDegommageIndex(`game-${i}`, 2, null))
+    expect(seen.size).toBeGreaterThanOrEqual(30)
   })
 })
 
@@ -160,17 +170,30 @@ describe('renderDegommageJournal', () => {
   }))
 
   it('returns one label per seq', () => {
-    const labels = renderDegommageJournal(refs, NAME)
+    const labels = renderDegommageJournal(GAME, refs, NAME)
     expect(labels.size).toBe(200)
     for (const ref of refs) expect(labels.get(ref.seq)).toBeTruthy()
   })
 
-  it('is reproducible — the same refs give the same labels', () => {
-    expect([...renderDegommageJournal(refs, NAME)]).toEqual([...renderDegommageJournal(refs, NAME)])
+  it('is reproducible — the same game and refs give the same labels', () => {
+    expect([...renderDegommageJournal(GAME, refs, NAME)]).toEqual([
+      ...renderDegommageJournal(GAME, refs, NAME),
+    ])
+  })
+
+  it('tells the same seqs with other words in another game', () => {
+    // The owner-visible point of the change: a table no longer replays the
+    // sentences of the previous table, because the seed carries the game id.
+    const short = refs.slice(0, 12)
+    const here = [...renderDegommageJournal(GAME, short, NAME).values()]
+    const there = [...renderDegommageJournal(OTHER_GAME, short, NAME).values()]
+    expect(there).not.toEqual(here)
+    const differing = here.filter((label, i) => label !== there[i])
+    expect(differing.length).toBeGreaterThanOrEqual(6)
   })
 
   it('never repeats the same sentence twice in a row', () => {
-    const labels = [...renderDegommageJournal(refs, NAME).values()]
+    const labels = [...renderDegommageJournal(GAME, refs, NAME).values()]
     for (let i = 1; i < labels.length; i++) expect(labels[i]).not.toBe(labels[i - 1])
   })
 
@@ -179,7 +202,7 @@ describe('renderDegommageJournal', () => {
     const tones = new Set<DegommageTone>()
     let previous: number | null = null
     for (const ref of first40) {
-      const index = pickDegommageIndex(ref.seq, previous)
+      const index = pickDegommageIndex(GAME, ref.seq, previous)
       previous = index
       const message = DEGOMMAGE_MESSAGES[index]
       if (message) tones.add(message.tone)
@@ -192,7 +215,7 @@ describe('renderDegommageJournal', () => {
     const counts: Record<string, number> = {}
     let previous: number | null = null
     for (const ref of long) {
-      const index = pickDegommageIndex(ref.seq, previous)
+      const index = pickDegommageIndex(GAME, ref.seq, previous)
       previous = index
       const message = DEGOMMAGE_MESSAGES[index]
       if (message) counts[message.tone] = (counts[message.tone] ?? 0) + 1
@@ -204,7 +227,11 @@ describe('renderDegommageJournal', () => {
   })
 
   it('applies élision to the rendered labels', () => {
-    const withVowel = renderDegommageJournal([{ seq: 1, actorId: 'a', targetId: 'a' }], () => 'Astrid')
+    const withVowel = renderDegommageJournal(
+      GAME,
+      [{ seq: 1, actorId: 'a', targetId: 'a' }],
+      () => 'Astrid'
+    )
     const label = withVowel.get(1) ?? ''
     expect(label).not.toContain('de Astrid')
   })

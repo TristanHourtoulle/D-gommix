@@ -3,6 +3,8 @@ import { renderDegommageJournal } from '@/lib/degommage-messages'
 import { buildGameJournal, deriveAbortReason, type RawEvent } from './game-detail-journal'
 
 const AT = new Date('2026-07-26T20:00:00Z')
+const GAME = '9f1b7c2e-0000-4000-8000-000000000001'
+const OTHER_GAME = '9f1b7c2e-0000-4000-8000-000000000002'
 
 function ev(partial: Partial<RawEvent> & { seq: number; type: string }): RawEvent {
   return { actorId: null, targetId: null, payload: null, createdAt: AT, ...partial }
@@ -75,14 +77,15 @@ describe('buildGameJournal', () => {
   ]
 
   it('returns one entry per event, in seq order, with the event timestamp', () => {
-    const journal = buildGameJournal(full, NAME)
+    const journal = buildGameJournal(GAME, full, NAME)
     expect(journal.map((entry) => entry.seq)).toEqual([1, 2, 3, 4, 5, 6])
     expect(journal[0]?.at).toBe(AT)
   })
 
   it('renders DEGOMMAGE lines identically to the live renderer', () => {
-    const journal = buildGameJournal(full, NAME)
+    const journal = buildGameJournal(GAME, full, NAME)
     const labels = renderDegommageJournal(
+      GAME,
       degommages.map((event) => ({ seq: event.seq, actorId: 'a', targetId: 'o' })),
       NAME
     )
@@ -90,14 +93,26 @@ describe('buildGameJournal', () => {
     expect(journal[2]?.text).toBe(labels.get(3))
   })
 
-  it('renders the exact happy-path sentences for seqs 2 and 3 (golden)', () => {
-    const journal = buildGameJournal(full, NAME)
-    expect(journal[1]?.text).toBe('Asterix balaie un pion d’Obelix d’un revers')
-    expect(journal[2]?.text).toBe('Asterix dégomme un pion d’Obelix, plein sabot')
+  it('renders the exact sentences of THIS game for seqs 2 and 3 (golden)', () => {
+    const journal = buildGameJournal(GAME, full, NAME)
+    expect(journal[1]?.text).toBe('Le sanglier pour Asterix, l’écurie pour Obelix')
+    expect(journal[2]?.text).toBe('Un pion d’Obelix décolle. Signé Asterix')
+  })
+
+  it('tells the very same log with other sentences in another game', () => {
+    // Seeding on the game id (see lib/seq-hash.ts) is what stops every table
+    // from replaying the same two opening sentences forever.
+    const here = buildGameJournal(GAME, full, NAME)
+    const there = buildGameJournal(OTHER_GAME, full, NAME)
+    expect(there[1]?.text).not.toBe(here[1]?.text)
+    expect(there[2]?.text).not.toBe(here[2]?.text)
+    // Only the dégommage lines move — the factual copy is not drawn.
+    expect(there[0]?.text).toBe(here[0]?.text)
+    expect(there[3]?.text).toBe(here[3]?.text)
   })
 
   it('keeps the factual copy for every non-DEGOMMAGE event', () => {
-    const journal = buildGameJournal(full, NAME)
+    const journal = buildGameJournal(GAME, full, NAME)
     expect(journal[0]?.text).toBe('Asterix a lancé la partie')
     expect(journal[3]?.text).toBe('Obelix a annulé le dégommage d’Asterix sur Obelix')
     expect(journal[4]?.text).toBe(
@@ -107,14 +122,14 @@ describe('buildGameJournal', () => {
   })
 
   it('keeps the sentence of an undone dégommage (UNDO never rewrites history)', () => {
-    const journal = buildGameJournal(full, NAME)
+    const journal = buildGameJournal(GAME, full, NAME)
     // seq 3 was undone by seq 4; its own line is still the seq-3 sentence.
-    expect(journal[2]?.text).toBe('Asterix dégomme un pion d’Obelix, plein sabot')
+    expect(journal[2]?.text).toBe('Un pion d’Obelix décolle. Signé Asterix')
   })
 
   it('falls back to the elided factual sentence when a DEGOMMAGE has no ids', () => {
     const broken = [ev({ seq: 2, type: 'DEGOMMAGE', actorId: null, targetId: 'o' })]
-    const journal = buildGameJournal(broken, NAME)
+    const journal = buildGameJournal(GAME, broken, NAME)
     expect(journal[0]?.text).toBe('Quelqu’un a dégommé un pion d’Obelix')
   })
 })
