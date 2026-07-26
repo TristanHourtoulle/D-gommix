@@ -21,9 +21,13 @@ import { OpponentCard } from './opponent-card'
 import { PawnField } from './pawn-field'
 import { SelfStrip } from './self-strip'
 import { Summary } from './summary'
+import { TauntPicker } from './taunt-picker'
+import { TauntStamp } from './taunt-stamp'
+import { cooldownSecondsLeft, type TauntId } from './taunts'
 import { displayName, type AvatarMap, type LivePlayer, type NameMap } from './types'
 import { useLiveJournal } from './use-live-journal'
 import { useTapLock } from './use-tap-lock'
+import { useTaunts } from './use-taunts'
 
 interface LiveScreenProps {
   gameId: string
@@ -53,6 +57,8 @@ export function LiveScreen({
   const { toast } = useToast()
   const [endSheetOpen, setEndSheetOpen] = useState(false)
   const tapLock = useTapLock()
+  const taunts = useTaunts(gameId)
+  const [tauntTargetId, setTauntTargetId] = useState<string | null>(null)
   useWakeLock()
 
   const names = useMemo<NameMap>(
@@ -105,6 +111,26 @@ export function LiveScreen({
     if (!tapLock.begin(targetId)) return
     const ack = await game.degommage(targetId)
     tapLock.settle(targetId, ack.ok)
+    if (!ack.ok) toast(ackErrorMessage(ack), 'error')
+  }
+
+  /**
+   * A 600 ms hold opens the vanne picker. The local cooldown gates the picker
+   * itself — no countdown UI, just the remaining seconds in a toast — while
+   * the ws-server stays the authority (a taunt sent from another tab comes
+   * back RATE_LIMITED and is toasted like any other failed ack).
+   */
+  const handleLongPress = (targetId: string): void => {
+    const remaining = taunts.cooldownRemainingMs()
+    if (remaining > 0) {
+      toast(`Encore ${cooldownSecondsLeft(remaining)} s avant la prochaine vanne`)
+      return
+    }
+    setTauntTargetId(targetId)
+  }
+
+  const sendTaunt = async (targetId: string, tauntId: TauntId): Promise<void> => {
+    const ack = await taunts.send(targetId, tauntId)
     if (!ack.ok) toast(ackErrorMessage(ack), 'error')
   }
 
@@ -199,6 +225,7 @@ export function LiveScreen({
               onTap={(targetId) => {
                 void handleTap(targetId)
               }}
+              onLongPress={handleLongPress}
             />
           )
         })}
@@ -268,6 +295,22 @@ export function LiveScreen({
             void run(game.respondEnd(accept))
           }}
         />
+      ) : null}
+
+      {tauntTargetId !== null ? (
+        <TauntPicker
+          targetName={displayName(names, tauntTargetId)}
+          onPick={(tauntId) => {
+            const targetId = tauntTargetId
+            setTauntTargetId(null)
+            void sendTaunt(targetId, tauntId)
+          }}
+          onClose={() => setTauntTargetId(null)}
+        />
+      ) : null}
+
+      {taunts.current ? (
+        <TauntStamp key={taunts.current.seq} taunt={taunts.current} names={names} />
       ) : null}
     </main>
   )
