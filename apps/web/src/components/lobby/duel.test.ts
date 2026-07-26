@@ -53,10 +53,10 @@ describe('findDuelRival', () => {
   })
 
   it('still frames the duel while the rival has only been invited', () => {
-    const lobby = lobbyOf(2, [
-      seat(ME, 'Astérix'),
-      { ...seat('o', 'Obélix'), status: 'invited' as const },
-    ])
+    // Held in a variable so the extra `status` field survives the excess
+    // property check — a real `LobbyPlayer` reaches the rule the same way.
+    const invitedRival = { ...seat('o', 'Obélix'), status: 'invited' as const }
+    const lobby = lobbyOf(2, [seat(ME, 'Astérix'), invitedRival])
     expect(findDuelRival(lobby, ME, feud)).toEqual({
       userId: 'o',
       username: 'Obélix',

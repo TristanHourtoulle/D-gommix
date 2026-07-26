@@ -153,9 +153,9 @@ export function useLeaderboardData(
 
 /**
  * The viewer's « qui dégomme qui » pairs, read from the all-time Classement
- * cache entry WITHOUT ever fetching (`enabled: false`). Consumed by surfaces
- * outside the Classement (the lobby Duel banner) where the framing is a
- * bonus, never a reason to run the whole circle aggregation: a player who
+ * cache entry WITHOUT ever fetching (the query stays disabled). Consumed by
+ * surfaces outside the Classement (the lobby Duel banner) where the framing
+ * is a bonus, never a reason to run the whole circle aggregation: a player who
  * challenged a rival from /classement has this payload in cache, a player who
  * deep-linked into a lobby simply gets no framing. `undefined` on a cold
  * cache or on a payload cached before plan 021 shipped `rivalryPairs`.
