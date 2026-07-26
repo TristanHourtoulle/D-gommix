@@ -37,9 +37,9 @@ verification baseline applies.
 | 015  | Lexique gaulois — owner-validated UI lexicon | — | — | — | DONE (merged `d4ccd5e`, E2E validated 2026-07-25 (wave-4 combined run 6/6)) |
 | 016  | Splash « Le déroulé » — once-per-session opening sequence | P2 | M | — | DONE (merged `1fb4f76`, E2E validated 2026-07-25 (wave-4 combined run 6/6)) |
 | 017  | Logo « Le pion couronné » — vector sources + regenerated PWA icon set | P2 | M | — (step 6 optional, needs 016) | DONE (merged `19fafd4`, pixel-verified icon masking 2026-07-25) |
-| 018  | Face à face : pair win record on the head-to-head card | P2 | S (M with optional step 5) | — (builds on 003, 006) | TODO |
-| 019  | Leaderboard season window (month-to-date) + win-streak chips | P2 | M | — | TODO |
-| 020  | Crash floor: French error boundaries + client-error reporting to Railway logs | P1 | M | — | TODO |
+| 018  | Face à face : pair win record on the head-to-head card | P2 | S (M with optional step 5) | — (builds on 003, 006) | DONE (merged `ea10920` as PR #46, E2E validated 2026-07-26; optional step 5 skipped in favor of 019) |
+| 019  | Leaderboard season window (month-to-date) + win-streak chips | P2 | M | — | DONE (merged `9992b47` as PR #47, E2E validated 2026-07-26) |
+| 020  | Crash floor: French error boundaries + client-error reporting to Railway logs | P1 | M | — | DONE (merged `cdcbdae` as PR #48, verified in real prod build with crash screenshots 2026-07-26; its client-error reporting caught a real bug in the place-du-village branch the same day) |
 
 Status values: TODO | IN PROGRESS | DONE | BLOCKED (with one-line reason) | REJECTED (with one-line rationale — finding fixed independently or approach abandoned)
 
