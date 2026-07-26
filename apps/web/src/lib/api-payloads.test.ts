@@ -422,3 +422,57 @@ describe('rivalry pairs on the wire', () => {
     expect(leaderboardPayloadSchema.safeParse(bad).success).toBe(false)
   })
 })
+
+describe('palmarès records on the wire', () => {
+  const baseLeaderboard = {
+    rows: [],
+    friendCount: 1,
+    topDegommeur: null,
+    rivalry: { nemesis: null, favoriteVictim: null },
+    characterWinrates: [],
+  }
+
+  it('accepts a leaderboard payload carrying the palmarès records', () => {
+    const fresh = {
+      ...baseLeaderboard,
+      records: {
+        fastestVillage: {
+          gameId: 'g1',
+          durationSec: 312,
+          holder: { userId: 'u2', username: 'Asterix', avatarId: 'b-menhir' },
+        },
+        longestVillage: {
+          gameId: 'g2',
+          durationSec: 5407,
+          // avatarId omitted on purpose — same optional convention as rivalry peers.
+          holder: { userId: 'u3', username: 'Obelix' },
+        },
+        longestStreak: {
+          holder: { userId: 'u2', username: 'Asterix', avatarId: null },
+          count: 4,
+        },
+        biggestCarton: {
+          holder: { userId: 'u3', username: 'Obelix', avatarId: null },
+          count: 7,
+          gameId: 'g2',
+        },
+      },
+    }
+
+    expect(leaderboardPayloadSchema.parse(fresh)).toEqual(fresh)
+  })
+
+  it('accepts a palmarès with every record still null', () => {
+    const emptyCircle = {
+      ...baseLeaderboard,
+      records: {
+        fastestVillage: null,
+        longestVillage: null,
+        longestStreak: null,
+        biggestCarton: null,
+      },
+    }
+
+    expect(leaderboardPayloadSchema.safeParse(emptyCircle).success).toBe(true)
+  })
+})

@@ -25,3 +25,28 @@ export function computeCurrentStreaks(
   }
   return streaks
 }
+
+/**
+ * Longest-ever win streak per player over the same newest-first
+ * `village_reached` result list `computeCurrentStreaks` consumes. Aborted
+ * games never reach this function (the caller filters on outcome), so they
+ * are neutral here too. A run of consecutive wins reads the same in either
+ * direction, so newest-first input needs no reversal: walk the list keeping
+ * the running streak and the best streak seen per player.
+ */
+export function computeLongestStreaks(
+  resultsNewestFirst: StreakGameResult[]
+): Map<string, number> {
+  const current = new Map<string, number>()
+  const longest = new Map<string, number>()
+  for (const result of resultsNewestFirst) {
+    if (result.won) {
+      const run = (current.get(result.userId) ?? 0) + 1
+      current.set(result.userId, run)
+      if (run > (longest.get(result.userId) ?? 0)) longest.set(result.userId, run)
+    } else {
+      current.set(result.userId, 0)
+    }
+  }
+  return longest
+}

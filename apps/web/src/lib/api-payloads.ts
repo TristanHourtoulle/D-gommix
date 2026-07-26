@@ -115,6 +115,26 @@ const rivalryPairSchema = z.object({
   taken: z.number(),
 })
 
+const recordHolderSchema = z.object({
+  userId: z.string(),
+  username: z.string(),
+  avatarId: z.string().nullable().optional(),
+})
+
+const gameRecordSchema = z.object({
+  gameId: z.string(),
+  /** Whole seconds, computed in SQL — no Date crosses the wire. */
+  durationSec: z.number(),
+  holder: recordHolderSchema,
+})
+
+const countRecordSchema = z.object({
+  holder: recordHolderSchema,
+  count: z.number(),
+  /** Game that set the record, when a single game did (biggest carton). */
+  gameId: z.string().optional(),
+})
+
 export const leaderboardPayloadSchema = z.object({
   rows: z.array(
     z.object({
@@ -149,6 +169,19 @@ export const leaderboardPayloadSchema = z.object({
   characterWinrates: z.array(
     z.object({ character: characterSchema, winrate: z.number(), games: z.number() })
   ),
+  /**
+   * All-time « Palmarès » records — never affected by `?period=` (plan 026).
+   * Optional for old PWA-cached SSR payloads (same convention as
+   * currentStreak / lastSeenAt).
+   */
+  records: z
+    .object({
+      fastestVillage: gameRecordSchema.nullable(),
+      longestVillage: gameRecordSchema.nullable(),
+      longestStreak: countRecordSchema.nullable(),
+      biggestCarton: countRecordSchema.nullable(),
+    })
+    .optional(),
 })
 
 export type SerializedHomeGame = z.infer<typeof serializedHomeGameSchema>
