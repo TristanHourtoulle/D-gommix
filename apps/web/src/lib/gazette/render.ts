@@ -77,6 +77,8 @@ export function hasFact(facts: GazetteFacts, key: GazetteFactKey): boolean {
       return facts.cleanSheet !== null
     case 'titleHolder':
       return facts.titleHolder !== null
+    case 'oracle':
+      return facts.oracle !== null
     case 'stamps':
       return facts.stamps.length > 0
   }
@@ -137,6 +139,8 @@ function slotValues(facts: GazetteFacts): Partial<Record<GazetteSlot, string>> {
     partant: quitter?.username,
     intact: facts.cleanSheet?.username,
     titre: facts.titleHolder?.username,
+    prophete: facts.oracle?.username,
+    prophetie: facts.oracle ? String(facts.oracle.count) : undefined,
     estampille: stamp?.label,
     joueurs: String(facts.playerCount),
     degommages: String(facts.totalDegommages),

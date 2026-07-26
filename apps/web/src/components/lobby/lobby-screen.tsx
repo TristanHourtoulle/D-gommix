@@ -13,6 +13,7 @@ import { useLobby } from '@/hooks/use-lobby'
 import { usePresence } from '@/hooks/use-presence'
 import { CHARACTER_META } from '@/lib/characters'
 import type { InvitableFriend } from '@/lib/queries/lobby'
+import type { MyOraclePick } from '@/lib/queries/oracle'
 import type {
   GameStateSnapshotPayload,
   KickedPayload,
@@ -23,12 +24,15 @@ import { CharacterGrid } from './character-grid'
 import { CodeDisplay } from './code-display'
 import { DuelBanner } from './duel-banner'
 import { HostControls } from './host-controls'
+import { OracleCard } from './oracle-card'
 import { SeatCard } from './seat-card'
 
 interface LobbyScreenProps {
   gameId: string
   meId: string
   friends: InvitableFriend[]
+  /** SSR seed of the viewer's OWN oracle pick (plan 040); never anybody else's. */
+  initialOraclePick: MyOraclePick | null
 }
 
 function startBlockReason(lobby: LobbyState): string | null {
@@ -51,12 +55,21 @@ function startBlockReason(lobby: LobbyState): string | null {
 }
 
 /** Realtime lobby: code, seats, character picks and host controls. */
-export function LobbyScreen({ gameId, meId, friends }: LobbyScreenProps) {
+export function LobbyScreen({ gameId, meId, friends, initialOraclePick }: LobbyScreenProps) {
   const router = useRouter()
   const { socket } = useSocket()
   const { toast } = useToast()
-  const { lobby, pickCharacter, invite, cancelInvite, kick, setFormat, start, leave } =
-    useLobby(gameId)
+  const {
+    lobby,
+    pickCharacter,
+    invite,
+    cancelInvite,
+    kick,
+    setFormat,
+    setOraclePick,
+    start,
+    leave,
+  } = useLobby(gameId)
   // No seed: the connect-time snapshot pushed by the ws-server is kept in the
   // presence store, so it is there even when the lobby is reached by a
   // client-side navigation long after the socket connected.
@@ -122,6 +135,17 @@ export function LobbyScreen({ gameId, meId, friends }: LobbyScreenProps) {
       toast(ackErrorMessage(ack), 'error')
     },
     [busy, pickCharacter, toast]
+  )
+
+  // Deliberately outside `runAction`: consulting the Oracle must never take
+  // the shared `busy` lock that guards the launch controls.
+  const handleOraclePick = useCallback(
+    async (predictedWinnerId: string, predictedSouffreDouleurId: string | null) => {
+      const ack = await setOraclePick(predictedWinnerId, predictedSouffreDouleurId)
+      if (!ack.ok) toast(ackErrorMessage(ack), 'error')
+      return ack
+    },
+    [setOraclePick, toast]
   )
 
   const handleStart = useCallback(async () => {
@@ -196,6 +220,14 @@ export function LobbyScreen({ gameId, meId, friends }: LobbyScreenProps) {
           Chaque joueur choisit librement — un 1v1 Caïus Bonus contre Caligula Minus est possible.
         </p>
       </div>
+
+      <OracleCard
+        meId={meId}
+        players={lobby.players}
+        initialPick={initialOraclePick}
+        disabled={busy}
+        onSubmit={handleOraclePick}
+      />
 
       {isHost ? (
         <HostControls

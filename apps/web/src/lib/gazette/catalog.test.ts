@@ -126,7 +126,7 @@ describe('gazette catalog — weights and shape', () => {
       expect(HEADLINES[family].length, family).toBe(headlineCounts[family])
     }
     expect(LEDES.length).toBe(12)
-    expect(BRIEF_FAMILIES.length).toBe(8)
+    expect(BRIEF_FAMILIES.length).toBe(9)
     for (const family of BRIEF_FAMILIES) expect(family.templates.length, family.key).toBe(3)
     expect(FLAVOUR_BRIEFS.length).toBe(5)
   })
@@ -143,6 +143,7 @@ describe('gazette catalog — weights and shape', () => {
       'cleanSheet',
       'biggestHitter',
       'validatedBy',
+      'oracle',
     ])
   })
 })

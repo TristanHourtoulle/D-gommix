@@ -1,4 +1,5 @@
 export * from './auth'
 export * from './friends'
 export * from './games'
+export * from './oracle'
 export * from './seals'

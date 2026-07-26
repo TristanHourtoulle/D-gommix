@@ -9,6 +9,7 @@ import { registerGameHandlers } from './handlers/game'
 import { registerFriendsHandlers } from './handlers/friends'
 import { registerLobbyHandlers } from './handlers/lobby'
 import { registerLobbyAdminHandlers } from './handlers/lobby-admin'
+import { registerOracleHandlers } from './handlers/oracle'
 import { HostTransferManager, type TimerApi } from './host-transfer'
 import { loadLobbyState } from './lobby-state'
 import { findActiveMemberships, type ActiveMembership } from './lobby-shared'
@@ -119,6 +120,7 @@ export function createWsServer(deps: WsServerDeps): WsServer {
     registerFriendsHandlers(socket, ctx)
     registerLobbyHandlers(socket, ctx)
     registerLobbyAdminHandlers(socket, ctx)
+    registerOracleHandlers(socket, ctx)
     registerGameHandlers(socket, ctx)
     // Socket counting is synchronous so presence transitions follow event order.
     const becameOnline = presence.registerSocket(userId)

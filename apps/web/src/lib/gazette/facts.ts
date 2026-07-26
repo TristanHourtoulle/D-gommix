@@ -89,6 +89,14 @@ export interface GazetteFacts {
    * frozen once the game is over. Null on a tie or with no prior history.
    */
   readonly titleHolder: GazetteCount | null
+  /**
+   * The best prophet of this game (plan 040): most oracle points, only when
+   * strictly ahead and only when they scored at least one point. `count` is
+   * the point total. Injected by the gazette page like `titleHolder` — it is
+   * not derivable from the event log alone. Null for every game played before
+   * the Oracle shipped; predictions cannot be backfilled.
+   */
+  readonly oracle: GazetteCount | null
   /** Plan 030 stamps, fed in by the gazette route; empty when the game earned none. */
   readonly stamps: readonly GazetteStamp[]
 }
@@ -104,6 +112,7 @@ export interface GazetteInput {
   readonly players: readonly { userId: string; username: string; hasLeft: boolean }[]
   readonly events: readonly RawEvent[]
   readonly titleHolder?: GazetteCount | null
+  readonly oracle?: GazetteCount | null
   readonly stamps?: readonly GazetteStamp[]
 }
 
@@ -315,6 +324,7 @@ export function deriveGazetteFacts(input: GazetteInput): GazetteFacts {
       .map((player) => ({ userId: player.userId, username: player.username })),
     cleanSheet,
     titleHolder: input.titleHolder ?? null,
+    oracle: input.oracle ?? null,
     stamps: input.stamps ?? [],
   }
 }

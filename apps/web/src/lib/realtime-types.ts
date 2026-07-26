@@ -165,6 +165,14 @@ export interface CommandMap {
     payload: { gameId: string }
     result: Record<never, never>
   }
+  'lobby:oracle_pick': {
+    payload: {
+      gameId: string
+      predictedWinnerId: string
+      predictedSouffreDouleurId?: string | null
+    }
+    result: Record<never, never>
+  }
   'lobby:start': {
     payload: { gameId: string }
     result: { firstEvents: GameEvent[] }

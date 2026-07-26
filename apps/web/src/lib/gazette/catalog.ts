@@ -42,6 +42,8 @@ export const SLOT_FACT = {
   partant: 'quitters',
   intact: 'cleanSheet',
   titre: 'titleHolder',
+  prophete: 'oracle',
+  prophetie: 'oracle',
   estampille: 'stamps',
   // Always available — no `requires` entry needed:
   joueurs: null,
@@ -75,6 +77,7 @@ export const FACT_MARKERS: Readonly<Partial<Record<GazetteFactKey, RegExp>>> = {
   quitters: /quitt/i,
   cleanSheet: /égratignure/i,
   titleHolder: /en titre/i,
+  oracle: /oracle|proph/i,
   stamps: /estampille/i,
 }
 
@@ -306,6 +309,25 @@ export const BRIEF_FAMILIES: readonly GazetteBriefFamily[] = [
       { text: 'Le chef de camp {chef} a validé la fin sans broncher.', requires: ['validatedBy'], weight: 4 },
       { text: '{chef}, chef de camp, siffle la fin de partie.', requires: ['validatedBy'], weight: 3 },
       { text: 'Fin validée par {chef}. Le village range les pions.', requires: ['validatedBy'], weight: 3 },
+    ],
+  },
+  // Appended at the very end on purpose (plan 040): the array order IS the
+  // brief draw slot, so inserting anywhere else would reshuffle every gazette
+  // ever rendered. `{prophetie}` may render `1`, hence the invariable wording.
+  {
+    key: 'oracle',
+    templates: [
+      {
+        text: 'L’Oracle avait vu juste : {prophete} repart avec {prophetie} au compteur des prophéties.',
+        requires: ['oracle'],
+        weight: 4,
+      },
+      {
+        text: 'Le village consulte {prophete} avant la prochaine : {prophetie} au compteur de l’Oracle.',
+        requires: ['oracle'],
+        weight: 3,
+      },
+      { text: 'Prophétie confirmée — {prophete} avait annoncé la couleur.', requires: ['oracle'], weight: 3 },
     ],
   },
 ]

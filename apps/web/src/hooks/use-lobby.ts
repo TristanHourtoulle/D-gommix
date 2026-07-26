@@ -17,6 +17,11 @@ export interface UseLobbyResult {
   cancelInvite: (userId: string) => Promise<EmptyAck>
   kick: (userId: string) => Promise<EmptyAck>
   setFormat: (format: GameFormat) => Promise<EmptyAck>
+  /** « L'Oracle du village » (plan 040): optional, secret, locked at start. */
+  setOraclePick: (
+    predictedWinnerId: string,
+    predictedSouffreDouleurId: string | null
+  ) => Promise<EmptyAck>
   start: () => Promise<Ack<{ firstEvents: GameEvent[] }>>
   leave: () => Promise<EmptyAck>
 }
@@ -71,8 +76,24 @@ export function useLobby(gameId: string): UseLobbyResult {
     (format: GameFormat) => run('lobby:set_format', { gameId, format }),
     [run, gameId]
   )
+  const setOraclePick = useCallback(
+    (predictedWinnerId: string, predictedSouffreDouleurId: string | null) =>
+      run('lobby:oracle_pick', { gameId, predictedWinnerId, predictedSouffreDouleurId }),
+    [run, gameId]
+  )
   const start = useCallback(() => run('lobby:start', { gameId }), [run, gameId])
   const leave = useCallback(() => run('lobby:leave', { gameId }), [run, gameId])
 
-  return { lobby, connected, pickCharacter, invite, cancelInvite, kick, setFormat, start, leave }
+  return {
+    lobby,
+    connected,
+    pickCharacter,
+    invite,
+    cancelInvite,
+    kick,
+    setFormat,
+    setOraclePick,
+    start,
+    leave,
+  }
 }

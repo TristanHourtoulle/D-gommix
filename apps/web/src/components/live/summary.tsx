@@ -32,6 +32,7 @@ import {
   EndgameVeil,
 } from './endgame-decor'
 import { RematchPrompt } from './rematch-prompt'
+import { OracleReveal } from './oracle-reveal'
 import { SealUnlocks } from './seal-unlocks'
 import { displayName, type NameMap } from './types'
 
@@ -221,6 +222,8 @@ export function Summary({
       ) : null}
 
       <SealUnlocks gameId={gameId} />
+
+      <OracleReveal gameId={gameId} state={state} names={names} />
 
       <section className="relative flex flex-col gap-2">
         {state.seats.map((userId, index) => {

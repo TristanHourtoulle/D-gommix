@@ -43,6 +43,13 @@
       "when": 1785084451850,
       "tag": "0005_slippery_the_initiative",
       "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1785091678551,
+      "tag": "0006_youthful_madripoor",
+      "breakpoints": true
     }
   ]
 }

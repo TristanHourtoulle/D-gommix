@@ -199,6 +199,24 @@ export const leaderboardPayloadSchema = z.object({
   titles: z.array(playerTitleSchema).optional(),
   /** Optional for old PWA-cached SSR payloads (same convention as currentStreak). */
   rivalryPairs: z.array(rivalryPairSchema).optional(),
+  /**
+   * « Classement des prophètes » (plan 040) — circle-scoped and all-time,
+   * never windowed by `?period=`: an Oracle score is a standing verdict, same
+   * rule as `titles` and `records`. Optional for old PWA-cached SSR payloads
+   * (same convention as currentStreak).
+   */
+  prophets: z
+    .array(
+      z.object({
+        userId: z.string(),
+        username: z.string(),
+        avatarId: z.string().nullable().optional(),
+        points: z.number(),
+        predictions: z.number(),
+        exactWinners: z.number(),
+      })
+    )
+    .optional(),
   characterWinrates: z.array(
     z.object({ character: characterSchema, winrate: z.number(), games: z.number() })
   ),
@@ -267,12 +285,33 @@ export const sealsPayloadSchema = z.object({
   ),
 })
 
+/**
+ * `/api/oracle?gameId=` — every prediction made in one FINISHED game (plan 040).
+ * A brand-new endpoint has no legacy PWA cache, so every field is required.
+ * Scoring is not on the wire: the Banquet already holds the finished GameState
+ * and derives it with `scoreOraclePicks`.
+ */
+export const oraclePayloadSchema = z.object({
+  picks: z.array(
+    z.object({
+      userId: z.string(),
+      username: z.string(),
+      avatarId: z.string().nullable(),
+      predictedWinnerId: z.string(),
+      predictedWinnerUsername: z.string(),
+      predictedSouffreDouleurId: z.string().nullable(),
+      predictedSouffreDouleurUsername: z.string().nullable(),
+    })
+  ),
+})
+
 export type SerializedHomeGame = z.infer<typeof serializedHomeGameSchema>
 export type HomePayload = z.infer<typeof homePayloadSchema>
 export type InvitesPayload = z.infer<typeof invitesPayloadSchema>
 export type FriendsPayload = z.infer<typeof friendsPayloadSchema>
 export type LeaderboardPayload = z.infer<typeof leaderboardPayloadSchema>
 export type SealsPayload = z.infer<typeof sealsPayloadSchema>
+export type OraclePayload = z.infer<typeof oraclePayloadSchema>
 
 /** Flattens the single `Date` of a home history row to ISO for the wire. */
 export function serializeHomeGame(game: HomeGame): SerializedHomeGame {
