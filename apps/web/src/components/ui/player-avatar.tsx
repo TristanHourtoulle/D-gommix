@@ -3,7 +3,7 @@ import { isKnownAvatarId } from '@/lib/avatars'
 
 interface PlayerAvatarProps {
   username: string
-  size?: 32 | 40 | 44 | 56 | 96
+  size?: 32 | 40 | 44 | 56 | 64 | 96
   /**
    * Avatar chosen from the profile. `null`/`undefined` — or an id this build
    * does not know — falls back to the pseudo initial, which is what the app

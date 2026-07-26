@@ -4,7 +4,7 @@ import Link from 'next/link'
 import { useState } from 'react'
 import { Icon } from '@/components/icons'
 import { hitByTarget } from '@/components/live/hit-fx'
-import { PlayerCard } from '@/components/live/player-card'
+import { OpponentCard } from '@/components/live/opponent-card'
 import { Summary } from '@/components/live/summary'
 import { Button } from '@/components/ui/button'
 import { Card } from '@/components/ui/card'
@@ -24,8 +24,8 @@ import {
 type Stage = 'winner' | 'loser'
 
 /**
- * Animations playground. Mounts the shipped live components — `PlayerCard` for
- * the dégommage hit combo, `Summary` for the two end-of-game orchestrations —
+ * Animations playground. Mounts the shipped live components — `OpponentCard`
+ * for the dégommage hit combo, `Summary` for the end-of-game orchestrations —
  * on hard-coded mock data, so every sequence can be watched on demand from the
  * installed PWA without playing a real game. Nothing here is duplicated from
  * those components: the replay mechanisms are theirs (a growing hit log flips
@@ -80,21 +80,32 @@ export function Playground() {
         <section className="flex flex-col gap-2">
           <p className="sec-label">Dégommage</p>
           <Card className="flex flex-col gap-3 p-4">
-            <div className="grid grid-cols-2 gap-3">
+            <div className="flex flex-col gap-3">
               {hero ? (
-                <PlayerCard
+                <OpponentCard
                   player={hero}
                   username={DEMO_NAMES[HERO_ID] ?? 'Joueur'}
+                  avatarId={null}
                   isHost
                   taken={hitCount}
                   hit={hits[HERO_ID]}
+                  canAct
+                  isLocked={false}
+                  isPending={false}
+                  onTap={() => setHitCount((n) => (n >= DEMO_LOG.length ? 1 : n + 1))}
                 />
               ) : null}
               {rival ? (
-                <PlayerCard
+                <OpponentCard
                   player={rival}
                   username={DEMO_NAMES[RIVAL_ID] ?? 'Joueur'}
+                  avatarId={null}
                   isHost={false}
+                  taken={0}
+                  canAct={false}
+                  isLocked={false}
+                  isPending={false}
+                  onTap={() => undefined}
                 />
               ) : null}
             </div>

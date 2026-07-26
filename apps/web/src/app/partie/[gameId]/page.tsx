@@ -27,7 +27,7 @@ export default async function PartiePage({ params }: PartiePageProps) {
   if (game.status === 'lobby') redirect(`/lobby/${gameId}`)
 
   const members = await db
-    .select({ userId: gamePlayers.userId, username: user.username })
+    .select({ userId: gamePlayers.userId, username: user.username, avatarId: user.avatarId })
     .from(gamePlayers)
     .innerJoin(user, eq(user.id, gamePlayers.userId))
     .where(
@@ -41,6 +41,7 @@ export default async function PartiePage({ params }: PartiePageProps) {
   const players: LivePlayer[] = members.map((member) => ({
     userId: member.userId,
     username: member.username ?? 'Joueur',
+    avatarId: member.avatarId,
   }))
 
   // Seeds the `invites` query so the rematch prompt's hook paints from server
