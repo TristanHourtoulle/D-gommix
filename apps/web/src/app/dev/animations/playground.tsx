@@ -58,7 +58,7 @@ export function Playground() {
 
   // Growing the log by one entry flips the hero's hit parity, which flips
   // `data-hit` on the card and restarts the CSS combo with the next onomatopée.
-  const hits = hitByTarget(DEMO_GAME_ID, DEMO_LOG.slice(0, hitCount))
+  const hits = hitByTarget(DEMO_GAME_ID, DEMO_LOG.slice(0, hitCount), DEMO_FINISHED.players)
   const hero = DEMO_FINISHED.players[HERO_ID]
   const rival = DEMO_FINISHED.players[RIVAL_ID]
 

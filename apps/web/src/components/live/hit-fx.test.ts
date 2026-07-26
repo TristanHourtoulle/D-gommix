@@ -15,9 +15,10 @@ const OTHER_GAME = '9f1b7c2e-0000-4000-8000-000000000002'
 const CAMPS: readonly CharacterId[] = ['asterix', 'obelix', 'caius_bonus', 'caligula_minus']
 
 /** Four seated players, one per camp, ids `a0`…`a3`. */
-const PLAYERS = Object.fromEntries(
-  CAMPS.map((character, i) => [`a${i}`, { character }])
-) as Record<string, { character: CharacterId }>
+const PLAYERS = Object.fromEntries(CAMPS.map((character, i) => [`a${i}`, { character }])) as Record<
+  string,
+  { character: CharacterId }
+>
 
 function log(...triples: readonly [number, string, string][]): DegommageEntry[] {
   return triples.map(([seq, actorId, targetId]) => ({ seq, actorId, targetId }))
@@ -83,9 +84,7 @@ describe('hitByTarget', () => {
       [4, 'a2', 'a'],
       [5, 'a3', 'b']
     )
-    expect(hitByTarget(GAME, entries, PLAYERS)).toEqual(
-      hitByTarget(GAME, entries.slice(), PLAYERS)
-    )
+    expect(hitByTarget(GAME, entries, PLAYERS)).toEqual(hitByTarget(GAME, entries.slice(), PLAYERS))
   })
 
   it('never stamps the same word twice in a row on one card', () => {
@@ -111,7 +110,9 @@ describe('hitByTarget — camps', () => {
 
   it('changes camp when the hitter changes', () => {
     const entries = log([1, 'a1', 'a0'], [2, 'a2', 'a0'], [3, 'a3', 'a0'])
-    const camps = entries.map((_, i) => hitByTarget(GAME, entries.slice(0, i + 1), PLAYERS).a0?.camp)
+    const camps = entries.map(
+      (_, i) => hitByTarget(GAME, entries.slice(0, i + 1), PLAYERS).a0?.camp
+    )
     expect(camps).toEqual(['obelix', 'caius_bonus', 'caligula_minus'])
   })
 
@@ -124,13 +125,11 @@ describe('hitByTarget — camps', () => {
 
   it('never stamps the same word twice in a row, even when the hitter alternates', () => {
     const entries = log(
-      ...Array.from({ length: 200 }, (_, i): [number, string, string] => [
-        i + 1,
-        `a${i % 4}`,
-        'a0',
-      ])
+      ...Array.from({ length: 200 }, (_, i): [number, string, string] => [i + 1, `a${i % 4}`, 'a0'])
     )
-    const words = entries.map((_, i) => hitByTarget(GAME, entries.slice(0, i + 1), PLAYERS).a0?.word)
+    const words = entries.map(
+      (_, i) => hitByTarget(GAME, entries.slice(0, i + 1), PLAYERS).a0?.word
+    )
     for (let i = 1; i < words.length; i++) expect(words[i]).not.toBe(words[i - 1])
   })
 

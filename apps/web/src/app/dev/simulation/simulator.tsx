@@ -175,7 +175,7 @@ export function Simulator() {
   const seatedViewerId = state.players[viewerId] ? viewerId : timeline.hostId
 
   const taken = takenByTarget(state)
-  const hits = hitByTarget(timeline.gameId, state.degommageLog)
+  const hits = hitByTarget(timeline.gameId, state.degommageLog, state.players)
   const me = state.players[seatedViewerId]
   const opponentSeats = state.seats.filter((userId) => userId !== seatedViewerId)
 
