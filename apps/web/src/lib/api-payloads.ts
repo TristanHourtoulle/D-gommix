@@ -110,6 +110,8 @@ export const leaderboardPayloadSchema = z.object({
       winrate: z.number(),
       villageGames: z.number(),
       degommages: z.number(),
+      /** Optional for old PWA-cached SSR payloads (same convention as lastSeenAt). */
+      currentStreak: z.number().optional(),
       favoriteCharacter: characterSchema.nullable(),
     })
   ),
