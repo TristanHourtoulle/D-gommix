@@ -1,11 +1,13 @@
+import Link from 'next/link'
 import { notFound, redirect } from 'next/navigation'
 import { requireOnboardedSession } from '@/lib/session'
-import { getGameDetail, type GameDetailPlayer } from '@/lib/queries/stats'
+import { getGameDetail, type GameAbortReason, type GameDetailPlayer } from '@/lib/queries/stats'
 import { RematchButton } from '@/components/rematch-button'
 import { Card } from '@/components/ui/card'
 import { CharacterBadge } from '@/components/ui/character-badge'
 import { Icon } from '@/components/icons'
 import { Pill } from '@/components/ui/pill'
+import { PlayerAvatar } from '@/components/ui/player-avatar'
 import { SectionTitle } from '@/components/ui/section-title'
 import { StatTile } from '@/components/ui/stat-tile'
 import { GameJournal } from '@/components/stats/game-journal'
@@ -25,6 +27,30 @@ interface GameDetailPageProps {
   params: Promise<{ gameId: string }>
 }
 
+/**
+ * End-state copy per true abort reason (derived from the event log — see
+ * deriveAbortReason). `null` reason falls back to the historical generic
+ * copy so pre-existing odd logs never render an empty card.
+ */
+const ABORT_COPY: Record<GameAbortReason | 'unknown', { pill: string; text: string }> = {
+  abandon_total: {
+    pill: 'Partie arrêtée',
+    text: 'La table a voté l’arrêt de la partie d’un commun accord.',
+  },
+  abandon_individual: {
+    pill: 'Partie abandonnée',
+    text: 'Trop de joueurs ont quitté la table pour continuer.',
+  },
+  zombie: {
+    pill: 'Partie clôturée',
+    text: 'Clôturée automatiquement après 24 h d’inactivité.',
+  },
+  unknown: {
+    pill: 'Partie abandonnée',
+    text: 'Personne n’a atteint le village cette fois-ci.',
+  },
+}
+
 function PlayerRecapRow({ player }: { player: GameDetailPlayer }) {
   const subParts = [
     player.character ? CHARACTER_META[player.character].label : null,
@@ -32,8 +58,10 @@ function PlayerRecapRow({ player }: { player: GameDetailPlayer }) {
     player.hasLeft ? 'a quitté la partie' : null,
   ].filter((part): part is string => part !== null)
 
-  return (
-    <Card className={`flex items-center gap-3 px-4 py-2.5 ${player.isWinner ? 'border-bronze' : ''}`}>
+  const rowClass = `card flex items-center gap-3 px-4 py-2.5 ${player.isWinner ? 'border-bronze' : ''}`
+  const content = (
+    <>
+      <PlayerAvatar username={player.username} size={32} avatarId={player.avatarId} />
       {player.character ? <CharacterBadge character={player.character} size="sm" /> : null}
       <div className="min-w-0 flex-1">
         <p className="m-0 truncate text-sm font-semibold">{player.username}</p>
@@ -45,7 +73,21 @@ function PlayerRecapRow({ player }: { player: GameDetailPlayer }) {
         <Icon name="sword" size={16} className="text-bronze" />
         {player.degommages}
       </span>
-    </Card>
+    </>
+  )
+
+  if (!player.isCircleMember) {
+    return <div className={rowClass}>{content}</div>
+  }
+  return (
+    <Link
+      href={`/amis/${player.userId}`}
+      aria-label={`Voir le profil de ${player.username}`}
+      className={`${rowClass} no-underline`}
+      style={{ color: 'inherit' }}
+    >
+      {content}
+    </Link>
   )
 }
 
@@ -91,9 +133,9 @@ export default async function GameDetailPage({ params }: GameDetailPageProps) {
           </>
         ) : (
           <>
-            <Pill variant="loss">Partie abandonnée</Pill>
+            <Pill variant="loss">{ABORT_COPY[detail.abortReason ?? 'unknown'].pill}</Pill>
             <p className="m-0 text-sm text-ink-soft">
-              Personne n&apos;a atteint le village cette fois-ci.
+              {ABORT_COPY[detail.abortReason ?? 'unknown'].text}
             </p>
           </>
         )}
