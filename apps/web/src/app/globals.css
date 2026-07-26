@@ -620,6 +620,249 @@ a {
  */
 .live-actions { padding-bottom: calc(0.75rem + env(safe-area-inset-bottom)); }
 
+/**
+ * « Tape le portrait » redesign (post-playtest round 1, direction A): the
+ * roster card and the tap target merge into one giant arcade key per opponent.
+ * Vocabulary reused as-is: the `.cta` key mechanics (ink lip swallowed on
+ * press), the parchment card chrome, and the `.player-card` hit combo — the
+ * shake plays on the `.opp-slot` wrapper so it never fights the button's own
+ * press translation over `transform`.
+ */
+
+/* Cinzel section label above the tap stack. */
+.zone-label {
+  margin: 0;
+  text-align: center;
+  font-family: var(--font-display);
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--bronze-strong);
+}
+
+/* The viewer's own compact, never-tappable row (no auto-targeting). */
+.self-strip {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  padding: 0.5rem 0.75rem;
+  border: 1.5px dashed var(--parchment-line);
+  border-radius: 14px;
+  background: color-mix(in srgb, var(--surface) 60%, transparent);
+}
+
+.self-stats {
+  margin: 0 0 0 auto;
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+  font-size: 0.74rem;
+  font-weight: 600;
+  color: var(--ink-soft);
+  white-space: nowrap;
+}
+
+/*
+ * One slot per opponent, stacked and flex-growing into the former dead space.
+ * The min-heights are floors for short viewports: 3 opponents (4-player game)
+ * keep ≥ 110px each, 2 opponents ≥ 148px, a lone opponent fills the zone.
+ */
+.opp-slot {
+  position: relative;
+  display: flex;
+  flex: 1;
+  min-height: calc(110px + var(--key-depth));
+}
+
+.tap-stack[data-count='2'] .opp-slot { min-height: calc(148px + var(--key-depth)); }
+.tap-stack[data-count='1'] .opp-slot { min-height: calc(220px + var(--key-depth)); }
+
+/* The whole card is the button — same key mechanics as `.cta`, camp-tinted. */
+.opp-card {
+  position: relative;
+  flex: 1;
+  display: flex;
+  align-items: center;
+  gap: 0.9rem;
+  width: 100%;
+  padding: 0.85rem 1rem;
+  text-align: left;
+  font-family: var(--font-body);
+  color: var(--ink);
+  background: color-mix(in srgb, var(--camp, var(--bronze)) 24%, var(--surface-2));
+  border: 2px solid var(--ink);
+  border-radius: 14px;
+  cursor: pointer;
+  user-select: none;
+  -webkit-tap-highlight-color: transparent;
+  margin-bottom: var(--key-depth);
+  box-shadow: 0 var(--key-depth) 0 var(--key-lip);
+  transition:
+    transform 90ms cubic-bezier(0.2, 0.8, 0.3, 1),
+    box-shadow 90ms cubic-bezier(0.2, 0.8, 0.3, 1);
+}
+
+/* The watermark sits absolutely under everything; lift the content above it. */
+.opp-card > * { position: relative; }
+
+/* Pressed by a finger, or held down for the whole 1.2 s lock. */
+.opp-card:active:not([disabled]),
+.opp-card[data-state='locked'],
+.opp-card[data-state='confirming'] {
+  transform: translateY(var(--key-depth));
+  box-shadow: 0 0 0 var(--key-lip);
+}
+
+.opp-card[disabled] { cursor: default; }
+
+/* A player who left: grayed out IN PLACE, never removed — no reflow. */
+.opp-card[data-state='out'] {
+  opacity: 0.55;
+  filter: grayscale(0.7);
+}
+
+/*
+ * Character full-body art as a low-opacity watermark behind the card content —
+ * same treatment as the summary hero — clipped by its own layer so the hit
+ * stars can still fly out of the unclipped button.
+ */
+.opp-art {
+  position: absolute;
+  inset: 0;
+  border-radius: 12px;
+  overflow: hidden;
+  pointer-events: none;
+}
+
+.opp-art img {
+  position: absolute;
+  right: -0.9rem;
+  top: 50%;
+  width: 8.5rem;
+  height: auto;
+  transform: translateY(-48%) rotate(4deg);
+  opacity: calc(var(--pawn-opacity) + 0.04);
+}
+
+.opp-name {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  font-family: var(--font-display);
+  font-size: 1.35rem;
+  font-weight: 700;
+  line-height: 1.15;
+  letter-spacing: 0.02em;
+}
+
+.opp-meta {
+  display: block;
+  margin-top: 0.15rem;
+  font-size: 0.78rem;
+  color: var(--ink-soft);
+}
+
+.opp-count {
+  margin-left: auto;
+  flex: none;
+  text-align: center;
+}
+
+.opp-count-n {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.3rem;
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+  font-size: 2.1rem;
+  font-weight: 800;
+  line-height: 1;
+}
+
+.opp-plus {
+  display: inline-block;
+  margin-top: 0.4rem;
+  font-size: 0.78rem;
+  font-weight: 800;
+  border: 2px solid var(--ink);
+  border-radius: 999px;
+  padding: 1px 10px;
+  background: var(--surface-2);
+  transition: opacity 150ms linear;
+}
+
+.opp-card[data-state='locked'] .opp-plus,
+.opp-card[data-state='confirming'] .opp-plus { opacity: 0.45; }
+
+/* 1.2 s lock feedback: a linear sweep dims the card left → right, then holds. */
+.opp-sweep {
+  position: absolute;
+  inset: 0;
+  border-radius: 12px;
+  overflow: hidden;
+  pointer-events: none;
+  background: color-mix(in srgb, var(--ink) 26%, transparent);
+  /* Duration mirrors TAP_LOCK_COOLDOWN_MS (`tap-lock.ts`). */
+  animation: opp-sweep 1.2s linear forwards;
+}
+
+@keyframes opp-sweep {
+  from { clip-path: inset(0 100% 0 0); }
+  to { clip-path: inset(0 0 0 0); }
+}
+
+.opp-lock {
+  position: absolute;
+  right: 10px;
+  bottom: 8px;
+  pointer-events: none;
+  font-family: var(--font-mono);
+  font-size: 0.64rem;
+  letter-spacing: 0.04em;
+  color: var(--surface-2);
+  background: var(--ink);
+  border-radius: 999px;
+  padding: 2px 8px;
+}
+
+/*
+ * Bottom row: the rare actions shrink so the frequent one can grow. Undo is a
+ * 56px square icon key; « Fin de partie » a reduced ghost-bronze key. Both on
+ * `.cta.ghost`, overridden here (later in the file, same specificity).
+ */
+.cta.live-undo {
+  width: 56px;
+  height: 56px;
+  flex: none;
+  padding: 0;
+}
+
+.cta.live-end {
+  flex: 1;
+  height: 56px;
+  padding-top: 0;
+  padding-bottom: 0;
+  color: var(--bronze-strong);
+  border-color: var(--bronze-strong);
+  box-shadow: 0 var(--key-depth) 0 var(--bronze-strong);
+}
+
+.cta.live-end:active:not([disabled]):not([aria-disabled='true']) {
+  box-shadow: 0 0 0 var(--bronze-strong);
+}
+
+/* Reduced motion: no press glide, and the lock is a plain static dim. */
+@media (prefers-reduced-motion: reduce) {
+  .opp-card { transition: none; }
+  .opp-plus { transition: none; }
+  .opp-sweep {
+    animation: none;
+    clip-path: none;
+  }
+}
+
 /* ---------- Liquid glass tab bar ---------- */
 
 .tabs-content { padding-bottom: calc(5.5rem + env(safe-area-inset-bottom)); }
@@ -742,6 +985,17 @@ a {
   pointer-events: none;
   /* Same fixed-element promotion as `.tabbar-zone` — see the note there. */
   transform: translateZ(0);
+}
+
+/**
+ * Route-scoped anchor for `/partie`: that route has no tab bar, so the 5.5rem
+ * above would drop the pile straight onto the undo / « Fin de partie » key row
+ * (56px keys + 5px lip on ~2rem of shell padding ≈ top edge at 5.8rem). The
+ * live screen tags <body> while its board is on screen (`live-screen.tsx`) and
+ * the pile re-anchors just above that row. The `(tabs)` behavior is untouched.
+ */
+body[data-toast-anchor='live'] .toast-zone {
+  bottom: calc(6.25rem + env(safe-area-inset-bottom));
 }
 
 /**

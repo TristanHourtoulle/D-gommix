@@ -17,11 +17,11 @@ import { GameClock } from './game-clock'
 import { hitByTarget } from './hit-fx'
 import { describeEndRequest, HostDecisionModal } from './host-decision-modal'
 import { LiveJournal } from './live-journal'
+import { OpponentCard } from './opponent-card'
 import { PawnField } from './pawn-field'
-import { PlayerCard } from './player-card'
+import { SelfStrip } from './self-strip'
 import { Summary } from './summary'
-import { TapZone } from './tap-zone'
-import { displayName, type LivePlayer, type NameMap } from './types'
+import { displayName, type AvatarMap, type LivePlayer, type NameMap } from './types'
 import { useLiveJournal } from './use-live-journal'
 import { useTapLock } from './use-tap-lock'
 
@@ -59,6 +59,10 @@ export function LiveScreen({
     () => Object.fromEntries(players.map((p) => [p.userId, p.username])),
     [players]
   )
+  const avatars = useMemo<AvatarMap>(
+    () => Object.fromEntries(players.map((p) => [p.userId, p.avatarId])),
+    [players]
+  )
   const journal = useLiveJournal(gameId, state, names)
   const hostId = game.hostId ?? initialHostId
   const isHost = viewerId === hostId
@@ -76,6 +80,20 @@ export function LiveScreen({
     invalidatedGameIdRef.current = gameId
     invalidate('home', 'leaderboard', 'invites')
   }, [state?.status, gameId, invalidate])
+
+  // Route-scoped toast anchor: the app toaster is pinned above the tab bar,
+  // but `/partie` has no tab bar — its bottom chrome is the undo/fin key row,
+  // which the default anchor would cover. Tagging <body> while the live board
+  // is on screen lets `.toast-zone` re-anchor above that row (globals.css)
+  // without touching the `(tabs)` behavior.
+  const liveBoardShown = state ? state.status !== 'finished' : false
+  useEffect(() => {
+    if (!liveBoardShown) return
+    document.body.setAttribute('data-toast-anchor', 'live')
+    return () => {
+      document.body.removeAttribute('data-toast-anchor')
+    }
+  }, [liveBoardShown])
 
   const run = async (command: Promise<Ack<{ seq: number }>>): Promise<void> => {
     const ack = await command
@@ -116,7 +134,9 @@ export function LiveScreen({
   }
 
   const inGame = activePlayers(state)
-  const opponents = inGame.filter((p) => p.userId !== viewerId)
+  // Seat order minus the viewer — includes players who left, whose card stays
+  // grayed out IN PLACE so the remaining targets never reflow under a finger.
+  const opponentSeats = state.seats.filter((userId) => userId !== viewerId)
   const me = state.players[viewerId]
   const canAct = me !== undefined && me.inGame
   const canUndo = canAct && validateCommand(state, viewerId, { type: 'undo' }, { isHost }).ok
@@ -133,43 +153,56 @@ export function LiveScreen({
   }
 
   return (
-    <main className="relative mx-auto flex min-h-dvh w-full max-w-md flex-col gap-4 px-4 py-5 pt-[calc(1.25rem_+_env(safe-area-inset-top))]">
+    <main className="relative mx-auto flex min-h-dvh w-full max-w-md flex-col gap-3 px-4 py-5 pt-[calc(1.25rem_+_env(safe-area-inset-top))]">
       <PawnField />
       <GameClock
         format={state.format}
         startedAt={startedAt}
         serverOffset={serverOffset}
         connected={connected}
+        viewerName={displayName(names, viewerId)}
       />
 
-      <div className="relative z-10 grid grid-cols-2 gap-3">
-        {state.seats.map((userId) => {
+      {me ? (
+        <SelfStrip
+          player={me}
+          username={displayName(names, viewerId)}
+          avatarId={avatars[viewerId] ?? null}
+          isHost={viewerId === hostId}
+          taken={taken[viewerId] ?? 0}
+          hit={hits[viewerId]}
+        />
+      ) : null}
+
+      {canAct ? <p className="zone-label relative z-10">Tape le portrait pour dégommer</p> : null}
+
+      <section
+        className="tap-stack relative z-10 flex min-h-0 flex-1 flex-col gap-3"
+        data-testid="tap-zone"
+        data-count={opponentSeats.length}
+      >
+        {opponentSeats.map((userId) => {
           const player = state.players[userId]
           if (!player) return null
           return (
-            <PlayerCard
+            <OpponentCard
               key={userId}
               player={player}
               username={displayName(names, userId)}
+              avatarId={avatars[userId] ?? null}
               isHost={userId === hostId}
               taken={taken[userId] ?? 0}
               hit={hits[userId]}
+              canAct={canAct}
+              isLocked={tapLock.lockedTargetIds.includes(userId)}
+              isPending={tapLock.pendingTargetIds.includes(userId)}
+              onTap={(targetId) => {
+                void handleTap(targetId)
+              }}
             />
           )
         })}
-      </div>
-
-      {canAct ? (
-        <TapZone
-          opponents={opponents}
-          names={names}
-          lockedTargetIds={tapLock.lockedTargetIds}
-          pendingTargetIds={tapLock.pendingTargetIds}
-          onTap={(targetId) => {
-            void handleTap(targetId)
-          }}
-        />
-      ) : null}
+      </section>
 
       {pending ? (
         <section
@@ -194,21 +227,27 @@ export function LiveScreen({
 
       <LiveJournal entries={journal.entries} state={state} />
 
-      <div className="live-actions relative z-10 mt-auto flex flex-col gap-2">
-        <Button
-          variant="ghost"
+      <div className="live-actions relative z-10 mt-auto flex gap-2.5">
+        <button
+          type="button"
+          className="cta ghost live-undo"
+          aria-label="Annuler la dernière action"
           disabled={!canUndo}
           onClick={() => {
             void run(game.undo())
           }}
         >
-          <Icon name="undo" size={16} />
-          Annuler la dernière action
-        </Button>
-        <Button disabled={!canAct || pending !== null} onClick={() => setEndSheetOpen(true)}>
+          <Icon name="undo" size={20} />
+        </button>
+        <button
+          type="button"
+          className="cta ghost live-end"
+          disabled={!canAct || pending !== null}
+          onClick={() => setEndSheetOpen(true)}
+        >
           <Icon name="flag" size={16} />
           Fin de partie
-        </Button>
+        </button>
       </div>
 
       {endSheetOpen && pending === null ? (

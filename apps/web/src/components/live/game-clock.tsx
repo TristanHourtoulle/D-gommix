@@ -10,13 +10,15 @@ interface GameClockProps {
   startedAt: string | null
   serverOffset: number
   connected: boolean
+  /** Viewer's pseudo, shown as « Toi : … » on the sync line. */
+  viewerName?: string
 }
 
 /**
  * Status header of the live screen: FFA pill, server-anchored chrono and the
- * « En direct » / « Reconnexion… » sync indicator.
+ * « En direct » / « Reconnexion… » sync indicator (plus « Toi : {pseudo} »).
  */
-export function GameClock({ format, startedAt, serverOffset, connected }: GameClockProps) {
+export function GameClock({ format, startedAt, serverOffset, connected, viewerName }: GameClockProps) {
   const chrono = useChrono(startedAt, serverOffset)
 
   return (
@@ -27,17 +29,24 @@ export function GameClock({ format, startedAt, serverOffset, connected }: GameCl
           {chrono ?? '--:--'}
         </span>
       </div>
-      <p
-        className="m-0 flex items-center gap-2 text-xs font-semibold"
-        style={{ color: connected ? 'var(--good)' : 'var(--bronze-strong)' }}
-      >
-        <span
-          aria-hidden="true"
-          className="inline-block h-2 w-2 rounded-full"
-          style={{ background: 'currentColor' }}
-        />
-        {connected ? 'En direct — synchronisé' : 'Reconnexion…'}
-      </p>
+      <div className="flex items-center justify-between gap-2">
+        <p
+          className="m-0 flex items-center gap-2 text-xs font-semibold"
+          style={{ color: connected ? 'var(--good)' : 'var(--bronze-strong)' }}
+        >
+          <span
+            aria-hidden="true"
+            className="inline-block h-2 w-2 rounded-full"
+            style={{ background: 'currentColor' }}
+          />
+          {connected ? 'En direct — synchronisé' : 'Reconnexion…'}
+        </p>
+        {viewerName ? (
+          <span className="truncate text-xs font-semibold" style={{ color: 'var(--ink-soft)' }}>
+            Toi : {viewerName}
+          </span>
+        ) : null}
+      </div>
     </header>
   )
 }
