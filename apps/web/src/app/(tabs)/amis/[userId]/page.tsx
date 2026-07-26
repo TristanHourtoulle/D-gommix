@@ -41,11 +41,12 @@ export default async function FriendProfilePage({ params }: FriendProfilePagePro
     )
   }
 
-  const [stats, headToHead, sharedGames] = await Promise.all([
+  const [stats, headToHead, sharedResult] = await Promise.all([
     getPlayerStats(userId),
     isSelf ? Promise.resolve(null) : getHeadToHead(me.id, userId),
-    isSelf ? Promise.resolve([]) : getSharedGames(me.id, userId),
+    isSelf ? Promise.resolve(null) : getSharedGames(me.id, userId),
   ])
+  const sharedGames = sharedResult?.games ?? []
   const winrateLabel =
     stats.winrate === null ? '—' : `${Math.round(stats.winrate * 100)} %`
   const favorite = stats.favoriteCharacter
@@ -73,8 +74,12 @@ export default async function FriendProfilePage({ params }: FriendProfilePagePro
         <StatTile icon="sword" label="Dégommages" value={stats.degommages} />
       </div>
 
-      {headToHead ? (
-        <HeadToHeadCard username={profile.username} headToHead={headToHead} />
+      {headToHead && sharedResult ? (
+        <HeadToHeadCard
+          username={profile.username}
+          headToHead={headToHead}
+          record={sharedResult.record}
+        />
       ) : null}
 
       <section className="card flex items-center gap-3 p-5">

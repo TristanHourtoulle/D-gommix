@@ -1,5 +1,10 @@
 import { describe, expect, it } from 'vitest'
-import { durationSeconds, filterSharedGames, resolveMyResult } from './shared-games'
+import {
+  computeSharedRecord,
+  durationSeconds,
+  filterSharedGames,
+  resolveMyResult,
+} from './shared-games'
 
 describe('filterSharedGames', () => {
   it('keeps only games present in both sets', () => {
@@ -52,6 +57,87 @@ describe('resolveMyResult', () => {
     expect(resolveMyResult('village_reached', 'other', 'viewer')).toBe('lost')
     expect(resolveMyResult('village_reached', null, 'viewer')).toBe('lost')
     expect(resolveMyResult(null, null, 'viewer')).toBe('lost')
+  })
+})
+
+describe('computeSharedRecord', () => {
+  it('computes played and per-player wins over mixed rows', () => {
+    const rows = [
+      { id: 'a', outcome: 'village_reached' as const, winnerId: 'me' },
+      { id: 'b', outcome: 'village_reached' as const, winnerId: 'friend' },
+      { id: 'c', outcome: 'village_reached' as const, winnerId: 'me' },
+      { id: 'd', outcome: 'aborted' as const, winnerId: null },
+    ]
+
+    const record = computeSharedRecord(rows, new Set(['a', 'b', 'c', 'd']), 'me', 'friend')
+
+    expect(record).toEqual({ played: 4, winsMine: 2, winsTheirs: 1 })
+  })
+
+  it('ignores rows outside the shared set entirely', () => {
+    const rows = [
+      { id: 'a', outcome: 'village_reached' as const, winnerId: 'me' },
+      { id: 'x', outcome: 'village_reached' as const, winnerId: 'me' },
+    ]
+
+    const record = computeSharedRecord(rows, new Set(['a']), 'me', 'friend')
+
+    expect(record).toEqual({ played: 1, winsMine: 1, winsTheirs: 0 })
+  })
+
+  it('counts a game won by a third player in played only', () => {
+    const rows = [{ id: 'a', outcome: 'village_reached' as const, winnerId: 'stranger' }]
+
+    const record = computeSharedRecord(rows, new Set(['a']), 'me', 'friend')
+
+    expect(record).toEqual({ played: 1, winsMine: 0, winsTheirs: 0 })
+  })
+
+  it('counts an aborted game in played only, even with a non-null winnerId', () => {
+    const rows = [
+      { id: 'a', outcome: 'aborted' as const, winnerId: 'me' },
+      { id: 'b', outcome: 'aborted' as const, winnerId: 'friend' },
+    ]
+
+    const record = computeSharedRecord(rows, new Set(['a', 'b']), 'me', 'friend')
+
+    expect(record).toEqual({ played: 2, winsMine: 0, winsTheirs: 0 })
+  })
+
+  it('runs over the full shared set, beyond the 20-game display cap', () => {
+    const rows = Array.from({ length: 25 }, (_, index) => ({
+      id: `game-${index}`,
+      outcome: 'village_reached' as const,
+      winnerId: 'me',
+    }))
+    const sharedIds = new Set(rows.map((row) => row.id))
+
+    const record = computeSharedRecord(rows, sharedIds, 'me', 'friend')
+
+    expect(record).toEqual({ played: 25, winsMine: 25, winsTheirs: 0 })
+  })
+
+  it('returns zeros for empty rows or an empty shared set', () => {
+    const rows = [{ id: 'a', outcome: 'village_reached' as const, winnerId: 'me' }]
+
+    expect(computeSharedRecord([], new Set(['a']), 'me', 'friend')).toEqual({
+      played: 0,
+      winsMine: 0,
+      winsTheirs: 0,
+    })
+    expect(computeSharedRecord(rows, new Set<string>(), 'me', 'friend')).toEqual({
+      played: 0,
+      winsMine: 0,
+      winsTheirs: 0,
+    })
+  })
+
+  it('counts a null outcome with the viewer as winner as a viewer win', () => {
+    const rows = [{ id: 'a', outcome: null, winnerId: 'me' }]
+
+    const record = computeSharedRecord(rows, new Set(['a']), 'me', 'friend')
+
+    expect(record).toEqual({ played: 1, winsMine: 1, winsTheirs: 0 })
   })
 })
 
