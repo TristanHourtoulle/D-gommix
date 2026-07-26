@@ -175,7 +175,7 @@ export function Simulator() {
   const seatedViewerId = state.players[viewerId] ? viewerId : timeline.hostId
 
   const taken = takenByTarget(state)
-  const hits = hitByTarget(timeline.gameId, state.degommageLog)
+  const hits = hitByTarget(timeline.gameId, state.degommageLog, state.players)
   const me = state.players[seatedViewerId]
   const opponentSeats = state.seats.filter((userId) => userId !== seatedViewerId)
 
@@ -260,6 +260,9 @@ export function Simulator() {
 
           <p className="helper-text m-0">
             Événement {player.cursor}/{timeline.events.length} · graine « {seed} »
+          </p>
+          <p className="helper-text m-0">
+            À 4 joueurs, les quatre coups signés passent à l’écran.
           </p>
         </Card>
 

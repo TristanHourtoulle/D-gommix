@@ -92,6 +92,7 @@ export function OpponentCard({
       className="player-card opp-slot"
       data-testid={`player-card-${username}`}
       data-hit={phase}
+      data-hit-camp={hit?.camp}
       style={{ '--camp': meta.colorVar } as CSSProperties}
     >
       <button
@@ -153,7 +154,7 @@ export function OpponentCard({
           </>
         ) : null}
       </button>
-      {hit ? <HitBurst word={hit.word} stars={STARS} /> : null}
+      {hit ? <HitBurst word={hit.word} stars={STARS} camp={hit.camp} /> : null}
     </div>
   )
 }

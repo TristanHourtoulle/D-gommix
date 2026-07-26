@@ -40,6 +40,7 @@ export function SelfStrip({ player, username, avatarId, isHost, taken, hit }: Se
       className="player-card self-strip relative z-10"
       data-testid={`player-card-${username}`}
       data-hit={phase}
+      data-hit-camp={hit?.camp}
       style={player.inGame ? undefined : { opacity: 0.55, filter: 'grayscale(0.7)' }}
     >
       <PlayerAvatar username={username} size={32} avatarId={avatarId} />
@@ -62,7 +63,7 @@ export function SelfStrip({ player, username, avatarId, isHost, taken, hit }: Se
         </span>{' '}
         donné{player.degommages > 1 ? 's' : ''} · {taken} subi{taken > 1 ? 's' : ''}
       </p>
-      {hit ? <HitBurst word={hit.word} stars={STARS} /> : null}
+      {hit ? <HitBurst word={hit.word} stars={STARS} camp={hit.camp} /> : null}
     </div>
   )
 }

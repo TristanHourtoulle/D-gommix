@@ -182,7 +182,7 @@ export function LiveScreen({
   // Append-only per-target hit count: what drives the card animation. Distinct
   // from `taken`, which excludes undone dégommages and would therefore replay
   // the whole animation every time somebody presses « Annuler ».
-  const hits = hitByTarget(gameId, state.degommageLog)
+  const hits = hitByTarget(gameId, state.degommageLog, state.players)
 
   const submitEnd = (kind: EndKind, winnerId?: string): void => {
     setEndSheetOpen(false)

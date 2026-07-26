@@ -2266,3 +2266,412 @@ body[data-toast-anchor='live'] .toast-zone {
 .gz-line + .gz-line {
   border-top: 1px solid var(--parchment-line);
 }
+
+/* ---------- Coups signés — the dégommage takes the hitter's camp (plan 042) ---------- */
+
+/**
+ * Four signature variants of the 560 ms dégommage hit, selected by the camp of
+ * the player who LANDED the blow:
+ *
+ *   Astérix        « Le direct du Gaulois » — the plan-011 combo, unchanged
+ *   Obélix         « Le menhir »            — a menhir drops and crushes
+ *   Caïus Bonus    « La volée de pila »     — three javelins cross the card
+ *   Caligula Minus « L’envol de toge »      — a toge sweeps the pion away
+ *
+ * Mechanism: TWO orthogonal attributes on the same `.player-card` root.
+ * `data-hit` still alternates "a"/"b" on every new hit — that is what RESTARTS
+ * a CSS animation, and it is untouched. `data-hit-camp` only SELECTS which
+ * keyframes run. No remount, no timer, no forced reflow.
+ *
+ * Astérix costs zero new CSS on purpose: the shipped rules match at 0-2-0 /
+ * 0-3-0, the camp rules below at 0-3-0 / 0-4-0, so the camp rules win for the
+ * three new camps and are simply ABSENT for `asterix`. The shipped combo is
+ * therefore provably unchanged — not one of its declarations is edited.
+ *
+ * Every keyframe is declared twice under two names with identical bodies. That
+ * duplication IS the restart mechanism, exactly as in plan 011: folding `-b`
+ * back into `-a` would silently stop consecutive hits from the same camp from
+ * restarting, and no test would catch it.
+ *
+ * Only `transform` and `opacity` are animated, so nothing in the flow resizes
+ * and no neighbouring card jumps. Decor never travels more than ~180px from
+ * centre; `body { overflow-x: clip }` clips whatever does.
+ *
+ * SOURCE ORDER IS LOAD-BEARING: the two reduced-motion overrides at the very
+ * end of this file are the only thing that keeps accessibility winning. Read
+ * their comment before moving anything.
+ */
+
+/* Decor is sized for the big arcade key; the compact self strip scales it down. */
+.player-card { --hit-scale: 1; }
+.player-card.self-strip { --hit-scale: 0.68; }
+
+.player-card[data-hit-camp='obelix'] { --hit-ink: var(--obelix); }
+.player-card[data-hit-camp='caius_bonus'] { --hit-ink: var(--caius); }
+.player-card[data-hit-camp='caligula_minus'] { --hit-ink: var(--caligula); }
+
+/* The stamp follows the HITTER. Astérix keeps `--asterix` from the plan-011
+   rule, which this never overrides (no `--hit-ink` is set for that camp).
+   Never `--camp`: that inline custom property is the TARGET's tint. */
+.player-card[data-hit-camp] .hit-stamp { color: var(--hit-ink, var(--asterix)); }
+
+/* ----- Decor elements, all drawn in CSS (no image, no SVG, nothing traced) ----- */
+
+/* Obélix's menhir: top-narrow, bottom-wide, ink-outlined, one lighter facet. */
+.hit-menhir {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: calc(46px * var(--hit-scale, 1));
+  height: calc(62px * var(--hit-scale, 1));
+  opacity: 0;
+  pointer-events: none;
+  background: linear-gradient(
+    160deg,
+    color-mix(in srgb, var(--obelix) 55%, var(--surface-2)) 0 46%,
+    color-mix(in srgb, var(--obelix) 78%, var(--ink)) 46% 100%
+  );
+  border: 2px solid var(--ink);
+  /* A stone, not a box. No `clip-path` — the border must stay drawn. */
+  border-radius: 46% 54% 22% 22% / 34% 34% 8% 8%;
+  will-change: transform, opacity;
+}
+
+/* Caïus's pilum: shaft and head cut from one shape. `--lane` is its vertical
+   slot in the volley, `--d` its launch delay. No border: it would fight the
+   clip-path, and gold on parchment reads on its own. */
+.hit-pilum {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: calc(56px * var(--hit-scale, 1));
+  height: 4px;
+  opacity: 0;
+  pointer-events: none;
+  background: var(--caius);
+  clip-path: polygon(0 38%, 74% 38%, 74% 0, 100% 50%, 74% 100%, 74% 62%, 0 62%);
+  will-change: transform, opacity;
+}
+
+/* Caligula's toge: a soft irregular cloth with one drawn fold. */
+.hit-toge {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: calc(120px * var(--hit-scale, 1));
+  height: calc(76px * var(--hit-scale, 1));
+  opacity: 0;
+  pointer-events: none;
+  background: linear-gradient(
+    115deg,
+    color-mix(in srgb, var(--caligula) 30%, var(--surface-2)) 0 40%,
+    color-mix(in srgb, var(--caligula) 62%, var(--surface-2)) 40% 100%
+  );
+  border: 2px solid color-mix(in srgb, var(--ink) 70%, transparent);
+  border-radius: 62% 38% 55% 45% / 52% 58% 42% 48%;
+  will-change: transform, opacity;
+}
+
+.hit-toge::before {
+  content: '';
+  position: absolute;
+  inset: 22% 16% 30% 12%;
+  border-radius: 50%;
+  background: color-mix(in srgb, var(--ink) 22%, transparent);
+  transform: rotate(-18deg);
+}
+
+/* ----- Obélix, « Le menhir » ----- */
+
+/*
+ * The fall is `linear` on purpose: the acceleration lives in the keyframe
+ * spacing, not in a curve, so it reads as gravity and stays exactly controlled.
+ * Impact lands at 44% ≈ 246 ms, which is where the shake and the tally pop hook
+ * in.
+ */
+@keyframes hit-menhir-ob-a {
+  0% { opacity: 0; transform: translate(-50%, -50%) translate3d(0, -104px, 0) rotate(-7deg) scale(0.88); }
+  8% { opacity: 1; transform: translate(-50%, -50%) translate3d(0, -88px, 0) rotate(-6deg) scale(0.9); }
+  22% { opacity: 1; transform: translate(-50%, -50%) translate3d(0, -62px, 0) rotate(-4deg) scale(0.94); }
+  34% { opacity: 1; transform: translate(-50%, -50%) translate3d(0, -30px, 0) rotate(-2deg) scale(0.98); }
+  44% { opacity: 1; transform: translate(-50%, -50%) translate3d(0, 4px, 0) rotate(1.5deg) scale(1.04, 0.94); }
+  52% { opacity: 1; transform: translate(-50%, -50%) translate3d(0, -7px, 0) rotate(2.5deg) scale(0.99, 1.03); }
+  64% { opacity: 1; transform: translate(-50%, -50%) translate3d(0, 1px, 0) rotate(2deg) scale(1); }
+  82% { opacity: 0.85; transform: translate(-50%, -50%) translate3d(0, 1px, 0) rotate(2deg) scale(1); }
+  100% { opacity: 0; transform: translate(-50%, -50%) translate3d(0, 5px, 0) rotate(2deg) scale(1); }
+}
+@keyframes hit-menhir-ob-b {
+  0% { opacity: 0; transform: translate(-50%, -50%) translate3d(0, -104px, 0) rotate(-7deg) scale(0.88); }
+  8% { opacity: 1; transform: translate(-50%, -50%) translate3d(0, -88px, 0) rotate(-6deg) scale(0.9); }
+  22% { opacity: 1; transform: translate(-50%, -50%) translate3d(0, -62px, 0) rotate(-4deg) scale(0.94); }
+  34% { opacity: 1; transform: translate(-50%, -50%) translate3d(0, -30px, 0) rotate(-2deg) scale(0.98); }
+  44% { opacity: 1; transform: translate(-50%, -50%) translate3d(0, 4px, 0) rotate(1.5deg) scale(1.04, 0.94); }
+  52% { opacity: 1; transform: translate(-50%, -50%) translate3d(0, -7px, 0) rotate(2.5deg) scale(0.99, 1.03); }
+  64% { opacity: 1; transform: translate(-50%, -50%) translate3d(0, 1px, 0) rotate(2deg) scale(1); }
+  82% { opacity: 0.85; transform: translate(-50%, -50%) translate3d(0, 1px, 0) rotate(2deg) scale(1); }
+  100% { opacity: 0; transform: translate(-50%, -50%) translate3d(0, 5px, 0) rotate(2deg) scale(1); }
+}
+
+/* Vertical, not lateral: nothing pushed the card sideways, a rock fell on it. */
+@keyframes hit-shake-ob-a {
+  0%, 100% { transform: translate3d(0, 0, 0) rotate(0deg); }
+  18% { transform: translate3d(0, 9px, 0) rotate(0.5deg); }
+  38% { transform: translate3d(0, -5px, 0) rotate(-0.4deg); }
+  58% { transform: translate3d(0, 3px, 0) rotate(0.25deg); }
+  78% { transform: translate3d(0, -1.5px, 0) rotate(0deg); }
+}
+@keyframes hit-shake-ob-b {
+  0%, 100% { transform: translate3d(0, 0, 0) rotate(0deg); }
+  18% { transform: translate3d(0, 9px, 0) rotate(0.5deg); }
+  38% { transform: translate3d(0, -5px, 0) rotate(-0.4deg); }
+  58% { transform: translate3d(0, 3px, 0) rotate(0.25deg); }
+  78% { transform: translate3d(0, -1.5px, 0) rotate(0deg); }
+}
+
+/* Pebbles skid outward and settle LOW: they ignore the vector's y component. */
+@keyframes hit-star-ob-a {
+  0% { opacity: 0; transform: translate(-50%, -50%) translate3d(0, 0, 0) scale(0.4); }
+  18% { opacity: 1; }
+  100% { opacity: 0; transform: translate(-50%, -50%) translate3d(calc(var(--x) * 1.15), 18px, 0) scale(0.9) rotate(90deg); }
+}
+@keyframes hit-star-ob-b {
+  0% { opacity: 0; transform: translate(-50%, -50%) translate3d(0, 0, 0) scale(0.4); }
+  18% { opacity: 1; }
+  100% { opacity: 0; transform: translate(-50%, -50%) translate3d(calc(var(--x) * 1.15), 18px, 0) scale(0.9) rotate(90deg); }
+}
+
+/* Heavier and straighter than Astérix's — a menhir does not tilt. */
+@keyframes hit-stamp-ob-a {
+  0% { opacity: 0; transform: translate(-50%, -50%) scale(3.4) rotate(-3deg); }
+  26% { opacity: 1; transform: translate(-50%, -50%) scale(0.84) rotate(-5deg); }
+  40% { opacity: 1; transform: translate(-50%, -50%) scale(1.08) rotate(-4deg); }
+  62% { opacity: 1; transform: translate(-50%, -50%) scale(1) rotate(-4deg); }
+  100% { opacity: 0; transform: translate(-50%, -50%) scale(1.1) rotate(-4deg); }
+}
+@keyframes hit-stamp-ob-b {
+  0% { opacity: 0; transform: translate(-50%, -50%) scale(3.4) rotate(-3deg); }
+  26% { opacity: 1; transform: translate(-50%, -50%) scale(0.84) rotate(-5deg); }
+  40% { opacity: 1; transform: translate(-50%, -50%) scale(1.08) rotate(-4deg); }
+  62% { opacity: 1; transform: translate(-50%, -50%) scale(1) rotate(-4deg); }
+  100% { opacity: 0; transform: translate(-50%, -50%) scale(1.1) rotate(-4deg); }
+}
+
+/* ----- Caïus Bonus, « La volée de pila » ----- */
+
+/*
+ * The `scaleX` breathing is the speed-line trick: the javelin stretches at
+ * mid-flight and compresses at both ends. `linear`, staggered by `--d`
+ * (0 / 70 / 140 ms), so the last one lands at 400 ms.
+ */
+@keyframes hit-pilum-cb-a {
+  0% { opacity: 0; transform: translate(-50%, -50%) translate3d(-180px, calc(var(--lane) + 34px), 0) rotate(-11deg) scaleX(0.7); }
+  12% { opacity: 1; }
+  50% { opacity: 1; transform: translate(-50%, -50%) translate3d(0, var(--lane), 0) rotate(-11deg) scaleX(1.15); }
+  88% { opacity: 1; }
+  100% { opacity: 0; transform: translate(-50%, -50%) translate3d(180px, calc(var(--lane) - 34px), 0) rotate(-11deg) scaleX(0.7); }
+}
+@keyframes hit-pilum-cb-b {
+  0% { opacity: 0; transform: translate(-50%, -50%) translate3d(-180px, calc(var(--lane) + 34px), 0) rotate(-11deg) scaleX(0.7); }
+  12% { opacity: 1; }
+  50% { opacity: 1; transform: translate(-50%, -50%) translate3d(0, var(--lane), 0) rotate(-11deg) scaleX(1.15); }
+  88% { opacity: 1; }
+  100% { opacity: 0; transform: translate(-50%, -50%) translate3d(180px, calc(var(--lane) - 34px), 0) rotate(-11deg) scaleX(0.7); }
+}
+
+/* Three lateral flinches, synced to the three crossings (~130 / 195 / 265 ms). */
+@keyframes hit-shake-cb-a {
+  0%, 100% { transform: translate3d(0, 0, 0) rotate(0deg); }
+  12% { transform: translate3d(-5px, 0, 0) rotate(-0.7deg); }
+  20% { transform: translate3d(1px, 0, 0) rotate(0.1deg); }
+  30% { transform: translate3d(4px, 0, 0) rotate(0.6deg); }
+  38% { transform: translate3d(-1px, 0, 0) rotate(-0.1deg); }
+  48% { transform: translate3d(-3px, 0, 0) rotate(-0.45deg); }
+  70% { transform: translate3d(1px, 0, 0) rotate(0.15deg); }
+}
+@keyframes hit-shake-cb-b {
+  0%, 100% { transform: translate3d(0, 0, 0) rotate(0deg); }
+  12% { transform: translate3d(-5px, 0, 0) rotate(-0.7deg); }
+  20% { transform: translate3d(1px, 0, 0) rotate(0.1deg); }
+  30% { transform: translate3d(4px, 0, 0) rotate(0.6deg); }
+  38% { transform: translate3d(-1px, 0, 0) rotate(-0.1deg); }
+  48% { transform: translate3d(-3px, 0, 0) rotate(-0.45deg); }
+  70% { transform: translate3d(1px, 0, 0) rotate(0.15deg); }
+}
+
+/* Sparks chipped off a shield: short, fast, half the surface's vector. */
+@keyframes hit-star-cb-a {
+  0% { opacity: 0; transform: translate(-50%, -50%) translate3d(0, 0, 0) scale(0.2); }
+  16% { opacity: 1; }
+  100% { opacity: 0; transform: translate(-50%, -50%) translate3d(calc(var(--x) * 0.5), calc(var(--y) * 0.5), 0) scale(0.7) rotate(200deg); }
+}
+@keyframes hit-star-cb-b {
+  0% { opacity: 0; transform: translate(-50%, -50%) translate3d(0, 0, 0) scale(0.2); }
+  16% { opacity: 1; }
+  100% { opacity: 0; transform: translate(-50%, -50%) translate3d(calc(var(--x) * 0.5), calc(var(--y) * 0.5), 0) scale(0.7) rotate(200deg); }
+}
+
+/* The word skids in from the left, on the volley's own axis. */
+@keyframes hit-stamp-cb-a {
+  0% { opacity: 0; transform: translate(-50%, -50%) translate3d(-46px, 12px, 0) scale(1.7) rotate(-17deg); }
+  30% { opacity: 1; transform: translate(-50%, -50%) translate3d(4px, 0, 0) scale(0.94) rotate(-6deg); }
+  44% { opacity: 1; transform: translate(-50%, -50%) translate3d(0, 0, 0) scale(1.05) rotate(-8deg); }
+  64% { opacity: 1; transform: translate(-50%, -50%) translate3d(0, 0, 0) scale(1) rotate(-7deg); }
+  100% { opacity: 0; transform: translate(-50%, -50%) translate3d(10px, -4px, 0) scale(1.08) rotate(-7deg); }
+}
+@keyframes hit-stamp-cb-b {
+  0% { opacity: 0; transform: translate(-50%, -50%) translate3d(-46px, 12px, 0) scale(1.7) rotate(-17deg); }
+  30% { opacity: 1; transform: translate(-50%, -50%) translate3d(4px, 0, 0) scale(0.94) rotate(-6deg); }
+  44% { opacity: 1; transform: translate(-50%, -50%) translate3d(0, 0, 0) scale(1.05) rotate(-8deg); }
+  64% { opacity: 1; transform: translate(-50%, -50%) translate3d(0, 0, 0) scale(1) rotate(-7deg); }
+  100% { opacity: 0; transform: translate(-50%, -50%) translate3d(10px, -4px, 0) scale(1.08) rotate(-7deg); }
+}
+
+/* ----- Caligula Minus, « L’envol de toge » ----- */
+
+/* Bottom-left to top-right; it covers the card at 46% ≈ 258 ms. */
+@keyframes hit-toge-cm-a {
+  0% { opacity: 0; transform: translate(-50%, -50%) translate3d(-150px, 44px, 0) rotate(-22deg) scale(0.66, 0.9); }
+  10% { opacity: 0.9; transform: translate(-50%, -50%) translate3d(-104px, 32px, 0) rotate(-16deg) scale(0.8, 0.95); }
+  34% { opacity: 0.95; transform: translate(-50%, -50%) translate3d(-30px, 8px, 0) rotate(-4deg) scale(1.06, 1); }
+  46% { opacity: 0.95; transform: translate(-50%, -50%) translate3d(4px, 0, 0) rotate(3deg) scale(1.14, 1.02); }
+  68% { opacity: 0.6; transform: translate(-50%, -50%) translate3d(72px, -22px, 0) rotate(14deg) scale(0.96, 0.94); }
+  100% { opacity: 0; transform: translate(-50%, -50%) translate3d(158px, -56px, 0) rotate(26deg) scale(0.74, 0.84); }
+}
+@keyframes hit-toge-cm-b {
+  0% { opacity: 0; transform: translate(-50%, -50%) translate3d(-150px, 44px, 0) rotate(-22deg) scale(0.66, 0.9); }
+  10% { opacity: 0.9; transform: translate(-50%, -50%) translate3d(-104px, 32px, 0) rotate(-16deg) scale(0.8, 0.95); }
+  34% { opacity: 0.95; transform: translate(-50%, -50%) translate3d(-30px, 8px, 0) rotate(-4deg) scale(1.06, 1); }
+  46% { opacity: 0.95; transform: translate(-50%, -50%) translate3d(4px, 0, 0) rotate(3deg) scale(1.14, 1.02); }
+  68% { opacity: 0.6; transform: translate(-50%, -50%) translate3d(72px, -22px, 0) rotate(14deg) scale(0.96, 0.94); }
+  100% { opacity: 0; transform: translate(-50%, -50%) translate3d(158px, -56px, 0) rotate(26deg) scale(0.74, 0.84); }
+}
+
+/* Rotation-dominant sway: the card is brushed, not struck. */
+@keyframes hit-shake-cm-a {
+  0%, 100% { transform: translate3d(0, 0, 0) rotate(0deg); }
+  16% { transform: translate3d(-2px, 1px, 0) rotate(-1.7deg); }
+  36% { transform: translate3d(2px, -1px, 0) rotate(1.3deg); }
+  56% { transform: translate3d(-1px, 0, 0) rotate(-0.7deg); }
+  78% { transform: translate3d(0.5px, 0, 0) rotate(0.3deg); }
+}
+@keyframes hit-shake-cm-b {
+  0%, 100% { transform: translate3d(0, 0, 0) rotate(0deg); }
+  16% { transform: translate3d(-2px, 1px, 0) rotate(-1.7deg); }
+  36% { transform: translate3d(2px, -1px, 0) rotate(1.3deg); }
+  56% { transform: translate3d(-1px, 0, 0) rotate(-0.7deg); }
+  78% { transform: translate3d(0.5px, 0, 0) rotate(0.3deg); }
+}
+
+/* Sparkles are DRAGGED by the cloth toward the top-right, whatever their own
+   vector says — they trail the toge instead of bursting from the impact. */
+@keyframes hit-star-cm-a {
+  0% { opacity: 0; transform: translate(-50%, -50%) translate3d(0, 0, 0) scale(0.3) rotate(0deg); }
+  24% { opacity: 1; }
+  100% { opacity: 0; transform: translate(-50%, -50%) translate3d(calc(var(--x) * 0.35 + 52px), calc(var(--y) * 0.35 - 38px), 0) scale(0.85) rotate(120deg); }
+}
+@keyframes hit-star-cm-b {
+  0% { opacity: 0; transform: translate(-50%, -50%) translate3d(0, 0, 0) scale(0.3) rotate(0deg); }
+  24% { opacity: 1; }
+  100% { opacity: 0; transform: translate(-50%, -50%) translate3d(calc(var(--x) * 0.35 + 52px), calc(var(--y) * 0.35 - 38px), 0) scale(0.85) rotate(120deg); }
+}
+
+/* The only variant that leans RIGHT — that mirrored tilt is its signature. */
+@keyframes hit-stamp-cm-a {
+  0% { opacity: 0; transform: translate(-50%, -50%) translate3d(30px, -14px, 0) scale(2.2) rotate(24deg); }
+  28% { opacity: 1; transform: translate(-50%, -50%) translate3d(0, 0, 0) scale(0.93) rotate(9deg); }
+  42% { opacity: 1; transform: translate(-50%, -50%) translate3d(0, 0, 0) scale(1.06) rotate(11deg); }
+  64% { opacity: 1; transform: translate(-50%, -50%) translate3d(0, 0, 0) scale(1) rotate(10deg); }
+  100% { opacity: 0; transform: translate(-50%, -50%) translate3d(-6px, 6px, 0) scale(1.1) rotate(10deg); }
+}
+@keyframes hit-stamp-cm-b {
+  0% { opacity: 0; transform: translate(-50%, -50%) translate3d(30px, -14px, 0) scale(2.2) rotate(24deg); }
+  28% { opacity: 1; transform: translate(-50%, -50%) translate3d(0, 0, 0) scale(0.93) rotate(9deg); }
+  42% { opacity: 1; transform: translate(-50%, -50%) translate3d(0, 0, 0) scale(1.06) rotate(11deg); }
+  64% { opacity: 1; transform: translate(-50%, -50%) translate3d(0, 0, 0) scale(1) rotate(10deg); }
+  100% { opacity: 0; transform: translate(-50%, -50%) translate3d(-6px, 6px, 0) scale(1.1) rotate(10deg); }
+}
+
+/* ----- Per-camp restyling of the shared stars ----- */
+
+/* Obélix: pebbles, not stars — round, ink, alternating with the camp blue. */
+.player-card[data-hit-camp='obelix'] .hit-star {
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  clip-path: none;
+  background: var(--ink);
+}
+.player-card[data-hit-camp='obelix'] .hit-star.ink { background: var(--obelix); }
+
+/* Caïus: sparks — a chipped shield sparks gold, never ink. */
+.player-card[data-hit-camp='caius_bonus'] .hit-star,
+.player-card[data-hit-camp='caius_bonus'] .hit-star.ink {
+  width: 8px;
+  height: 8px;
+  background: var(--caius);
+}
+
+/* Caligula: sparkles trailing the cloth. */
+.player-card[data-hit-camp='caligula_minus'] .hit-star { width: 9px; height: 9px; }
+.player-card[data-hit-camp='caligula_minus'] .hit-star.ink { background: var(--caligula); }
+
+/* ----- Per-camp rules. The tally keeps plan 011's keyframes, duration and
+   spring curve: only its DELAY moves, to land on each variant's impact frame.
+   Astérix keeps 170 ms and has no rule here at all. ----- */
+
+.player-card[data-hit-camp='obelix'][data-hit='a'] { animation: hit-shake-ob-a 320ms cubic-bezier(0.2, 0.9, 0.3, 1) 240ms both; }
+.player-card[data-hit-camp='obelix'][data-hit='b'] { animation: hit-shake-ob-b 320ms cubic-bezier(0.2, 0.9, 0.3, 1) 240ms both; }
+.player-card[data-hit-camp='obelix'][data-hit='a'] .hit-menhir { animation: hit-menhir-ob-a 560ms linear both; }
+.player-card[data-hit-camp='obelix'][data-hit='b'] .hit-menhir { animation: hit-menhir-ob-b 560ms linear both; }
+.player-card[data-hit-camp='obelix'][data-hit='a'] .hit-star { animation: hit-star-ob-a 300ms cubic-bezier(0.2, 0.7, 0.3, 1) 250ms both; }
+.player-card[data-hit-camp='obelix'][data-hit='b'] .hit-star { animation: hit-star-ob-b 300ms cubic-bezier(0.2, 0.7, 0.3, 1) 250ms both; }
+.player-card[data-hit-camp='obelix'][data-hit='a'] .hit-stamp { animation: hit-stamp-ob-a 320ms cubic-bezier(0.2, 0.9, 0.3, 1) 230ms both; }
+.player-card[data-hit-camp='obelix'][data-hit='b'] .hit-stamp { animation: hit-stamp-ob-b 320ms cubic-bezier(0.2, 0.9, 0.3, 1) 230ms both; }
+.player-card[data-hit-camp='obelix'][data-hit='a'] .hit-tally { animation-delay: 250ms; }
+.player-card[data-hit-camp='obelix'][data-hit='b'] .hit-tally { animation-delay: 250ms; }
+
+.player-card[data-hit-camp='caius_bonus'][data-hit='a'] { animation: hit-shake-cb-a 560ms cubic-bezier(0.36, 0.07, 0.19, 0.97) both; }
+.player-card[data-hit-camp='caius_bonus'][data-hit='b'] { animation: hit-shake-cb-b 560ms cubic-bezier(0.36, 0.07, 0.19, 0.97) both; }
+.player-card[data-hit-camp='caius_bonus'][data-hit='a'] .hit-pilum { animation: hit-pilum-cb-a 260ms linear var(--d) both; }
+.player-card[data-hit-camp='caius_bonus'][data-hit='b'] .hit-pilum { animation: hit-pilum-cb-b 260ms linear var(--d) both; }
+.player-card[data-hit-camp='caius_bonus'][data-hit='a'] .hit-star { animation: hit-star-cb-a 300ms cubic-bezier(0.2, 0.7, 0.3, 1) 200ms both; }
+.player-card[data-hit-camp='caius_bonus'][data-hit='b'] .hit-star { animation: hit-star-cb-b 300ms cubic-bezier(0.2, 0.7, 0.3, 1) 200ms both; }
+.player-card[data-hit-camp='caius_bonus'][data-hit='a'] .hit-stamp { animation: hit-stamp-cb-a 360ms cubic-bezier(0.15, 0.85, 0.25, 1) 200ms both; }
+.player-card[data-hit-camp='caius_bonus'][data-hit='b'] .hit-stamp { animation: hit-stamp-cb-b 360ms cubic-bezier(0.15, 0.85, 0.25, 1) 200ms both; }
+.player-card[data-hit-camp='caius_bonus'][data-hit='a'] .hit-tally { animation-delay: 230ms; }
+.player-card[data-hit-camp='caius_bonus'][data-hit='b'] .hit-tally { animation-delay: 230ms; }
+
+.player-card[data-hit-camp='caligula_minus'][data-hit='a'] { animation: hit-shake-cm-a 560ms cubic-bezier(0.34, 1.2, 0.64, 1) both; }
+.player-card[data-hit-camp='caligula_minus'][data-hit='b'] { animation: hit-shake-cm-b 560ms cubic-bezier(0.34, 1.2, 0.64, 1) both; }
+.player-card[data-hit-camp='caligula_minus'][data-hit='a'] .hit-toge { animation: hit-toge-cm-a 560ms cubic-bezier(0.3, 0.6, 0.4, 1) both; }
+.player-card[data-hit-camp='caligula_minus'][data-hit='b'] .hit-toge { animation: hit-toge-cm-b 560ms cubic-bezier(0.3, 0.6, 0.4, 1) both; }
+.player-card[data-hit-camp='caligula_minus'][data-hit='a'] .hit-star { animation: hit-star-cm-a 380ms cubic-bezier(0.2, 0.7, 0.3, 1) 180ms both; }
+.player-card[data-hit-camp='caligula_minus'][data-hit='b'] .hit-star { animation: hit-star-cm-b 380ms cubic-bezier(0.2, 0.7, 0.3, 1) 180ms both; }
+.player-card[data-hit-camp='caligula_minus'][data-hit='a'] .hit-stamp { animation: hit-stamp-cm-a 380ms cubic-bezier(0.2, 0.9, 0.3, 1) 150ms both; }
+.player-card[data-hit-camp='caligula_minus'][data-hit='b'] .hit-stamp { animation: hit-stamp-cm-b 380ms cubic-bezier(0.2, 0.9, 0.3, 1) 150ms both; }
+.player-card[data-hit-camp='caligula_minus'][data-hit='a'] .hit-tally { animation-delay: 210ms; }
+.player-card[data-hit-camp='caligula_minus'][data-hit='b'] .hit-tally { animation-delay: 210ms; }
+
+/*
+ * Reduced motion, part 2 — MUST stay at the end of this file.
+ * The plan-011 blocks above match at 0-2-0 / 0-3-0; the camp rules match at
+ * 0-3-0 / 0-4-0 and would otherwise WIN inside the media query, because a
+ * media query adds no specificity. These selectors tie the camp rules on
+ * specificity, so the cascade falls back to source order — which is why
+ * appending them here, after every camp rule, is the whole fix. Moving this
+ * block up silently re-enables the shake for three of the four camps.
+ *
+ * The decor itself needs nothing: `.hit-fx { display: none }` in the plan-011
+ * block already removes the menhir, the pila and the toge with the stars.
+ *
+ * The stamp delay documented in `components/sound/arena-sounds.ts` is per camp
+ * now: 40 / 230 / 200 / 150 ms for asterix / obelix / caius_bonus /
+ * caligula_minus.
+ */
+@media (prefers-reduced-motion: reduce) {
+  .player-card[data-hit-camp][data-hit] { animation: none; }
+  .player-card[data-hit-camp][data-hit] .hit-tally { animation-delay: 0ms; }
+}
+
+[data-motion='reduced'] .player-card[data-hit-camp][data-hit] { animation: none; }
+[data-motion='reduced'] .player-card[data-hit-camp][data-hit] .hit-tally { animation-delay: 0ms; }

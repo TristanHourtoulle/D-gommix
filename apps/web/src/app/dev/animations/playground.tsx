@@ -1,5 +1,6 @@
 'use client'
 
+import type { CharacterId } from '@degommix/game-core'
 import Link from 'next/link'
 import { useEffect, useState, useSyncExternalStore } from 'react'
 import { Icon } from '@/components/icons'
@@ -14,6 +15,7 @@ import {
 } from '@/components/sound/sound-preference'
 import { Button } from '@/components/ui/button'
 import { Card } from '@/components/ui/card'
+import { CHARACTER_IDS, CHARACTER_META } from '@/lib/characters'
 import { QueryProvider } from '@/lib/query-client'
 import {
   DEMO_ENDED_AT,
@@ -22,12 +24,21 @@ import {
   DEMO_LOG,
   DEMO_NAMES,
   DEMO_STARTED_AT,
+  demoActors,
   HERO_ID,
   RIVAL_ID,
 } from './mocks'
 
 /** Which end-of-game sequence is on stage, if any. */
 type Stage = 'winner' | 'loser'
+
+/** French name of each camp's signature hit (plan 042). */
+const SIGNATURE_LABELS: Record<CharacterId, string> = {
+  asterix: 'Le direct du Gaulois',
+  obelix: 'Le menhir',
+  caius_bonus: 'La volée de pila',
+  caligula_minus: 'L’envol de toge',
+}
 
 /**
  * Animations playground. Mounts the shipped live components — `OpponentCard`
@@ -44,6 +55,7 @@ type Stage = 'winner' | 'loser'
 export function Playground() {
   const [reduced, setReduced] = useState(false)
   const [hitCount, setHitCount] = useState(0)
+  const [camp, setCamp] = useState<CharacterId>('asterix')
   const [stage, setStage] = useState<Stage | null>(null)
   const [runId, setRunId] = useState(0)
 
@@ -58,7 +70,9 @@ export function Playground() {
 
   // Growing the log by one entry flips the hero's hit parity, which flips
   // `data-hit` on the card and restarts the CSS combo with the next onomatopée.
-  const hits = hitByTarget(DEMO_GAME_ID, DEMO_LOG.slice(0, hitCount))
+  // The camp of the demo log's only actor is what picks the signature variant,
+  // exactly as `state.players` does in a real game.
+  const hits = hitByTarget(DEMO_GAME_ID, DEMO_LOG.slice(0, hitCount), demoActors(camp))
   const hero = DEMO_FINISHED.players[HERO_ID]
   const rival = DEMO_FINISHED.players[RIVAL_ID]
 
@@ -138,11 +152,34 @@ export function Playground() {
                 />
               ) : null}
             </div>
+            <div className="flex flex-wrap gap-2">
+              {CHARACTER_IDS.map((id) => (
+                <Button
+                  key={id}
+                  variant="ghost"
+                  fullWidth={false}
+                  size="sm"
+                  aria-pressed={camp === id}
+                  onClick={() => {
+                    setCamp(id)
+                    // Bumping the count flips the parity too, so the new
+                    // variant replays instead of waiting for the next tap.
+                    setHitCount((n) => (n >= DEMO_LOG.length ? 1 : n + 1))
+                  }}
+                >
+                  {CHARACTER_META[id].label}
+                </Button>
+              ))}
+            </div>
             <Button onClick={() => setHitCount((n) => (n >= DEMO_LOG.length ? 1 : n + 1))}>
               Rejouer le dégommage
             </Button>
             <p className="helper-text m-0">
-              Onomatopée : {hits[HERO_ID]?.word ?? '—'} · coup {hitCount}/{DEMO_LOG.length}
+              Coup signé : {SIGNATURE_LABELS[camp]} · onomatopée : {hits[HERO_ID]?.word ?? '—'} ·
+              coup {hitCount}/{DEMO_LOG.length}
+            </p>
+            <p className="helper-text m-0">
+              En partie, le coup prend le camp de celui qui dégomme.
             </p>
           </Card>
         </section>
