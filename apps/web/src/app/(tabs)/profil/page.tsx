@@ -40,7 +40,7 @@ export default async function ProfilePage() {
             <h1 className="s-title m-0" style={{ fontSize: '1.05rem' }}>
               {username}
             </h1>
-            <p className="s-sub">Ton profil de dégommeur</p>
+            <p className="s-sub">Ta hutte</p>
           </div>
         </DevMenuGesture>
       </header>
