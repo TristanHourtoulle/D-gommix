@@ -138,9 +138,16 @@ test('two-player 1v1 happy path (design §7.3)', async ({ browser }) => {
 
     // — Step 8c: game detail shows the full journal —
     await p1.goto(`/parties/${gameId}`)
+    // The archive replays the exact seq-deterministic live sentences
+    // (apps/web/src/lib/degommage-messages.ts): this game's dégommages are
+    // seqs 2 and 3, which pick catalog indexes 8 and 3.
     await expect(
-      p1.getByText(`${J1.username} a dégommé ${J2.username}`, { exact: true })
-    ).toHaveCount(2)
+      p1.getByText(`${J1.username} balaie un pion d’${J2.username} d’un revers`, { exact: true })
+    ).toBeVisible()
+    await expect(
+      p1.getByText(`${J1.username} dégomme un pion d’${J2.username}, plein sabot`, { exact: true })
+    ).toBeVisible()
+    await expect(p1.getByRole('link', { name: `Voir le profil de ${J2.username}` })).toBeVisible()
     // « de Asterix » is elided to « d’Asterix » (see apps/web/src/lib/elision.ts).
     await expect(
       p1.getByText(`${J2.username} a annulé le dégommage d’${J1.username} sur ${J2.username}`)
