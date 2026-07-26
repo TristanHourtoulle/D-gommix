@@ -127,6 +127,17 @@ export function LeaderboardScreen({ viewerId, initialData }: LeaderboardScreenPr
           )}
         </>
       )}
+
+      <div className="flex items-center justify-between">
+        <p className="sec-label">L’Almanach</p>
+        <Link
+          href="/almanach"
+          data-testid="almanach-link"
+          className="text-xs font-semibold text-bronze underline underline-offset-2"
+        >
+          Tout voir
+        </Link>
+      </div>
     </main>
   )
 }
