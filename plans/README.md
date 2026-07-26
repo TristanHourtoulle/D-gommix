@@ -20,7 +20,8 @@ Plans 021–028 were added by the 2026-07-26 `/improve next` round 4 (planned at
 commit `596863e`), all eight candidates owner-selected. Same verification
 baseline. Owner-directed execution order: wave A = 021, 022, 023, 025
 (parallel); wave B = 026 → 027 → 028 (serialized, shared leaderboard payload);
-024 last (repo-wide string sweep).
+024 last (repo-wide string sweep). Round 4 fully shipped 2026-07-26 (PRs
+#52-#59).
 
 ## Execution order & status
 
@@ -46,14 +47,14 @@ baseline. Owner-directed execution order: wave A = 021, 022, 023, 025
 | 018  | Face à face : pair win record on the head-to-head card | P2 | S (M with optional step 5) | — (builds on 003, 006) | DONE (merged `ea10920` as PR #46, E2E validated 2026-07-26; optional step 5 skipped in favor of 019) |
 | 019  | Leaderboard season window (month-to-date) + win-streak chips | P2 | M | — | DONE (merged `9992b47` as PR #47, E2E validated 2026-07-26) |
 | 020  | Crash floor: French error boundaries + client-error reporting to Railway logs | P1 | M | — | DONE (merged `cdcbdae` as PR #48, verified in real prod build with crash screenshots 2026-07-26; its client-error reporting caught a real bug in the place-du-village branch the same day) |
-| 021 | « Rivalités » pairs list — full « qui dégomme qui » on /classement | P1 | S | — (018/019 merged) | TODO |
-| 022 | Actionable friend profile — presence, invite and rematch on /amis/[userId] | P2 | S-M | — | TODO |
-| 023 | Friend-request badge + ambient toasts (FriendsEventsBridge + Tribu badge) | P2 | S | — | TODO |
-| 024 | Lexique gaulois vague 2 + SPECS docs pass (mapping owner-validated 2026-07-26) | P2 | S-M | — (execute last) | TODO |
-| 025 | Game-detail fidelity: real abort reason, live journal sentences, avatars + links | P2 | S-M | — | TODO |
-| 026 | « Palmarès » all-time records card on /classement | P2 | M | — | TODO |
-| 027 | Season archive: browsable past months + « champion du mois » + SPECS §7 amendment | P2 | M | 026 (soft — payload rebase) | TODO |
-| 028 | Personal stats: « dégommages subis » + per-character winrate per player | P3 | M | 026, 027 (soft — payload rebase) | TODO |
+| 021 | « Rivalités » pairs list — full « qui dégomme qui » on /classement | P1 | S | — (018/019 merged) | DONE (merged `5215757` as PR #52, combined wave-A integration E2E + reviewer visual pass 2026-07-26) |
+| 022 | Actionable friend profile — presence, invite and rematch on /amis/[userId] | P2 | S-M | — | DONE (merged `805c2fe` as PR #54, wave-A E2E + visual pass 2026-07-26) |
+| 023 | Friend-request badge + ambient toasts (FriendsEventsBridge + Tribu badge) | P2 | S | — | DONE (merged `49941c3` as PR #55, wave-A E2E + visual pass 2026-07-26) |
+| 024 | Lexique gaulois vague 2 + SPECS docs pass (mapping owner-validated 2026-07-26) | P2 | S-M | — (execute last) | DONE (merged `49214fb` as PR #59, e2e ship-gate green incl. the renamed « Chronique » assertion; lobby-vocabulary coherence gaps deliberately deferred — see PR body) |
+| 025 | Game-detail fidelity: real abort reason, live journal sentences, avatars + links | P2 | S-M | — | DONE (merged `da2a89e` as PR #53, wave-A E2E incl. its new deterministic-sentence assertions + visual pass) |
+| 026 | « Palmarès » all-time records card on /classement | P2 | M | — | DONE (merged `736cf30` as PR #56, per-PR e2e ship-gate 2026-07-26) |
+| 027 | Season archive: browsable past months + « champion du mois » + SPECS §7 amendment | P2 | M | 026 (soft — payload rebase) | DONE (merged `697e00a` as PR #57, per-PR e2e ship-gate 2026-07-26) |
+| 028 | Personal stats: « dégommages subis » + per-character winrate per player | P3 | M | 026, 027 (soft — payload rebase) | DONE (merged `c50adf4` as PR #58, per-PR e2e ship-gate 2026-07-26) |
 
 Status values: TODO | IN PROGRESS | DONE | BLOCKED (with one-line reason) | REJECTED (with one-line rationale — finding fixed independently or approach abandoned)
 
