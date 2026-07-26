@@ -31,6 +31,13 @@ export interface InviteReceivedPayload {
   gameId: string
   hostUsername: string
   format: GameFormat
+  /**
+   * Id of the finished game this invitation is a rematch of. Only set on the
+   * live `replay:create` broadcast — the reconnect re-push and the invites
+   * endpoint cannot derive it (no db column), so consumers must treat it as a
+   * hint, not a guarantee.
+   */
+  rematchOf?: string
 }
 
 export interface InviteCanceledPayload {

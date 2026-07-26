@@ -181,7 +181,10 @@ describe('resync, host transfer, zombie job and replay', () => {
       await sendCommand(s1, gameId, { type: 'request_end', kind: 'village', winnerId: 'u1' })
     )
 
-    const invite = waitForEvent<{ gameId: string; hostUsername: string }>(s2, 'invite:received')
+    const invite = waitForEvent<{ gameId: string; hostUsername: string; rematchOf?: string }>(
+      s2,
+      'invite:received'
+    )
     const replay = expectOk(
       await emitAck<{ gameId: string; code: string }>(s1, 'replay:create', {
         finishedGameId: gameId,
@@ -189,14 +192,20 @@ describe('resync, host transfer, zombie job and replay', () => {
     )
     expect(replay.gameId).not.toBe(gameId)
     expect(replay.code).not.toBe(code)
-    expect((await invite).gameId).toBe(replay.gameId)
+    const invitePayload = await invite
+    expect(invitePayload.gameId).toBe(replay.gameId)
+    expect(invitePayload.rematchOf).toBe(gameId)
 
     const seats = await ts.db
       .select()
       .from(gamePlayers)
       .where(eq(gamePlayers.gameId, replay.gameId))
-    const byUser = new Map(seats.map((s) => [s.userId, s.status]))
-    expect(byUser.get('u1')).toBe('joined')
-    expect(byUser.get('u2')).toBe('invited')
+    const byUser = new Map(seats.map((s) => [s.userId, s]))
+    expect(byUser.get('u1')?.status).toBe('joined')
+    expect(byUser.get('u2')?.status).toBe('invited')
+    // The rematch preselects each player's character from the source game
+    // (startGameWith assigns the CHARACTER_POOL in seat order).
+    expect(byUser.get('u1')?.character).toBe('asterix')
+    expect(byUser.get('u2')?.character).toBe('obelix')
   })
 })

@@ -3,6 +3,7 @@ import { and, eq, or, gamePlayers, games, user } from '@degommix/db'
 import { LiveScreen } from '@/components/live/live-screen'
 import type { LivePlayer } from '@/components/live/types'
 import { db } from '@/lib/db'
+import { getPendingInvites } from '@/lib/queries/invites'
 import { requireOnboardedSession } from '@/lib/session'
 
 const UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
@@ -42,6 +43,10 @@ export default async function PartiePage({ params }: PartiePageProps) {
     username: member.username ?? 'Joueur',
   }))
 
+  // Seeds the `invites` query so the rematch prompt's hook paints from server
+  // state on reload instead of an empty cache (same seeding as the tabs).
+  const invites = await getPendingInvites(viewer.id)
+
   return (
     <LiveScreen
       gameId={gameId}
@@ -50,6 +55,7 @@ export default async function PartiePage({ params }: PartiePageProps) {
       players={players}
       fallbackStartedAt={game.startedAt?.toISOString() ?? null}
       fallbackEndedAt={game.endedAt?.toISOString() ?? null}
+      initialInvites={{ invites }}
     />
   )
 }
