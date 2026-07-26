@@ -16,6 +16,12 @@ Plans 018–020 were added by the 2026-07-26 `/improve next` round (planned at
 commit `8890290`), owner-selected from that audit's candidates. The same
 verification baseline applies.
 
+Plans 021–028 were added by the 2026-07-26 `/improve next` round 4 (planned at
+commit `596863e`), all eight candidates owner-selected. Same verification
+baseline. Owner-directed execution order: wave A = 021, 022, 023, 025
+(parallel); wave B = 026 → 027 → 028 (serialized, shared leaderboard payload);
+024 last (repo-wide string sweep).
+
 ## Execution order & status
 
 | Plan | Title | Priority | Effort | Depends on | Status |
@@ -26,7 +32,7 @@ verification baseline applies.
 | 004  | Presence snapshot on connect + lobby availability | P2 | S-M | — | DONE (merged `ad61450`, E2E validated 2026-07-25) |
 | 005  | « Inviter » from Amis creates the lobby | P2 | S | 001, 004 (both soft) | DONE (merged `ada135e`, E2E validated 2026-07-25) |
 | 006  | Friend profile: « Vos parties ensemble » + tappable ranking rows | P2 | M | — (composes with 003) | DONE (merged `76ff631`, E2E validated 2026-07-25) |
-| 007  | Per-target tap lock | P3 | S-M | — | DONE (merged `18302eb`, E2E validated 2026-07-25) |
+| 007  | Per-target tap lock | P3 | S-M | — | DONE (merged `18302eb`, E2E validated 2026-07-25) ; table verdict still pending — owner 2026-07-26: not observed during the two playtests, re-test at the next physical table session (plan 007's alternatives ladder stays open) |
 | 008  | Leaderboard spotlight cards: gap between section title and content | P3 | S | — | DONE (merged `5310eb9`, E2E validated 2026-07-25) |
 | 009  | Live action keys: safe-area bottom breathing room | P3 | S | — | DONE (merged `dbd8992`, E2E validated 2026-07-25) |
 | 010  | Live journal: 44 deterministic dégommage sentences | — | — | — | DONE (merged `f5d4a4a`, E2E validated 2026-07-25 (combined run 6/6)) |
@@ -40,6 +46,14 @@ verification baseline applies.
 | 018  | Face à face : pair win record on the head-to-head card | P2 | S (M with optional step 5) | — (builds on 003, 006) | DONE (merged `ea10920` as PR #46, E2E validated 2026-07-26; optional step 5 skipped in favor of 019) |
 | 019  | Leaderboard season window (month-to-date) + win-streak chips | P2 | M | — | DONE (merged `9992b47` as PR #47, E2E validated 2026-07-26) |
 | 020  | Crash floor: French error boundaries + client-error reporting to Railway logs | P1 | M | — | DONE (merged `cdcbdae` as PR #48, verified in real prod build with crash screenshots 2026-07-26; its client-error reporting caught a real bug in the place-du-village branch the same day) |
+| 021 | « Rivalités » pairs list — full « qui dégomme qui » on /classement | P1 | S | — (018/019 merged) | TODO |
+| 022 | Actionable friend profile — presence, invite and rematch on /amis/[userId] | P2 | S-M | — | TODO |
+| 023 | Friend-request badge + ambient toasts (FriendsEventsBridge + Tribu badge) | P2 | S | — | TODO |
+| 024 | Lexique gaulois vague 2 + SPECS docs pass (mapping owner-validated 2026-07-26) | P2 | S-M | — (execute last) | TODO |
+| 025 | Game-detail fidelity: real abort reason, live journal sentences, avatars + links | P2 | S-M | — | TODO |
+| 026 | « Palmarès » all-time records card on /classement | P2 | M | — | TODO |
+| 027 | Season archive: browsable past months + « champion du mois » + SPECS §7 amendment | P2 | M | 026 (soft — payload rebase) | TODO |
+| 028 | Personal stats: « dégommages subis » + per-character winrate per player | P3 | M | 026, 027 (soft — payload rebase) | TODO |
 
 Status values: TODO | IN PROGRESS | DONE | BLOCKED (with one-line reason) | REJECTED (with one-line rationale — finding fixed independently or approach abandoned)
 
@@ -74,6 +88,15 @@ Status values: TODO | IN PROGRESS | DONE | BLOCKED (with one-line reason) | REJE
   shippable now; step 6 — the monochrome emblem fading in above the engraved
   wordmark — is explicitly marked skippable and must be skipped while 016 is
   still TODO. Order does not matter otherwise.
+- **021/026/027/028 all touch `api-payloads.ts` + `/api/leaderboard` +
+  classement components** (whichever lands second rebases on the first — the
+  plans each encode this).
+- **022 and 023 both append one hook to `apps/web/src/hooks/use-tab-data.ts`**
+  (trivial additive rebase for the second).
+- **025 edits the `getGameDetail` half of `queries/stats.ts` while 026 edits
+  its leaderboard half** (disjoint regions, still rebase-aware).
+- **024 runs LAST** because it renames strings across screens 022/023/025
+  touch, and its Step 0 gate is satisfied (owner validated 2026-07-26).
 
 ## Findings considered and rejected
 
@@ -89,3 +112,9 @@ Status values: TODO | IN PROGRESS | DONE | BLOCKED (with one-line reason) | REJE
   explicitly did NOT select Postgres backups verification, the deploy-path
   verification gate, récap sharing, or local single-phone mode — do not
   re-propose these in a future audit without new evidence"
+- "2026-07-26 round 4: « Revoir la partie » replay scrubber (L, spike-only)
+  and soirée/rematch-chain recap (MED confidence, needs grouping-rule spike)
+  surfaced but not selected; account-recovery spike not selected (still §7
+  backlog — the owner-run reset-link alternative is recorded for when it's
+  wanted); Web Push: measure first — check at the next playtest whether the
+  durable-invitation banner suffices, then record « not needed » or plan it."
