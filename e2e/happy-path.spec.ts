@@ -107,6 +107,10 @@ test('two-player 1v1 happy path (design §7.3)', async ({ browser }) => {
     await tapTarget.click()
     await expectCounter(p2, J1.username, 2)
     await expectCounter(p2, J2.username, 0)
+    // Both dégommages are still in the 2-line live journal at this point:
+    // seq 2 is the first blood, seq 3 hits the same target seconds later.
+    await expect(p1.getByText('Premier sang')).toBeVisible()
+    await expect(p1.getByText('Sans pitié')).toBeVisible()
     await shot(p1, '09-live')
     await p1.emulateMedia({ colorScheme: 'dark' })
     await shot(p1, '10-live-dark')
@@ -139,6 +143,8 @@ test('two-player 1v1 happy path (design §7.3)', async ({ browser }) => {
     // — Step 8a: summary on both screens, J2 winner, correct counters —
     await expect(p2.getByText('Le banquet')).toBeVisible()
     await expect(p2.getByText('Victoire')).toBeVisible()
+    // J2 won having lost the only surviving pion of the game (seq 3 was undone).
+    await expect(p2.getByText('Remontada')).toBeVisible()
     await expect(p2.getByTestId(`summary-row-${J2.username}`)).toContainText('vainqueur')
     await expect(p2.getByTestId(`summary-row-${J1.username}`)).toContainText('1')
     await expect(p1.getByText('Le banquet')).toBeVisible()
@@ -164,6 +170,11 @@ test('two-player 1v1 happy path (design §7.3)', async ({ browser }) => {
     expect(drawn).toHaveLength(2)
     expect(drawn[0]).not.toBe(drawn[1])
     await expect(p1.getByRole('link', { name: `Voir le profil de ${J2.username}` })).toBeVisible()
+    // The archive replays the same verdicts from the persisted log: the undone
+    // dégommage (seq 3) lost its « Sans pitié », the first blood kept its stamp.
+    await expect(p1.getByText('Premier sang')).toBeVisible()
+    await expect(p1.getByText('Sans pitié')).toHaveCount(0)
+    await expect(p1.getByText('Remontada')).toBeVisible()
     // « de Asterix » is elided to « d’Asterix » (see apps/web/src/lib/elision.ts).
     await expect(
       p1.getByText(`${J2.username} a annulé le dégommage d’${J1.username} sur ${J2.username}`)
