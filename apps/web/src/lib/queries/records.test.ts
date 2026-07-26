@@ -8,7 +8,8 @@ import { pickLongestStreakHolder, type VillageResultRow } from './records'
 vi.mock('@/lib/db', () => ({ db: {} }))
 
 function row(userId: string, username: string | null): VillageResultRow {
-  return { userId, username, avatarId: null, won: true }
+  // `gameId` is unread by the picker; it exists for the cote fold (plan 043).
+  return { gameId: `g-${userId}`, userId, username, avatarId: null, won: true }
 }
 
 describe('pickLongestStreakHolder', () => {

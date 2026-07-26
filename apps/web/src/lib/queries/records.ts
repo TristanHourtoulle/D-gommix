@@ -40,18 +40,22 @@ export interface CircleRecords {
 
 /** One row of the circle's all-time village_reached history, newest first. */
 export interface VillageResultRow extends StreakGameResult {
+  /** Groups seats into games for the cote fold (plan 043). */
+  gameId: string
   username: string | null
   avatarId: string | null
 }
 
 /**
  * All-time win/loss list of the circle's village_reached games, newest first
- * by ended_at. Single source for the current-streak chips (stats.ts) and the
- * longest-streak record, so the table is scanned once per leaderboard load.
+ * by (ended_at, id). Single source for the current-streak chips (stats.ts),
+ * the longest-streak record and the « Cote du guerrier » fold (plan 043), so
+ * the table is scanned once per leaderboard load.
  */
 export function queryVillageResults(memberIds: string[]) {
   return db
     .select({
+      gameId: games.id,
       userId: gamePlayers.userId,
       username: user.username,
       avatarId: user.avatarId,
@@ -69,10 +73,14 @@ export function queryVillageResults(memberIds: string[]) {
         sql`${gamePlayers.status} in ('joined', 'left')`
       )
     )
-    .orderBy(sql`${games.endedAt} desc`)
+    // (ended_at, id) — the replay-cursor order of PR #75
+    // (apps/ws-server/src/backfill-seals.ts, apps/ws-server/src/seals.ts),
+    // read in reverse. `games.id` breaks ended_at ties so the sequence — and
+    // therefore the cote fold that consumes it — is deterministic.
+    .orderBy(sql`${games.endedAt} desc`, sql`${games.id} desc`)
 }
 
-const durationSec = sql`round(extract(epoch from (${games.endedAt} - ${games.startedAt})))`
+const durationSec =sql`round(extract(epoch from (${games.endedAt} - ${games.startedAt})))`
 
 /**
  * Extreme-duration village_reached game of the circle, winner joined for the
