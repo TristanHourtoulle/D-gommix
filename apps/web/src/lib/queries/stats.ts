@@ -10,7 +10,12 @@ import {
   games,
   user,
 } from '@degommix/db'
-import type { CharacterId, GameFormat, GameOutcome } from '@degommix/game-core'
+import {
+  compareStandings,
+  type CharacterId,
+  type GameFormat,
+  type GameOutcome,
+} from '@degommix/game-core'
 import { db } from '@/lib/db'
 import { buildPerCharacter, type CharacterStat } from '@/lib/character-stats'
 import { computeCotes, type CoteEntry } from '@/lib/cote'
@@ -109,18 +114,13 @@ export interface CircleStanding {
   degommages: number
 }
 
-/**
- * Ranking order of the village (design §5.3), shared by the full leaderboard
- * and the viewer's rank chip so the two can never disagree.
- */
-export function compareStandings(a: CircleStanding, b: CircleStanding): number {
-  return (
-    b.wins - a.wins ||
-    b.winrate - a.winrate ||
-    b.degommages - a.degommages ||
-    a.username.localeCompare(b.username, 'fr')
-  )
-}
+// Ranking order (design §5.3) now lives in @degommix/game-core/season so the
+// ws-server can rank a month with the exact ordering that crowns the champion
+// the player sees (plan 039). `CircleStanding` stays here — it carries the
+// display fields (userId, avatarId, villageGames) the comparator does not read.
+// Re-exported under its old name so month-champions.ts and every other importer
+// are untouched; imported above as well because this module sorts with it too.
+export { compareStandings }
 
 /** Finished, actually-started games of the circle, phantom lobbies excluded. */
 function circleFinishedStarted(memberIds: string[], range: LeaderboardRange = {}) {
