@@ -146,6 +146,33 @@ describe('wire schemas', () => {
     expect(leaderboardPayloadSchema.safeParse(bad).success).toBe(false)
   })
 
+  it('accepts a leaderboard payload carrying the cotes', () => {
+    const payload = {
+      rows: [],
+      friendCount: 2,
+      topDegommeur: null,
+      rivalry: { nemesis: null, favoriteVictim: null },
+      characterWinrates: [],
+      cotes: [
+        { userId: 'u1', cote: 1048, games: 7, trend: 19 },
+        { userId: 'u2', cote: 968, games: 0, trend: -16 },
+      ],
+    }
+    expect(leaderboardPayloadSchema.parse(payload)).toEqual(payload)
+  })
+
+  it('accepts a leaderboard payload with an empty cotes array', () => {
+    const payload = {
+      rows: [],
+      friendCount: 0,
+      topDegommeur: null,
+      rivalry: { nemesis: null, favoriteVictim: null },
+      characterWinrates: [],
+      cotes: [],
+    }
+    expect(leaderboardPayloadSchema.safeParse(payload).success).toBe(true)
+  })
+
   it('rejects a leaderboard row missing its rank', () => {
     const bad = {
       rows: [
