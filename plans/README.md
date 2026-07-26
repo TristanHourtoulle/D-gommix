@@ -23,6 +23,15 @@ baseline. Owner-directed execution order: wave A = 021, 022, 023, 025
 024 last (repo-wide string sweep). Round 4 fully shipped 2026-07-26 (PRs
 #52-#59).
 
+Plans 029–038 were added by the 2026-07-26 round 5 (« encore plus drôle »,
+planned at commit `08f1da1`): the owner validated proposals I–IX from the
+fun-features artifact (replay/X excluded) plus a dev-mode game simulator he
+requested. Execution order: wave 0 = 038 (the test bench for the whole round);
+wave A = 034, 035, 036 in parallel (classement, minor overlaps rebase); wave B =
+030 → 029 → 037 serialized (live-screen files); wave C = 032 → 033 serialized
+(profile surfaces, 033 carries migration 0005); wave D = 031 last (consumes
+030's stamps).
+
 ## Execution order & status
 
 | Plan | Title | Priority | Effort | Depends on | Status |
@@ -55,6 +64,16 @@ baseline. Owner-directed execution order: wave A = 021, 022, 023, 025
 | 026 | « Palmarès » all-time records card on /classement | P2 | M | — | DONE (merged `736cf30` as PR #56, per-PR e2e ship-gate 2026-07-26) |
 | 027 | Season archive: browsable past months + « champion du mois » + SPECS §7 amendment | P2 | M | 026 (soft — payload rebase) | DONE (merged `697e00a` as PR #57, per-PR e2e ship-gate 2026-07-26) |
 | 028 | Personal stats: « dégommages subis » + per-character winrate per player | P3 | M | 026, 027 (soft — payload rebase) | DONE (merged `c50adf4` as PR #58, per-PR e2e ship-gate 2026-07-26) |
+| 029 | Provocations en direct — taunt picker, room broadcast, cooldown 60s | P2 | M | — (rebase vs 030/037/038 on live files) | TODO |
+| 030 | Moments forts tamponnés — Premier sang, Vengeance !, Triplé !, Remontada, Carnage, Sans pitié | P2 | M | 038 (soft — foldJournal extraction) | TODO |
+| 031 | La Gazette du Village — deterministic parchment recap per game | P2 | M-L | 030 (soft — stamps in briefs) | TODO |
+| 032 | Titres gaulois évolutifs — rarity-based epithets under pseudos | P2 | M | — | TODO |
+| 033 | Sceaux hauts faits — achievements table (migration 0005), Banquet unlocks, backfill | P2 | M-L | — (execute after 032: same profile surfaces) | TODO |
+| 034 | Le Duel — règle tes comptes depuis les Rivalités + bannière lobby | P3 | S-M | — | TODO |
+| 035 | Le Barde du soir — anti-champion mensuel (Assurancetourix ligoté) | P3 | S | — | TODO |
+| 036 | L'Almanach des stats absurdes — page parodique liée aux Lauriers | P3 | M | — | TODO |
+| 037 | Bruitages d'arène — opt-in, Web Audio, 3 samples | P3 | S-M | — (execute after 029/030 on live files) | TODO |
+| 038 | Simulation de partie (mode dev) — timeline seedée dans le vrai réducteur | P2 | M | — (EXECUTE FIRST: wave 0) | TODO |
 
 Status values: TODO | IN PROGRESS | DONE | BLOCKED (with one-line reason) | REJECTED (with one-line rationale — finding fixed independently or approach abandoned)
 
@@ -98,6 +117,20 @@ Status values: TODO | IN PROGRESS | DONE | BLOCKED (with one-line reason) | REJE
   its leaderboard half** (disjoint regions, still rebase-aware).
 - **024 runs LAST** because it renames strings across screens 022/023/025
   touch, and its Step 0 gate is satisfied (owner validated 2026-07-26).
+
+- **029/030/037/038 touch live-screen-adjacent files** (`use-live-journal`,
+  `opponent-card`, `live-screen`, `summary`) — strict order 038 → 030 → 029 →
+  037, later ones rebase on whatever landed first.
+- **034/035/036 touch classement surfaces** (`rivalry-tile`,
+  `champions-strip`, `leaderboard-screen`) — parallel-safe, but whoever lands
+  second rebases rather than re-deciding the layout.
+- **032 and 033 both touch the two profile pages** (`/profil` and
+  `/amis/[userId]`) — 032 first, 033 rebases on it.
+- **031 runs last**: it consumes 030's stamp API. Its « en titre » fact is
+  deliberately participant-scoped, **not** the viewer-scoped titles of 032 —
+  do not unify them.
+- **033 introduces migration `0005`.** Any other plan that needs a migration
+  must regenerate after it so the Drizzle journal stays linear.
 
 ## Findings considered and rejected
 
