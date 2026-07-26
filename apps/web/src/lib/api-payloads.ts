@@ -196,6 +196,20 @@ export const leaderboardPayloadSchema = z.object({
           username: z.string(),
           avatarId: z.string().nullable().optional(),
           wins: z.number(),
+          /**
+           * « Barde du soir » of that month (plan 035) — last of the same
+           * standings; null when a single player was ranked. Optional for old
+           * PWA-cached SSR payloads (same convention as souffreDouleur).
+           */
+          barde: z
+            .object({
+              userId: z.string(),
+              username: z.string(),
+              avatarId: z.string().nullable().optional(),
+              wins: z.number(),
+            })
+            .nullable()
+            .optional(),
         })
       ),
     })

@@ -43,6 +43,24 @@ const paths = {
     </>
   ),
   home: <polygon points="12 2 3 10 3 21 10 21 10 15 14 15 14 21 21 21 21 10 12 2" />,
+  /**
+   * « Le barde ligoté » — a three-string lyre bound by a rope, the mark of the
+   * « Barde du soir » (plan 035). Original instrument-and-rope motif drawn for
+   * this registry — never traced from official artwork: 24-grid, stroke-only,
+   * legible down to 12px.
+   */
+  'lyre-tied': (
+    <>
+      <path d="M6 6H18" />
+      <path d="M8.5 18C5 15.5 4.5 10 6 6" />
+      <path d="M15.5 18C19 15.5 19.5 10 18 6" />
+      <path d="M8 18H16" />
+      <path d="M9.5 9V15" />
+      <path d="M14.5 9V15" />
+      <path d="M3.5 10.5L20.5 13.5" />
+      <path d="M13 12.3L11 16.5" />
+    </>
+  ),
   moon: (
     <path d="M4 11.9309C4 16.9396 8.0596 21 13.0674 21C16.4803 21 19.4528 19.1141 21 16.3273C20.4852 16.4181 19.9554 16.4655 19.4145 16.4655C14.4068 16.4655 10.3472 12.4051 10.3472 7.39637C10.3472 5.80122 10.7589 4.30225 11.4819 3C7.23006 3.74996 4 7.46316 4 11.9309Z" />
   ),
