@@ -19,7 +19,7 @@ const TABS: Tab[] = [
   { href: '/', label: 'Village', icon: 'home', aliases: [] },
   { href: '/amis', label: 'Tribu', icon: 'users', aliases: [] },
   { href: '/jouer', label: 'Arène', icon: 'play', aliases: ['/lobby'] },
-  { href: '/classement', label: 'Lauriers', icon: 'trophy', aliases: ['/parties'] },
+  { href: '/classement', label: 'Lauriers', icon: 'trophy', aliases: ['/parties', '/almanach'] },
 ]
 
 function matchesPrefix(pathname: string, prefix: string): boolean {
