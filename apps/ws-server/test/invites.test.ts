@@ -1,4 +1,4 @@
-import { eq, sql } from 'drizzle-orm'
+import { and, eq, sql } from 'drizzle-orm'
 import { friendships, gamePlayers, games } from '@degommix/db'
 import { migrateTestDb } from '@degommix/db/test-utils'
 import type { Socket as ClientSocket } from 'socket.io-client'
@@ -152,6 +152,40 @@ describe('durable invitations', () => {
 
     const second = await emitAck(s2, 'lobby:create', { format: 2 })
     expect(second).toMatchObject({ ok: false, code: 'ALREADY_IN_GAME' })
+  })
+
+  it('accepting one invitation auto-declines the others and cancels them live', async () => {
+    // canonicalPair ordering: 'u2' < 'u3' lexicographically.
+    await ts.db.insert(friendships).values({ userLow: 'u2', userHigh: 'u3' })
+    const { gameId: gameA } = await inviteU2()
+    const s3 = await ts.connectAs('u3')
+    const createdB = expectOk(await emitAck<{ gameId: string }>(s3, 'lobby:create', { format: 2 }))
+    expectOk(await emitAck(s3, 'lobby:invite', { gameId: createdB.gameId, friendId: 'u2' }))
+
+    const s2 = await ts.connectAs('u2')
+    // Attach before the accept: the cancel is synchronous with the ack.
+    const canceled = waitForEvent<{ gameId: string }>(s2, 'invite:canceled')
+    expectOk(await emitAck(s2, 'lobby:respond_invite', { gameId: gameA, accept: true }))
+    expect(await canceled).toEqual({ gameId: createdB.gameId })
+
+    expect(await seatStatus(gameA, 'u2')).toBe('joined')
+    expect(await seatStatus(createdB.gameId, 'u2')).toBe('declined')
+  })
+
+  it('a joined seat elsewhere blocks accepting a stale invitation', async () => {
+    const { gameId } = await inviteU2()
+    const s2 = await ts.connectAs('u2')
+    // Creating a lobby auto-declines the pending invitation, so restore the
+    // pre-fix stale state: an `invited` seat surviving while u2 sits `joined`.
+    expectOk(await emitAck(s2, 'lobby:create', { format: 2 }))
+    await ts.db
+      .update(gamePlayers)
+      .set({ status: 'invited' })
+      .where(and(eq(gamePlayers.gameId, gameId), eq(gamePlayers.userId, 'u2')))
+
+    const ack = await emitAck(s2, 'lobby:respond_invite', { gameId, accept: true })
+    expect(ack).toMatchObject({ ok: false, code: 'ALREADY_IN_GAME' })
+    expect(await seatStatus(gameId, 'u2')).toBe('invited')
   })
 
   it('join_by_code into the lobby you were invited to still works', async () => {

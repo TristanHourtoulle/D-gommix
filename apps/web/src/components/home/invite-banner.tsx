@@ -39,8 +39,10 @@ export function InviteBanner({ initialData }: InviteBannerProps) {
       }
       if (accepted) {
         // Joining a lobby gives the Accueil its resume banner and the Amis
-        // screen the lobby id it needs to forward invitations.
-        invalidate('home', 'friends')
+        // screen the lobby id it needs to forward invitations. The other
+        // pending invitations were auto-declined server-side, so the invites
+        // payload must refetch too.
+        invalidate('home', 'friends', 'invites')
         router.push(`/lobby/${gameId}`)
       }
     } finally {

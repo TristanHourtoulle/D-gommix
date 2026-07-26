@@ -149,6 +149,10 @@ async function pushPendingInvites(
   socket: AppSocket,
   memberships: ActiveMembership[]
 ): Promise<void> {
+  // A user seated in a live game cannot act on invitations: pushing them would
+  // only paint a banner they cannot answer (accepting throws ALREADY_IN_GAME).
+  // `memberships` only contains non-finished games, so `joined` means live.
+  if (memberships.some((m) => m.player.status === 'joined')) return
   const pending = memberships.filter(
     (m) => m.player.status === 'invited' && m.game.status === 'lobby'
   )

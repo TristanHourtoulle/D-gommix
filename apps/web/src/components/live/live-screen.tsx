@@ -70,7 +70,7 @@ export function LiveScreen({
   useEffect(() => {
     if (!shouldInvalidateOnFinish(state?.status, gameId, invalidatedGameIdRef.current)) return
     invalidatedGameIdRef.current = gameId
-    invalidate('home', 'leaderboard')
+    invalidate('home', 'leaderboard', 'invites')
   }, [state?.status, gameId, invalidate])
 
   const run = async (command: Promise<Ack<{ seq: number }>>): Promise<void> => {

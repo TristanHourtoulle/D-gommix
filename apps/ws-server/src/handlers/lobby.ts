@@ -149,6 +149,10 @@ export function registerLobbyHandlers(socket: AppSocket, ctx: AppContext): void 
         return OK
       }
       assertLobby(game)
+      // Same rule as every other game-entry transition: a joined seat elsewhere
+      // blocks, and the user's other pending invitations are auto-declined so
+      // they cannot resurface once seated here.
+      await assertNotJoinedElsewhere(db, io, userId, { exceptGameId: gameId })
       const seats = await listSeats(db, gameId)
       const joinedCount = seats.filter((s) => s.status === 'joined').length
       if (joinedCount >= game.format) throw new CommandError('LOBBY_FULL')
