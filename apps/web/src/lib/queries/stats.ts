@@ -13,6 +13,7 @@ import {
 import type { CharacterId, GameFormat, GameOutcome } from '@degommix/game-core'
 import { db } from '@/lib/db'
 import { buildPerCharacter, type CharacterStat } from '@/lib/character-stats'
+import { computeCotes, type CoteEntry } from '@/lib/cote'
 import { deriveGazetteFacts, type GazetteFacts } from '@/lib/gazette/facts'
 import {
   buildGameJournal,
@@ -78,6 +79,12 @@ export interface Leaderboard {
   characterWinrates: CharacterWinrate[]
   /** All-time « Palmarès » — never windowed by `range` (plan 026). */
   records: CircleRecords
+  /**
+   * « La Cote du guerrier » (plan 043) — an Elo rating in sesterces folded
+   * over the same all-time scan the streak chips use. Never windowed by
+   * `range`: a rating is a standing verdict, not a monthly statistic.
+   */
+  cotes: CoteEntry[]
 }
 
 export async function getCircleMemberIds(userId: string): Promise<string[]> {
@@ -287,6 +294,8 @@ export async function getLeaderboard(
   }
 
   const streaks = computeCurrentStreaks(streakRows)
+  // Same rows, second fold — zero extra queries (plan 043).
+  const cotes = computeCotes(streakRows)
   const perCharacterByUser = buildPerCharacter(characterRows)
 
   const rows: LeaderboardRow[] = buildStandings(members, statRows).map((row, index) => ({
@@ -322,7 +331,14 @@ export async function getLeaderboard(
     )
     .sort((a, b) => b.winrate - a.winrate || b.games - a.games)
 
-  return { rows, friendCount: memberIds.length - 1, topDegommeur, characterWinrates, records }
+  return {
+    rows,
+    friendCount: memberIds.length - 1,
+    topDegommeur,
+    characterWinrates,
+    records,
+    cotes,
+  }
 }
 
 /** One player's all-time per-character record (profile pages). */
