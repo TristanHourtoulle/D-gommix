@@ -112,7 +112,7 @@ export default async function FriendProfilePage({ params }: FriendProfilePagePro
 
       {isSelf ? null : (
         <section className="flex flex-col gap-2">
-          <p className="sec-label">Vos parties ensemble</p>
+          <p className="sec-label">Vieilles querelles</p>
           {sharedGames.length === 0 ? (
             <EmptyState
               icon="flag"
