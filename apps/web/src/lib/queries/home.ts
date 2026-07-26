@@ -119,11 +119,12 @@ export async function getActiveGame(userId: string): Promise<ActiveGame | null> 
 }
 
 /**
- * My 20 most recent *played* games, newest first, for the home history list.
+ * My most recent *played* games, newest first — the home payload keeps the
+ * default cap of 20, the full-history page (/parties) asks for more.
  * Lobbies dissolved before the start are finished/aborted rows too, but they
  * are never games: `gameStarted` keeps them out (see ./game-filters).
  */
-export async function getLastGames(userId: string): Promise<HomeGame[]> {
+export async function getLastGames(userId: string, limit = 20): Promise<HomeGame[]> {
   const gameRows = await db
     .select({
       id: games.id,
@@ -147,7 +148,7 @@ export async function getLastGames(userId: string): Promise<HomeGame[]> {
       ),
     )
     .orderBy(sql`${games.endedAt} desc nulls last`)
-    .limit(20)
+    .limit(limit)
 
   if (gameRows.length === 0) return []
 
