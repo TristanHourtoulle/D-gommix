@@ -64,17 +64,20 @@ export function RecordsCard({ records }: RecordsCardProps) {
   return (
     <Card className="flex flex-col gap-2 px-4 py-3">
       <p className="sec-label">Palmarès du village</p>
-      <div className="flex flex-col gap-1.5">
+      <div className="flex flex-col gap-2">
         {lines.map((line) => (
-          <p key={line.label} className="m-0 flex items-center gap-2 text-sm">
-            <Icon name={line.icon} size={14} className="text-bronze" />
-            <span className="min-w-0 flex-1 truncate">
-              <span className="font-semibold">{line.label}</span> — {line.holder}
-            </span>
-            <span className="shrink-0 font-mono text-xs" style={{ color: 'var(--ink-soft)' }}>
-              {line.value}
-            </span>
-          </p>
+          <div key={line.label} className="flex flex-col gap-0.5">
+            <p className="m-0 flex items-center gap-2 text-sm">
+              <Icon name={line.icon} size={14} className="text-bronze" />
+              <span className="font-semibold">{line.label}</span>
+            </p>
+            <p className="m-0 flex items-center gap-2 pl-6 text-sm">
+              <span className="min-w-0 flex-1 truncate">{line.holder}</span>
+              <span className="shrink-0 font-mono text-xs" style={{ color: 'var(--ink-soft)' }}>
+                {line.value}
+              </span>
+            </p>
+          </div>
         ))}
       </div>
     </Card>
