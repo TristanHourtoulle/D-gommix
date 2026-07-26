@@ -1935,3 +1935,56 @@ body[data-toast-anchor='live'] .toast-zone {
 .form-dot { width: 10px; height: 10px; border-radius: 3px; flex: none; }
 .form-dot.v { background: var(--good); }
 .form-dot.d { background: var(--bad); opacity: 0.55; }
+
+/* ---------- Moment stamps (journal + résumé) ---------- */
+
+/**
+ * Highlight stamps derived from the event log (apps/web/src/lib/game-stamps.ts):
+ * « Premier sang », « Vengeance ! », « Triplé ! », « Carnage », « Sans pitié »
+ * on a journal line, « Remontada » on the end-of-game hero.
+ *
+ * Same ink-stamp language as the dégommage onomatopée above — Cinzel,
+ * uppercase, tilted — but boxed and small, so it reads as a margin note
+ * stamped onto the page rather than as a hit landing on a card. `color` is set
+ * inline by the caller to the acting player's camp colour; the bronze here is
+ * the fallback. The tilt is a custom property so the two sizes can differ
+ * without duplicating the keyframes.
+ */
+.moment-stamp {
+  --tilt: -5deg;
+  display: inline-block;
+  flex: none;
+  padding: 0.05rem 0.3rem;
+  border: 1.5px solid currentColor;
+  border-radius: 3px;
+  font-family: var(--font-display);
+  font-size: 0.6rem;
+  font-weight: 700;
+  line-height: 1.35;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  white-space: nowrap;
+  color: var(--bronze);
+  opacity: 0.92;
+  transform: rotate(var(--tilt));
+  animation: moment-stamp-in 320ms cubic-bezier(0.2, 0.8, 0.3, 1) both;
+}
+
+.moment-stamp.lg {
+  --tilt: -7deg;
+  padding: 0.15rem 0.55rem;
+  border-width: 2px;
+  font-size: 0.85rem;
+  letter-spacing: 0.06em;
+}
+
+@keyframes moment-stamp-in {
+  0% { opacity: 0; transform: rotate(calc(var(--tilt) * 3)) scale(1.9); }
+  60% { opacity: 0.92; transform: rotate(calc(var(--tilt) * 0.6)) scale(0.96); }
+  100% { opacity: 0.92; transform: rotate(var(--tilt)) scale(1); }
+}
+
+/* Reduced motion: the stamp is already at rest, so nothing needs to play. */
+@media (prefers-reduced-motion: reduce) {
+  .moment-stamp { animation: none; }
+}
