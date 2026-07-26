@@ -124,6 +124,19 @@ export function pickFavoriteVictim(pairs: readonly PairCount[]): PairCount | nul
   return pickBest(pairs, 'dealt', 'taken')
 }
 
+/**
+ * Display order of the « Rivalités » list: most active pair first
+ * (dealt + taken desc), then French alphabetical username. Returns a copy —
+ * never mutates the input.
+ */
+export function sortRivalryPairs<T extends { username: string; dealt: number; taken: number }>(
+  pairs: readonly T[]
+): T[] {
+  return [...pairs].sort(
+    (a, b) => b.dealt + b.taken - (a.dealt + a.taken) || a.username.localeCompare(b.username, 'fr')
+  )
+}
+
 /** Degommages suffered per player in the current game (undone ones excluded). */
 export function takenByTarget(
   state: Pick<GameState, 'degommageLog' | 'undoneSeqs'>
