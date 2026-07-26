@@ -16,6 +16,20 @@ export interface MonthGameRow {
   degommages: number
 }
 
+/**
+ * « Barde du soir » (plan 035) — the last of a completed month's standings,
+ * under the exact same ordering that crowns its champion. Identifiers stay
+ * generic (`barde`); the character name lives only in the French UI copy
+ * of the chip (see champions-strip.tsx).
+ */
+export interface MonthBarde {
+  userId: string
+  username: string
+  avatarId: string | null
+  /** Wins of that month — usually 0; kept so the chip can stay factual. */
+  wins: number
+}
+
 export interface MonthChampion {
   /** Paris month key, 'YYYY-MM'. */
   month: string
@@ -23,6 +37,12 @@ export interface MonthChampion {
   username: string
   avatarId: string | null
   wins: number
+  /**
+   * Last of the same month's standings, or `null` when only one player was
+   * ranked that month — nobody is last of one. A month with no village win
+   * has no champion at all, so it carries no barde either.
+   */
+  barde: MonthBarde | null
 }
 
 export interface SeasonMeta {
@@ -39,6 +59,9 @@ export interface SeasonMeta {
  * denominator). The current month is excluded (its race is still running);
  * a month with zero village wins has no champion but still counts for
  * `earliestMonth`.
+ *
+ * Plan 035 adds the anti-champion: the last of the same standings gets the
+ * « Barde du soir » distinction, or `null` when only one player was ranked.
  */
 export function computeSeasonMeta(rows: MonthGameRow[], currentMonth: string): SeasonMeta {
   const byMonth = new Map<string, Map<string, CircleStanding>>()
@@ -74,12 +97,26 @@ export function computeSeasonMeta(rows: MonthGameRow[], currentMonth: string): S
     ranked.sort(compareStandings)
     const top = ranked[0]
     if (top === undefined || top.wins < 1) continue
+    // Only players who actually played that month are in `ranked` (the map
+    // is filled from the rows), so the barde is the last *participant* —
+    // never a circle member who sat the month out. A single participant
+    // yields no barde.
+    const bottom = ranked.length > 1 ? ranked[ranked.length - 1] : undefined
     pastChampions.push({
       month,
       userId: top.userId,
       username: top.username,
       avatarId: top.avatarId,
       wins: top.wins,
+      barde:
+        bottom === undefined
+          ? null
+          : {
+              userId: bottom.userId,
+              username: bottom.username,
+              avatarId: bottom.avatarId,
+              wins: bottom.wins,
+            },
     })
   }
   pastChampions.sort((a, b) => b.month.localeCompare(a.month))
