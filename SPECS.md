@@ -187,6 +187,36 @@ La résolution actuelle (435 px) suffit pour les badges et reste acceptable en f
 - Onboarding des règles du jeu, dispositif RGPD (petit comité privé).
 - Spectateurs, rejoindre une partie lancée, édition rétroactive des parties.
 
+## 8. Lexique gaulois (post-v1)
+
+Le vocabulaire ci-dessous a remplacé les libellés d'origine dans l'interface
+(plans 015 et 024). Le corps de cette spec garde les anciens termes : c'est
+le document historique. Règle : les noms et titres de sections parlent
+gaulois, les verbes d'action restent en français littéral.
+
+| Terme d'origine (spec) | Terme en production |
+|---|---|
+| Accueil | Village |
+| Amis | Tribu |
+| Jouer | Arène |
+| Classement | Lauriers |
+| Salut {pseudo} | Salve, {pseudo} |
+| Nouvelle partie | Aux armes ! |
+| Lobby | Le camp |
+| Quitter le lobby | Lever le camp |
+| Résumé de partie | Le banquet |
+| Plus grand dégommeur | Fléau des Gaules |
+| Rejouer | Revanche ! |
+| Voir le classement | Voir les lauriers |
+| Winrate par personnage | Victoires par personnage |
+| Invitations reçues | Convocations |
+| Historique récent / Historique | Chronique / La chronique |
+| Face à face | Duel |
+| Vos parties ensemble | Vieilles querelles |
+| Profil (fiche joueur) | Faits d'armes |
+| Profil (réglages) | Ta hutte |
+| hôte | chef de camp |
+
 ---
 
 *Document v2 — intègre les arbitrages du 25 juillet 2026. Base initiale : itérations de design de juillet 2026 (maquette v4).*

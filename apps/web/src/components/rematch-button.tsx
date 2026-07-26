@@ -10,7 +10,7 @@ import { emitWithAck } from '@/lib/socket'
 import { ackErrorMessage } from '@/lib/ws-errors'
 
 interface RematchButtonProps {
-  /** A finished game the viewer played in (SPECS.md §« Rejouer »). */
+  /** A finished game the viewer played in (SPECS.md §« Rejouer », UI: « Revanche ! » — see SPECS.md §8). */
   finishedGameId: string
   variant?: 'primary' | 'ghost'
   /** Small inline key (« Revanche » on the latest history row) instead of the full-width bar. */
