@@ -13,6 +13,7 @@ import {
 import type { CharacterId, GameFormat, GameOutcome } from '@degommix/game-core'
 import { db } from '@/lib/db'
 import { buildPerCharacter, type CharacterStat } from '@/lib/character-stats'
+import { deriveGazetteFacts, type GazetteFacts } from '@/lib/gazette/facts'
 import {
   buildGameJournal,
   buildSummaryStamp,
@@ -362,6 +363,8 @@ export interface GameDetailPlayer {
 
 export interface GameDetail {
   id: string
+  /** Join code — the gazette masthead's « partie n° ». */
+  code: string
   status: 'lobby' | 'active' | 'finished'
   outcome: GameOutcome | null
   /** Why an aborted game ended; null for village wins (and unknown logs). */
@@ -375,6 +378,13 @@ export interface GameDetail {
   totalDegommages: number
   players: GameDetailPlayer[]
   journal: JournalEntry[]
+  /**
+   * Everything the Gazette du Village is allowed to say about this game,
+   * derived from the log the page already fetched (pure, no extra query).
+   * `titleHolder` and `stamps` are filled by the gazette route, which is
+   * the only surface that needs them.
+   */
+  gazetteFacts: GazetteFacts
 }
 
 /**
@@ -387,6 +397,7 @@ export async function getGameDetail(gameId: string, viewerId: string): Promise<G
   const gameRows = await db
     .select({
       id: games.id,
+      code: games.code,
       status: games.status,
       outcome: games.outcome,
       format: games.format,
@@ -460,11 +471,14 @@ export async function getGameDetail(gameId: string, viewerId: string): Promise<G
   }))
   players.sort((a, b) => Number(b.isWinner) - Number(a.isWinner) || b.degommages - a.degommages)
 
+  const abortReason = game.outcome === 'aborted' ? deriveAbortReason(eventRows) : null
+
   return {
     id: game.id,
+    code: game.code,
     status: game.status,
     outcome: game.outcome,
-    abortReason: game.outcome === 'aborted' ? deriveAbortReason(eventRows) : null,
+    abortReason,
     format: game.format as GameFormat,
     startedAt: game.startedAt,
     endedAt: game.endedAt,
@@ -473,5 +487,15 @@ export async function getGameDetail(gameId: string, viewerId: string): Promise<G
     players,
     journal: buildGameJournal(game.id, eventRows, name),
     summaryStamp: buildSummaryStamp(eventRows, game.winnerId),
+    gazetteFacts: deriveGazetteFacts({
+      gameCode: game.code,
+      outcome: game.outcome,
+      abortReason,
+      startedAt: game.startedAt,
+      endedAt: game.endedAt,
+      winnerId: game.winnerId,
+      players,
+      events: eventRows,
+    }),
   }
 }

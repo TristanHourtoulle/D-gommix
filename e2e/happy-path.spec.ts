@@ -195,6 +195,20 @@ test('two-player 1v1 happy path (design §7.3)', async ({ browser }) => {
     await expect(p1.getByText(new RegExp(`village atteint par ${J2.username}`))).toBeVisible()
     await shot(p1, '15-detail', true)
 
+    // — Step 8d: the gazette reads the same game —
+    await p1.getByRole('link', { name: 'Lire la gazette' }).click()
+    await expect(p1).toHaveURL(new RegExp(`/parties/${gameId}/gazette$`))
+    await expect(p1.getByText('La Gazette du Village')).toBeVisible()
+    await expect(p1.getByText(/Édition du .+ · partie n° /)).toBeVisible()
+    await expect(p1.getByText('Brèves du sanglier')).toBeVisible()
+    // J2 annulled a dégommage, so the « undoers » brief names them; and no slot
+    // may leak (apps/web/src/lib/gazette/render.ts fills every drawn template).
+    await expect(p1.getByRole('main')).toContainText(J2.username)
+    await expect(p1.getByRole('main')).not.toContainText('{')
+    await expect(p1.getByRole('main')).not.toContainText('undefined')
+    await shot(p1, '18-gazette', true)
+    await p1.goto(`/parties/${gameId}`)
+
     // Accueil with history, light + dark.
     await p1.goto('/')
     await expect(p1.getByText('Chronique')).toBeVisible()
