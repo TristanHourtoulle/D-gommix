@@ -1,6 +1,11 @@
 import { describe, expect, it } from 'vitest'
 import { renderDegommageJournal } from '@/lib/degommage-messages'
-import { buildGameJournal, deriveAbortReason, type RawEvent } from './game-detail-journal'
+import {
+  buildGameJournal,
+  buildSummaryStamp,
+  deriveAbortReason,
+  type RawEvent,
+} from './game-detail-journal'
 
 const AT = new Date('2026-07-26T20:00:00Z')
 const GAME = '9f1b7c2e-0000-4000-8000-000000000001'
@@ -131,5 +136,41 @@ describe('buildGameJournal', () => {
     const broken = [ev({ seq: 2, type: 'DEGOMMAGE', actorId: null, targetId: 'o' })]
     const journal = buildGameJournal(GAME, broken, NAME)
     expect(journal[0]?.text).toBe('Quelqu’un a dégommé un pion d’Obelix')
+  })
+})
+
+describe('moment stamps', () => {
+  const full = [
+    ev({ seq: 1, type: 'GAME_STARTED', actorId: 'a' }),
+    ev({ seq: 2, type: 'DEGOMMAGE', actorId: 'a', targetId: 'o' }),
+    ev({ seq: 3, type: 'DEGOMMAGE', actorId: 'a', targetId: 'o' }),
+    ev({ seq: 4, type: 'UNDO', actorId: 'o', payload: { targetSeq: 3 } }),
+  ]
+
+  it('exposes the actor of every journal line', () => {
+    const journal = buildGameJournal(GAME, full, NAME)
+    expect(journal.map((entry) => entry.actorId)).toEqual(['a', 'a', 'a', 'o'])
+  })
+
+  it('stamps « Premier sang » on the first dégommage line', () => {
+    const journal = buildGameJournal(GAME, full, NAME)
+    expect(journal[0]?.stamp).toBeNull()
+    expect(journal[1]?.stamp).toBe('premier_sang')
+  })
+
+  it('drops the stamp of an undone dégommage while keeping its sentence', () => {
+    const journal = buildGameJournal(GAME, full, NAME)
+    const withoutUndo = buildGameJournal(GAME, full.slice(0, 3), NAME)
+    expect(withoutUndo[2]?.stamp).toBe('sans_pitie')
+    expect(journal[2]?.stamp).toBeNull()
+    expect(journal[2]?.text).toBe(withoutUndo[2]?.text)
+  })
+
+  it('returns « Remontada » when the winner suffered the most dégommages', () => {
+    expect(buildSummaryStamp(full, 'o')).toBe('remontada')
+  })
+
+  it('returns null when the winner is unknown', () => {
+    expect(buildSummaryStamp(full, null)).toBeNull()
   })
 })

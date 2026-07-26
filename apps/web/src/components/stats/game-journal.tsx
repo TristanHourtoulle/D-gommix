@@ -1,13 +1,16 @@
 import { Card } from '@/components/ui/card'
+import { MomentStamp } from '@/components/ui/moment-stamp'
 import type { JournalEntry } from '@/lib/queries/stats'
 import { formatEventTime } from './format'
 
 interface GameJournalProps {
   entries: JournalEntry[]
+  /** userId → camp colour CSS variable, for the moment stamps. */
+  colorByUser?: Record<string, string>
 }
 
 /** Full timestamped journal of a finished game, in seq order. */
-export function GameJournal({ entries }: GameJournalProps) {
+export function GameJournal({ entries, colorByUser }: GameJournalProps) {
   return (
     <div>
       <p className="sec-label">Journal de partie</p>
@@ -25,6 +28,12 @@ export function GameJournal({ entries }: GameJournalProps) {
                 {formatEventTime(entry.at)}
               </time>
               <span className="text-sm">{entry.text}</span>
+              {entry.stamp ? (
+                <MomentStamp
+                  stamp={entry.stamp}
+                  colorVar={entry.actorId === null ? undefined : colorByUser?.[entry.actorId]}
+                />
+              ) : null}
             </li>
           ))}
         </ol>

@@ -1,6 +1,13 @@
 import type { EndKind } from '@degommix/game-core'
 import { deName } from '@/lib/elision'
 import { renderDegommageJournal, type DegommageRef } from '@/lib/degommage-messages'
+import {
+  detectLineStamps,
+  detectSummaryStamp,
+  takenFromEvents,
+  type StampEvent,
+  type StampId,
+} from '@/lib/game-stamps'
 
 /**
  * Pure pieces of the game-detail query (`getGameDetail` in ./stats.ts), kept
@@ -22,6 +29,10 @@ export interface JournalEntry {
   seq: number
   at: Date
   text: string
+  /** Actor of the event, for the camp colour of its stamp. */
+  actorId: string | null
+  /** Highlight stamped on this line, `null` on an ordinary one. */
+  stamp: StampId | null
 }
 
 /**
@@ -92,6 +103,18 @@ function journalText(
   }
 }
 
+/** `game_events` row → the shape the shared stamp detector reads. */
+function toStampEvent(event: RawEvent): StampEvent {
+  return {
+    seq: event.seq,
+    type: event.type,
+    actorId: event.actorId,
+    targetId: event.targetId,
+    payload: event.payload,
+    at: event.createdAt.getTime(),
+  }
+}
+
 /**
  * Full journal of a finished game. Builds the (gameId, seq)-deterministic
  * dégommage sentences with the SAME shared renderer as the live journal
@@ -113,10 +136,14 @@ export function buildGameJournal(
     }
   }
   const degommageLabels = renderDegommageJournal(gameId, refs, (userId) => name(userId))
+  const stampRows = events.map(toStampEvent)
+  const stamps = detectLineStamps(stampRows)
   return events.map((event) => ({
     seq: event.seq,
     at: event.createdAt,
     text: journalText(event, events, name, degommageLabels),
+    actorId: event.actorId,
+    stamp: stamps.get(event.seq) ?? null,
   }))
 }
 
@@ -142,4 +169,17 @@ export function deriveAbortReason(events: readonly RawEvent[]): GameAbortReason 
     return null
   }
   return events.some((event) => event.type === 'PLAYER_QUIT') ? 'abandon_individual' : null
+}
+
+/**
+ * End-of-game stamp of a finished game — « Remontada » when the winner is the
+ * player who lost the most pions. Same derivation as the live summary
+ * (`detectSummaryStamp`), fed from the persisted log instead of the reduced
+ * state, so the archive claims exactly what the table saw at « Le banquet ».
+ */
+export function buildSummaryStamp(
+  events: readonly RawEvent[],
+  winnerId: string | null
+): StampId | null {
+  return detectSummaryStamp(takenFromEvents(events.map(toStampEvent)), winnerId)
 }

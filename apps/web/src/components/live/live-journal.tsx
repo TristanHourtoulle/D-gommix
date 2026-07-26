@@ -1,5 +1,7 @@
 import type { GameState } from '@degommix/game-core'
 import { CharacterBadge } from '@/components/ui/character-badge'
+import { MomentStamp } from '@/components/ui/moment-stamp'
+import { CHARACTER_META } from '@/lib/characters'
 import type { JournalEntry } from './use-live-journal'
 
 interface LiveJournalProps {
@@ -23,6 +25,12 @@ export function LiveJournal({ entries, state }: LiveJournalProps) {
             <div key={entry.seq} className="flex items-center gap-2 text-xs font-medium">
               {character ? <CharacterBadge character={character} size="sm" /> : null}
               <span>{entry.label}</span>
+              {entry.stamp ? (
+                <MomentStamp
+                  stamp={entry.stamp}
+                  colorVar={character ? CHARACTER_META[character].colorVar : undefined}
+                />
+              ) : null}
             </div>
           )
         })

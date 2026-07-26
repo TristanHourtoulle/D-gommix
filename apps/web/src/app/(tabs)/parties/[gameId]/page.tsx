@@ -6,6 +6,7 @@ import { RematchButton } from '@/components/rematch-button'
 import { Card } from '@/components/ui/card'
 import { CharacterBadge } from '@/components/ui/character-badge'
 import { Icon } from '@/components/icons'
+import { MomentStamp } from '@/components/ui/moment-stamp'
 import { Pill } from '@/components/ui/pill'
 import { PlayerAvatar } from '@/components/ui/player-avatar'
 import { SectionTitle } from '@/components/ui/section-title'
@@ -108,6 +109,11 @@ export default async function GameDetailPage({ params }: GameDetailPageProps) {
   // getGameDetail also serves friends of the participants, and only participants
   // may open a rematch (the server would answer NOT_MEMBER otherwise).
   const isParticipant = detail.players.some((player) => player.userId === user.id)
+  const colorByUser: Record<string, string> = Object.fromEntries(
+    detail.players.flatMap((player) =>
+      player.character ? [[player.userId, CHARACTER_META[player.character].colorVar]] : []
+    )
+  )
 
   return (
     <main className="tab-page">
@@ -119,6 +125,7 @@ export default async function GameDetailPage({ params }: GameDetailPageProps) {
         {isVictory && detail.winner ? (
           <>
             <Pill variant="win">Victoire</Pill>
+            {detail.summaryStamp ? <MomentStamp stamp={detail.summaryStamp} size="lg" /> : null}
             {detail.winner.character ? (
               <CharacterBadge character={detail.winner.character} size="lg" />
             ) : null}
@@ -158,7 +165,7 @@ export default async function GameDetailPage({ params }: GameDetailPageProps) {
         ))}
       </div>
 
-      <GameJournal entries={detail.journal} />
+      <GameJournal entries={detail.journal} colorByUser={colorByUser} />
 
       {isParticipant ? <RematchButton finishedGameId={detail.id} variant="primary" /> : null}
     </main>

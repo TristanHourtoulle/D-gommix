@@ -15,11 +15,13 @@ import { db } from '@/lib/db'
 import { buildPerCharacter, type CharacterStat } from '@/lib/character-stats'
 import {
   buildGameJournal,
+  buildSummaryStamp,
   deriveAbortReason,
   type GameAbortReason,
   type JournalEntry,
   type RawEvent,
 } from './game-detail-journal'
+import type { StampId } from '@/lib/game-stamps'
 import { gameStarted, inList, isPhantomLobbyGame } from './game-filters'
 import { getCircleRecords, queryVillageResults, type CircleRecords } from './records'
 import { computeCurrentStreaks } from './streaks'
@@ -364,6 +366,8 @@ export interface GameDetail {
   outcome: GameOutcome | null
   /** Why an aborted game ended; null for village wins (and unknown logs). */
   abortReason: GameAbortReason | null
+  /** End-of-game highlight (« Remontada »), null when the game earned none. */
+  summaryStamp: StampId | null
   format: GameFormat
   startedAt: Date | null
   endedAt: Date | null
@@ -468,5 +472,6 @@ export async function getGameDetail(gameId: string, viewerId: string): Promise<G
     totalDegommages: players.reduce((sum, player) => sum + player.degommages, 0),
     players,
     journal: buildGameJournal(game.id, eventRows, name),
+    summaryStamp: buildSummaryStamp(eventRows, game.winnerId),
   }
 }
