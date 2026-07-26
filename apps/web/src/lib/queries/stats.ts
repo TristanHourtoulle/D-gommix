@@ -12,9 +12,17 @@ import {
 } from '@degommix/db'
 import type { CharacterId, GameFormat, GameOutcome } from '@degommix/game-core'
 import { db } from '@/lib/db'
-import { deName } from '@/lib/elision'
+import {
+  buildGameJournal,
+  deriveAbortReason,
+  type GameAbortReason,
+  type JournalEntry,
+  type RawEvent,
+} from './game-detail-journal'
 import { gameStarted, isPhantomLobbyGame } from './game-filters'
 import { computeCurrentStreaks } from './streaks'
+
+export type { GameAbortReason, JournalEntry } from './game-detail-journal'
 
 export interface LeaderboardRow {
   rank: number
@@ -325,18 +333,21 @@ export interface GameDetailPlayer {
   degommages: number
   isWinner: boolean
   hasLeft: boolean
-}
-
-export interface JournalEntry {
-  seq: number
-  at: Date
-  text: string
+  /**
+   * True when this player is the viewer or one of the viewer's friends —
+   * the only profiles /amis/[userId] shows the viewer (it walls strangers
+   * behind « Profil réservé aux amis »), so the only rows the detail page
+   * links.
+   */
+  isCircleMember: boolean
 }
 
 export interface GameDetail {
   id: string
   status: 'lobby' | 'active' | 'finished'
   outcome: GameOutcome | null
+  /** Why an aborted game ended; null for village wins (and unknown logs). */
+  abortReason: GameAbortReason | null
   format: GameFormat
   startedAt: Date | null
   endedAt: Date | null
@@ -344,68 +355,6 @@ export interface GameDetail {
   totalDegommages: number
   players: GameDetailPlayer[]
   journal: JournalEntry[]
-}
-
-function payloadNumber(payload: unknown, key: string): number | null {
-  if (payload !== null && typeof payload === 'object' && key in payload) {
-    const value = (payload as Record<string, unknown>)[key]
-    if (typeof value === 'number') return value
-  }
-  return null
-}
-
-function payloadString(payload: unknown, key: string): string | null {
-  if (payload !== null && typeof payload === 'object' && key in payload) {
-    const value = (payload as Record<string, unknown>)[key]
-    if (typeof value === 'string') return value
-  }
-  return null
-}
-
-interface RawEvent {
-  seq: number
-  type: string
-  actorId: string | null
-  targetId: string | null
-  payload: unknown
-  createdAt: Date
-}
-
-function journalText(event: RawEvent, events: RawEvent[], name: (id: string | null) => string): string {
-  switch (event.type) {
-    case 'GAME_STARTED':
-      return `${name(event.actorId)} a lancé la partie`
-    case 'DEGOMMAGE':
-      return `${name(event.actorId)} a dégommé ${name(event.targetId)}`
-    case 'UNDO': {
-      const targetSeq = payloadNumber(event.payload, 'targetSeq')
-      const target = events.find((candidate) => candidate.seq === targetSeq)
-      if (!target) return `${name(event.actorId)} a annulé un dégommage`
-      return `${name(event.actorId)} a annulé le dégommage ${deName(name(target.actorId))} sur ${name(target.targetId)}`
-    }
-    case 'PLAYER_QUIT':
-      return `${name(event.actorId)} a quitté la partie`
-    case 'END_REQUESTED': {
-      const kind = payloadString(event.payload, 'kind')
-      if (kind === 'village')
-        return `${name(event.actorId)} demande la fin de partie — village atteint par ${name(event.targetId)}`
-      if (kind === 'abandon_individual') return `${name(event.actorId)} demande à abandonner la partie`
-      return `${name(event.actorId)} demande l'arrêt de la partie`
-    }
-    case 'END_REJECTED': {
-      const requestSeq = payloadNumber(event.payload, 'requestSeq')
-      const request = events.find((candidate) => candidate.seq === requestSeq)
-      if (request && request.actorId === event.actorId)
-        return `${name(event.actorId)} a retiré sa demande de fin`
-      return `${name(event.actorId)} a rejeté la demande de fin`
-    }
-    case 'END_VALIDATED':
-      return `${name(event.actorId)} a validé la fin de partie`
-    case 'GAME_AUTO_CLOSED':
-      return 'Partie clôturée automatiquement après 24 h d’inactivité'
-    default:
-      return `Événement ${event.type}`
-  }
 }
 
 /**
@@ -430,18 +379,22 @@ export async function getGameDetail(gameId: string, viewerId: string): Promise<G
   const game = gameRows[0]
   if (!game || isPhantomLobbyGame(game)) return null
 
-  const playerRows = await db
-    .select({
-      userId: gamePlayers.userId,
-      username: user.username,
-      avatarId: user.avatarId,
-      character: gamePlayers.character,
-      degommages: gamePlayers.degommages,
-      status: gamePlayers.status,
-    })
-    .from(gamePlayers)
-    .innerJoin(user, eq(user.id, gamePlayers.userId))
-    .where(and(eq(gamePlayers.gameId, gameId), sql`${gamePlayers.status} in ('joined', 'left')`))
+  const [playerRows, circleMemberIds] = await Promise.all([
+    db
+      .select({
+        userId: gamePlayers.userId,
+        username: user.username,
+        avatarId: user.avatarId,
+        character: gamePlayers.character,
+        degommages: gamePlayers.degommages,
+        status: gamePlayers.status,
+      })
+      .from(gamePlayers)
+      .innerJoin(user, eq(user.id, gamePlayers.userId))
+      .where(and(eq(gamePlayers.gameId, gameId), sql`${gamePlayers.status} in ('joined', 'left')`)),
+    getCircleMemberIds(viewerId),
+  ])
+  const circle = new Set(circleMemberIds)
 
   const isParticipant = playerRows.some((row) => row.userId === viewerId)
   if (!isParticipant) {
@@ -483,6 +436,7 @@ export async function getGameDetail(gameId: string, viewerId: string): Promise<G
     degommages: row.degommages,
     isWinner: row.userId === game.winnerId,
     hasLeft: row.status === 'left',
+    isCircleMember: circle.has(row.userId),
   }))
   players.sort((a, b) => Number(b.isWinner) - Number(a.isWinner) || b.degommages - a.degommages)
 
@@ -490,16 +444,13 @@ export async function getGameDetail(gameId: string, viewerId: string): Promise<G
     id: game.id,
     status: game.status,
     outcome: game.outcome,
+    abortReason: game.outcome === 'aborted' ? deriveAbortReason(eventRows) : null,
     format: game.format as GameFormat,
     startedAt: game.startedAt,
     endedAt: game.endedAt,
     winner: players.find((player) => player.isWinner) ?? null,
     totalDegommages: players.reduce((sum, player) => sum + player.degommages, 0),
     players,
-    journal: eventRows.map((event) => ({
-      seq: event.seq,
-      at: event.createdAt,
-      text: journalText(event, eventRows, name),
-    })),
+    journal: buildGameJournal(eventRows, name),
   }
 }
