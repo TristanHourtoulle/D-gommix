@@ -102,6 +102,31 @@ export function aggregateTakenCounts(rows: readonly RivalryEventRow[]): Map<stri
 }
 
 /**
+ * Non-undone degommages suffered per target, **grouped by game**. Same
+ * cancellation rule as `aggregateTakenCounts`: a DEGOMMAGE counts unless an
+ * UNDO of the SAME game targets its `seq`. Self-degommages and rows with a
+ * null actor or target are ignored. Games where every hit was undone still
+ * appear with an empty inner map only if they had a DEGOMMAGE row; games with
+ * no surviving hit at all are simply absent.
+ */
+export function aggregateTakenByGame(
+  rows: readonly RivalryEventRow[]
+): Map<string, Map<string, number>> {
+  const undone = undoneKeys(rows)
+  const byGame = new Map<string, Map<string, number>>()
+  for (const row of rows) {
+    if (row.type !== 'DEGOMMAGE') continue
+    const { actorId, targetId } = row
+    if (actorId === null || targetId === null || actorId === targetId) continue
+    if (undone.has(`${row.gameId}:${row.seq}`)) continue
+    const game = byGame.get(row.gameId) ?? new Map<string, number>()
+    game.set(targetId, (game.get(targetId) ?? 0) + 1)
+    byGame.set(row.gameId, game)
+  }
+  return byGame
+}
+
+/**
  * Picks the pair with the highest `main` counter. Ties are broken by the other
  * counter descending, then by `opponentId` ascending, so the winner is stable
  * whatever order the rows arrived in.
