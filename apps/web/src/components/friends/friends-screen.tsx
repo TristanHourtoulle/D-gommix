@@ -58,7 +58,7 @@ export function FriendsScreen({ initialData }: FriendsScreenProps) {
     () => Object.fromEntries(friends.map((friend) => [friend.id, friend.initialPresence])),
     [friends]
   )
-  const { presenceOf } = usePresence(initialPresence)
+  const { presenceOf, lastSeenOf } = usePresence(initialPresence)
 
   const run = useCallback(
     async <K extends CommandName>(
@@ -210,6 +210,7 @@ export function FriendsScreen({ initialData }: FriendsScreenProps) {
                 username={friend.username}
                 avatarId={friend.avatarId ?? null}
                 presence={presenceOf(friend.id)}
+                lastSeenAt={lastSeenOf(friend.id) ?? friend.lastSeenAt ?? null}
                 busy={busyKey === friend.id}
                 onInvite={() => void inviteFriend(friend.id)}
                 onRemove={() => void run(friend.id, 'friends:remove', { friendId: friend.id })}

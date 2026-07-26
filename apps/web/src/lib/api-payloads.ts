@@ -85,6 +85,8 @@ export const friendsPayloadSchema = z.object({
       username: z.string(),
       avatarId: z.string().nullable().optional(),
       initialPresence: presenceSchema,
+      /** ISO 8601, null before the first ws connection; optional for old caches. */
+      lastSeenAt: z.string().nullable().optional(),
     })
   ),
   myLobbyId: z.string().nullable(),
