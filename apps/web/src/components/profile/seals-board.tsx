@@ -16,7 +16,7 @@ const DATE_FORMAT: Intl.DateTimeFormatOptions = {
 }
 
 /**
- * The six hauts faits, always all six, in SEALS order: unlocked ones in bronze,
+ * The sixteen hauts faits, always all of them, in SEALS order: unlocked ones in bronze,
  * locked ones faint — so the board doubles as the catalog of what there is to
  * chase.
  *
