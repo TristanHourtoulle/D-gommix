@@ -148,6 +148,14 @@ test('two-player 1v1 happy path (design §7.3)', async ({ browser }) => {
     await expect(p2.getByTestId(`summary-row-${J2.username}`)).toContainText('vainqueur')
     await expect(p2.getByTestId(`summary-row-${J1.username}`)).toContainText('1')
     await expect(p1.getByText('Le banquet')).toBeVisible()
+
+    // Plan 033: J2's first ever win engraves « Premier de cordée ». No
+    // Imperator — J1 dégommed J2 once (asserted above), and no seal at all for
+    // J1 (1v1 fails both the Tour-du-village seat guard and the Bouclier-arverne
+    // activity guard).
+    await expect(p2.getByTestId('seal-unlocks')).toContainText('Sceau débloqué')
+    await expect(p2.getByTestId('seal-unlocks')).toContainText('Premier de cordée')
+    await expect(p1.getByTestId('seal-unlocks')).toHaveCount(0)
     await shot(p2, '13-resume')
 
     // — Step 8b: J1's leaderboard shows J2 ranked with 1 win —
@@ -155,6 +163,11 @@ test('two-player 1v1 happy path (design §7.3)', async ({ browser }) => {
     await expect(p1.getByTestId(`ranking-row-${J2.username}`)).toContainText('1 v · 100%')
     await expect(p1.getByTestId(`ranking-row-${J1.username}`)).toContainText('0 v')
     await shot(p1, '14-classement')
+
+    // Plan 033: the seal is permanent — it is on J2's profile board too.
+    await p2.goto('/profil')
+    await expect(p2.getByTestId('seals-board')).toContainText('Premier de cordée')
+    await expect(p2.getByTestId('seals-board')).toContainText('1/6')
 
     // — Step 8c: game detail shows the full journal —
     await p1.goto(`/parties/${gameId}`)

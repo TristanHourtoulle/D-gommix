@@ -6,6 +6,7 @@ import { getDegommagesTaken, getHeadToHead } from '@/lib/queries/rivalries'
 import { getSharedGames } from '@/lib/queries/shared-games'
 import { getPlayerCharacterStats } from '@/lib/queries/stats'
 import { getTitleFor } from '@/lib/queries/titles'
+import { getUnlockedSeals } from '@/lib/queries/seals'
 import { CHARACTER_META } from '@/lib/characters'
 import { CharacterBadge } from '@/components/ui/character-badge'
 import { EmptyState } from '@/components/ui/empty-state'
@@ -14,6 +15,7 @@ import { GameHistoryItem } from '@/components/home/game-history-item'
 import { HeadToHeadCard } from '@/components/stats/head-to-head-card'
 import { PerCharacterBlock } from '@/components/stats/per-character-block'
 import { PlayerTitleLine } from '@/components/stats/player-title-line'
+import { SealsBoard } from '@/components/profile/seals-board'
 import { RematchButton } from '@/components/rematch-button'
 import { PlayerAvatar } from '@/components/ui/player-avatar'
 import { SectionTitle } from '@/components/ui/section-title'
@@ -47,14 +49,16 @@ export default async function FriendProfilePage({ params }: FriendProfilePagePro
     )
   }
 
-  const [stats, headToHead, sharedResult, taken, perCharacter, title] = await Promise.all([
-    getPlayerStats(userId),
-    isSelf ? Promise.resolve(null) : getHeadToHead(me.id, userId),
-    isSelf ? Promise.resolve(null) : getSharedGames(me.id, userId),
-    getDegommagesTaken(userId),
-    getPlayerCharacterStats(userId),
-    getTitleFor(me.id, userId),
-  ])
+  const [stats, headToHead, sharedResult, taken, perCharacter, title, seals] =
+    await Promise.all([
+      getPlayerStats(userId),
+      isSelf ? Promise.resolve(null) : getHeadToHead(me.id, userId),
+      isSelf ? Promise.resolve(null) : getSharedGames(me.id, userId),
+      getDegommagesTaken(userId),
+      getPlayerCharacterStats(userId),
+      getTitleFor(me.id, userId),
+      getUnlockedSeals(userId),
+    ])
   const sharedGames = sharedResult?.games ?? []
   const winrateLabel =
     stats.winrate === null ? '—' : `${Math.round(stats.winrate * 100)} %`
@@ -113,6 +117,8 @@ export default async function FriendProfilePage({ params }: FriendProfilePagePro
       </section>
 
       <PerCharacterBlock perCharacter={perCharacter} />
+
+      <SealsBoard unlocked={seals} isSelf={isSelf} />
 
       {isSelf ? null : (
         <section className="flex flex-col gap-2">

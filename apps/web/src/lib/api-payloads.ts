@@ -1,5 +1,5 @@
 import { z } from 'zod'
-import { CHARACTERS } from '@degommix/game-core'
+import { CHARACTERS, SEAL_IDS } from '@degommix/game-core'
 import { TITLE_IDS } from '@/lib/titles'
 import type { ActiveGame, HomeGame, HomeStats } from '@/lib/queries/home'
 import type { ViewerRank } from '@/lib/queries/stats'
@@ -243,11 +243,23 @@ export const leaderboardPayloadSchema = z.object({
     .optional(),
 })
 
+/**
+ * `/api/seals?gameId=` — the hauts faits the caller FIRST earned in one game
+ * (plan 033). A brand-new endpoint has no legacy PWA cache, so unlike the tab
+ * payloads above every field is required.
+ */
+export const sealsPayloadSchema = z.object({
+  seals: z.array(
+    z.object({ sealId: z.enum(SEAL_IDS), gameId: z.string(), unlockedAt: z.string() })
+  ),
+})
+
 export type SerializedHomeGame = z.infer<typeof serializedHomeGameSchema>
 export type HomePayload = z.infer<typeof homePayloadSchema>
 export type InvitesPayload = z.infer<typeof invitesPayloadSchema>
 export type FriendsPayload = z.infer<typeof friendsPayloadSchema>
 export type LeaderboardPayload = z.infer<typeof leaderboardPayloadSchema>
+export type SealsPayload = z.infer<typeof sealsPayloadSchema>
 
 /** Flattens the single `Date` of a home history row to ISO for the wire. */
 export function serializeHomeGame(game: HomeGame): SerializedHomeGame {
