@@ -11,18 +11,21 @@ import { ThemeSegmented } from '@/components/theme/theme-segmented'
 import { DevMenuGesture } from '@/components/dev/dev-menu-gesture'
 import { PerCharacterBlock } from '@/components/stats/per-character-block'
 import { PlayerTitleLine } from '@/components/stats/player-title-line'
+import { SealsBoard } from '@/components/profile/seals-board'
 import { getAvatarId } from '@/lib/queries/profile'
 import { getPlayerCharacterStats } from '@/lib/queries/stats'
 import { getTitleFor } from '@/lib/queries/titles'
+import { getUnlockedSeals } from '@/lib/queries/seals'
 
 export default async function ProfilePage() {
   const session = await requireSession()
   const { username, email } = session.user
   if (!username) redirect('/onboarding')
-  const [avatarId, perCharacter, title] = await Promise.all([
+  const [avatarId, perCharacter, title, seals] = await Promise.all([
     getAvatarId(session.user.id),
     getPlayerCharacterStats(session.user.id),
     getTitleFor(session.user.id, session.user.id),
+    getUnlockedSeals(session.user.id),
   ])
 
   return (
@@ -50,6 +53,8 @@ export default async function ProfilePage() {
       </header>
 
       <PerCharacterBlock perCharacter={perCharacter} />
+
+      <SealsBoard unlocked={seals} isSelf />
 
       <section className="flex flex-col gap-2">
         <p className="sec-label">Pseudo</p>
