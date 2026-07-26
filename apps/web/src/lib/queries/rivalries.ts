@@ -2,6 +2,7 @@ import { and, eq, sql, gameEvents, gamePlayers, games, user } from '@degommix/db
 import { db } from '@/lib/db'
 import {
   aggregatePairCounts,
+  aggregateTakenCounts,
   pickFavoriteVictim,
   pickNemesis,
   sortRivalryPairs,
@@ -60,6 +61,24 @@ async function finishedGameIdsFor(userId: string): Promise<string[]> {
       )
     )
 
+  return rows.map((row) => row.id)
+}
+
+/** Finished, started games where any of the given members held a seat. */
+async function finishedGameIdsForMembers(memberIds: string[]): Promise<string[]> {
+  if (memberIds.length === 0) return []
+  const rows = await db
+    .selectDistinct({ id: games.id })
+    .from(games)
+    .innerJoin(gamePlayers, eq(gamePlayers.gameId, games.id))
+    .where(
+      and(
+        inList(gamePlayers.userId, memberIds),
+        sql`${gamePlayers.status} in ('joined', 'left')`,
+        eq(games.status, 'finished'),
+        gameStarted
+      )
+    )
   return rows.map((row) => row.id)
 }
 
@@ -174,6 +193,55 @@ export async function getRivalrySpotlight(viewerId: string): Promise<RivalrySpot
     nemesis: toPeer(nemesisPair, 'taken', usernames),
     favoriteVictim: toPeer(victimPair, 'dealt', usernames),
   }
+}
+
+/**
+ * Circle member who suffered the most non-undone degommages, all-time — the
+ * taken-side twin of the « Fléau des Gaules » spotlight. A member can only be
+ * dégommé in a game they sat in, so scanning the union of the circle's games
+ * counts exactly each member's own suffered hits. Strangers met via code are
+ * filtered out (SPECS.md §Amis: « Profil et stats visibles par les amis
+ * uniquement »). Null when nobody in the circle was ever dégommé.
+ */
+export async function getSouffreDouleur(viewerId: string): Promise<RivalryPeer | null> {
+  const memberIds = await getCircleMemberIds(viewerId)
+  const gameIds = await finishedGameIdsForMembers(memberIds)
+  const rows = await loadRivalryEvents(gameIds)
+  const taken = aggregateTakenCounts(rows)
+
+  const circle = new Set(memberIds)
+  let bestId: string | null = null
+  let bestTaken = 0
+  for (const [userId, count] of taken) {
+    if (!circle.has(userId) || count === 0) continue
+    const beats =
+      count > bestTaken ||
+      (count === bestTaken && bestId !== null && userId.localeCompare(bestId) < 0)
+    if (beats) {
+      bestId = userId
+      bestTaken = count
+    }
+  }
+  if (bestId === null) return null
+
+  const identity = (await loadUsernames([bestId])).get(bestId)
+  return {
+    userId: bestId,
+    username: identity?.username ?? 'Inconnu',
+    avatarId: identity?.avatarId ?? null,
+    count: bestTaken,
+  }
+}
+
+/**
+ * Total non-undone degommages this player suffered over their finished games.
+ * Goes through the same UNDO-cancellation path as the pair aggregation — a raw
+ * SQL count over game_events would overcount undone hits.
+ */
+export async function getDegommagesTaken(userId: string): Promise<number> {
+  const gameIds = await finishedGameIdsFor(userId)
+  const rows = await loadRivalryEvents(gameIds)
+  return aggregateTakenCounts(rows).get(userId) ?? 0
 }
 
 export interface RivalryPair {
