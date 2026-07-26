@@ -178,7 +178,7 @@ La résolution actuelle (435 px) suffit pour les badges et reste acceptable en f
 
 - Modes en équipe (Gaulois vs Romains 2v2) — le FFA couvre tous les usages actuels.
 - Détection automatique des mouvements de pions (tout est déclaratif, au tap) et **suivi des pions restants** (supprimé au kickoff : trop lourd à logger).
-- Plus de 4 joueurs, tournois, saisons.
+- Plus de 4 joueurs, tournois (arbres/brackets). **Saisons** — partiellement livré depuis la v1 : fenêtre mensuelle du classement (« Ce mois-ci »), archives des mois passés et champion du mois ; restent hors périmètre les récompenses de saison, les notifications et les tournois.
 - **Mode « partie locale »** multi-joueurs sur un seul téléphone (celui de l'host) — reporté en V2.
 - Récupération de mot de passe, suppression de compte, photo de profil.
 - Blocage d'amis.

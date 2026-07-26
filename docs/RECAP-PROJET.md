@@ -64,7 +64,7 @@ Le jeu physique propose exactement 4 personnages, chacun avec sa couleur de camp
 
 ## Hors périmètre
 
-**V1 (exclu)** : modes en équipe (2v2), détection automatique des mouvements, suivi des pions restants, plus de 4 joueurs / tournois / saisons, récupération de mot de passe, suppression de compte, photo de profil, blocage d'amis, Web Push, mode offline, desktop/tablette, autres langues, onboarding règles, RGPD, spectateurs, rejoindre une partie lancée, édition rétroactive.
+**V1 (exclu)** : modes en équipe (2v2), détection automatique des mouvements, suivi des pions restants, plus de 4 joueurs / tournois, saisons partiellement livrées depuis (fenêtre mensuelle + archives du classement et champion du mois — récompenses, notifications et brackets restent exclus), récupération de mot de passe, suppression de compte, photo de profil, blocage d'amis, Web Push, mode offline, desktop/tablette, autres langues, onboarding règles, RGPD, spectateurs, rejoindre une partie lancée, édition rétroactive.
 
 **Reporté en V2** : mode « partie locale » multi-joueurs sur le seul téléphone de l'host.
 
