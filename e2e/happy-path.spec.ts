@@ -10,7 +10,7 @@ const J1 = { email: 'j1@degommix.test', username: 'Asterix' }
 const J2 = { email: 'j2@degommix.test', username: 'Obelix' }
 
 /**
- * The 44 sentences this game could draw: the whole catalog rendered with the
+ * The 80 sentences this game could draw: the whole catalog rendered with the
  * two pseudos of the run. The draw is seeded on the game id (see
  * apps/web/src/lib/seq-hash.ts), which is a fresh uuid on every run, so the
  * spec asserts membership rather than an exact sentence.
@@ -174,7 +174,7 @@ test('two-player 1v1 happy path (design §7.3)', async ({ browser }) => {
     await expect(p1.getByText('Journal de partie')).toBeVisible()
     // The archive replays the (gameId, seq)-deterministic live sentences
     // (apps/web/src/lib/degommage-messages.ts). The game id is drawn per run,
-    // so which of the 44 catalog entries this game lands on cannot be
+    // so which of the 80 catalog entries this game lands on cannot be
     // precomputed: assert instead that both dégommage lines ARE catalog
     // sentences rendered with these two pseudos (a fallback or a broken
     // élision would not be), and that the second is not the first.
