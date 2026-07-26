@@ -77,7 +77,10 @@ export function LiveScreen({
     () => Object.fromEntries(players.map((p) => [p.userId, p.avatarId])),
     [players]
   )
-  const journal = useLiveJournal(gameId, state, names)
+  const journal = useLiveJournal(gameId, state, names, {
+    startedAt,
+    serverOffsetMs: serverOffset,
+  })
   const hostId = game.hostId ?? initialHostId
   const isHost = viewerId === hostId
 
@@ -260,7 +263,7 @@ export function LiveScreen({
         </section>
       ) : null}
 
-      <LiveJournal entries={journal.entries} state={state} />
+      <LiveJournal rows={journal.rows} state={state} />
 
       <button
         type="button"

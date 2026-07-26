@@ -13,9 +13,14 @@ import { PawnField } from '@/components/live/pawn-field'
 import { SelfStrip } from '@/components/live/self-strip'
 import { Summary } from '@/components/live/summary'
 import { displayName, type AvatarMap, type NameMap } from '@/components/live/types'
-import { foldJournal } from '@/components/live/use-live-journal'
+import {
+  decorateJournal,
+  foldJournal,
+  toStampEvents,
+} from '@/components/live/use-live-journal'
 import { Button } from '@/components/ui/button'
 import { Card } from '@/components/ui/card'
+import { BARDE_FIVE_MINUTES_MS, detectBardeRows } from '@/lib/barde-milestones'
 import { QueryProvider } from '@/lib/query-client'
 import { takenByTarget } from '@/lib/rivalries'
 import { generateTimeline, type SimScenario, type SimSpeed } from './timeline'
@@ -136,6 +141,31 @@ export function Simulator() {
     () => foldJournal(timeline.gameId, [...applied], state, names),
     [timeline.gameId, applied, state, names]
   )
+  // How far the SIMULATED game has run: the last applied event's timestamp
+  // minus the timeline's fixed base date. Never the wall clock — see below.
+  const simulatedElapsedMs = useMemo(() => {
+    if (applied.length < 2) return 0
+    const last = applied[applied.length - 1]
+    if (!last) return 0
+    return Math.max(0, Date.parse(last.createdAt) - Date.parse(timeline.startedAt))
+  }, [applied, timeline.startedAt])
+  const bardeRows = useMemo(
+    () =>
+      detectBardeRows(
+        timeline.gameId,
+        toStampEvents([...applied]),
+        Date.parse(timeline.startedAt),
+        // Simulated elapsed time, NOT the wall clock: the simulator anchors on
+        // a fixed past date with `serverOffset={0}` (SIM_BASE_AT), so a real
+        // `Date.now()` would fire the five-minute line on the very first
+        // event. A generated timeline spans roughly a minute of simulated
+        // play, so `cinq_minutes` normally does NOT appear here — the four
+        // event-derived milestones do, which is what the bench is for.
+        simulatedElapsedMs >= BARDE_FIVE_MINUTES_MS
+      ),
+    [timeline.gameId, timeline.startedAt, applied, simulatedElapsedMs]
+  )
+  const rows = useMemo(() => decorateJournal(journal, bardeRows), [journal, bardeRows])
 
   const viewerOptions = useMemo(
     () => timeline.players.map((p) => ({ value: p.userId, label: p.username })),
@@ -286,7 +316,7 @@ export function Simulator() {
               )
             })}
           </section>
-          <LiveJournal entries={journal.entries} state={state} />
+          <LiveJournal rows={rows} state={state} />
           <Card className="flex flex-col gap-2">
             <p className="sec-label">Tableau des augures</p>
             <AuguresPanel state={state} elapsedSec={simulatedElapsedSec} names={names} />
