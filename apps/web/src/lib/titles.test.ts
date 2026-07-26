@@ -4,6 +4,7 @@ import {
   computeMiracleValues,
   computeTitleHolders,
   pickTitle,
+  podiumRowLabel,
   OMBRE_MIN_GAMES,
   TITLE_IDS,
   TITLE_META,
@@ -193,5 +194,25 @@ describe('buildTitleEntries', () => {
       { userId: 'asterix', title: 'revenant' },
       { userId: 'obelix', title: 'berserker' },
     ])
+  })
+})
+
+describe('podiumRowLabel', () => {
+  it('keeps the plain profile label when the player wears no title', () => {
+    expect(podiumRowLabel('Astérix', null)).toBe('Voir le profil de Astérix')
+  })
+
+  it('carries the label AND the definition, since the podium cannot reveal it on tap', () => {
+    expect(podiumRowLabel('Astérix', 'miracule')).toBe(
+      'Voir le profil de Astérix — Le Miraculé : A gagné une partie en étant le plus dégommé de la table'
+    )
+  })
+
+  it('still starts with the profile label, and names the condition, for every title', () => {
+    for (const id of TITLE_IDS) {
+      const label = podiumRowLabel('Obélix', id)
+      expect(label.startsWith('Voir le profil de Obélix')).toBe(true)
+      expect(label).toContain(TITLE_META[id].hint)
+    }
   })
 })

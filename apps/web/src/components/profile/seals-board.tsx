@@ -16,9 +16,14 @@ const DATE_FORMAT: Intl.DateTimeFormatOptions = {
 }
 
 /**
- * The six hauts faits, always all six, in SEALS order: unlocked ones in bronze
- * with their date, locked ones faint with their condition — so the board
- * doubles as the catalog of what there is to chase.
+ * The six hauts faits, always all six, in SEALS order: unlocked ones in bronze,
+ * locked ones faint — so the board doubles as the catalog of what there is to
+ * chase.
+ *
+ * The condition is printed under every medallion, earned or not: it used to be
+ * swapped for the unlock date once the seal was gravé, which meant the board
+ * forgot what a seal means exactly when you finally owned it. Both lines are
+ * shown now, and neither is a hover tooltip (this is a phone-first app).
  */
 export function SealsBoard({ unlocked, isSelf }: SealsBoardProps) {
   const unlockedById = new Map(unlocked.map((seal) => [seal.sealId, seal]))
@@ -43,10 +48,16 @@ export function SealsBoard({ unlocked, isSelf }: SealsBoardProps) {
                 <SealMedallion sealId={seal.id} size={56} isLocked={earned === undefined} />
                 <p className="m-0 text-xs font-bold">{seal.label}</p>
                 <p className="m-0 text-[0.65rem]" style={{ color: 'var(--ink-faint)' }}>
-                  {earned
-                    ? new Date(earned.unlockedAt).toLocaleDateString('fr-FR', DATE_FORMAT)
-                    : seal.hint}
+                  {seal.hint}
                 </p>
+                {earned ? (
+                  <p
+                    className="m-0 text-[0.6rem] font-bold"
+                    style={{ color: 'var(--bronze-strong)' }}
+                  >
+                    {new Date(earned.unlockedAt).toLocaleDateString('fr-FR', DATE_FORMAT)}
+                  </p>
+                ) : null}
               </div>
             )
           })}

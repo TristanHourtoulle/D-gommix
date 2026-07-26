@@ -41,6 +41,19 @@ export const TITLE_META: Record<TitleId, TitleMeta> = {
 }
 
 /**
+ * Accessible name of a podium column. The column is one big <Link>, so the
+ * title line there cannot be the tap-to-reveal button it is on the two profile
+ * pages (nested interactive elements); the definition rides this label instead.
+ * Extracted for the unit tests — `apps/web/vitest.config.ts` has no DOM.
+ */
+export function podiumRowLabel(username: string, titleId: TitleId | null): string {
+  const base = `Voir le profil de ${username}`
+  if (titleId === null) return base
+  const meta = TITLE_META[titleId]
+  return `${base} — ${meta.label} : ${meta.hint}`
+}
+
+/**
  * Rarity tie-break, rarest-feeling first. Only consulted when two applicable
  * titles have the SAME number of holders: « Le Miraculé » and « Le Revenant »
  * say the most about a player's table story, « L’Increvable » the least (it is

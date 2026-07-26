@@ -4,7 +4,7 @@ import { Card } from '@/components/ui/card'
 import { Icon } from '@/components/icons'
 import { PlayerAvatar } from '@/components/ui/player-avatar'
 import type { LeaderboardRow } from '@/lib/queries/stats'
-import type { PlayerTitleEntry } from '@/lib/titles'
+import { podiumRowLabel, type PlayerTitleEntry } from '@/lib/titles'
 import { PlayerTitleLine } from './player-title-line'
 
 interface PodiumProps {
@@ -51,6 +51,11 @@ function PodiumCrown() {
  * Two players → two centred socles in rank order. Each column keeps the
  * `ranking-row-*` testid and profile link contract of the plain table rows;
  * the visually hidden « N v · N% » span preserves the text the e2e asserts.
+ *
+ * The whole column is the link, so the title line cannot be its own button
+ * here (nested interactive elements); the worn title's definition rides the
+ * link's aria-label instead, and the tap-to-reveal version lives one tap away
+ * on the profile this row already points at.
  */
 export function Podium({ rows, viewerId, titles }: PodiumProps) {
   const [first, second, third] = rows.slice(0, 3)
@@ -65,47 +70,50 @@ export function Podium({ rows, viewerId, titles }: PodiumProps) {
     <Card className="lb-podium-card">
       <p className="sec-label text-center">Le podium</p>
       <div className="lb-podium">
-        {columns.map((row) => (
-          <Link
-            key={row.userId}
-            href={`/amis/${row.userId}`}
-            data-testid={`ranking-row-${row.username}`}
-            aria-label={`Voir le profil de ${row.username}`}
-            className={`lb-pod lb-p${row.rank}${row.userId === viewerId ? ' me' : ''}`}
-            style={{ '--i': columns.length - row.rank } as CSSProperties}
-          >
-            {row.rank === 1 ? (
-              <PodiumCrown />
-            ) : (
-              <span className={`lb-medal${row.rank === 2 ? ' silver' : ''}`} aria-hidden>
-                {row.rank}
+        {columns.map((row) => {
+          const title = titleByUser.get(row.userId) ?? null
+          return (
+            <Link
+              key={row.userId}
+              href={`/amis/${row.userId}`}
+              data-testid={`ranking-row-${row.username}`}
+              aria-label={podiumRowLabel(row.username, title)}
+              className={`lb-pod lb-p${row.rank}${row.userId === viewerId ? ' me' : ''}`}
+              style={{ '--i': columns.length - row.rank } as CSSProperties}
+            >
+              {row.rank === 1 ? (
+                <PodiumCrown />
+              ) : (
+                <span className={`lb-medal${row.rank === 2 ? ' silver' : ''}`} aria-hidden>
+                  {row.rank}
+                </span>
+              )}
+              <PlayerAvatar
+                username={row.username}
+                size={row.rank === 1 ? 56 : 40}
+                avatarId={row.avatarId ?? null}
+              />
+              <span className="lb-pod-name">{row.username}</span>
+              <PlayerTitleLine titleId={title} align="center" interactive={false} />
+              <span className="sr-only">{`${row.wins} v · ${row.winrate}%`}</span>
+              <span className="lb-chips" aria-hidden>
+                <span className="lb-chip">{row.wins} v</span>
+                <span className="lb-chip">{row.winrate} %</span>
+                <span className="lb-chip">{row.villageGames} p.</span>
+                <span className="lb-chip">
+                  <Icon name="sword" size={11} className="text-bronze" />
+                  {row.degommages}
+                </span>
+                {(row.currentStreak ?? 0) >= 2 ? (
+                  <span className="lb-chip">Série : {row.currentStreak}</span>
+                ) : null}
               </span>
-            )}
-            <PlayerAvatar
-              username={row.username}
-              size={row.rank === 1 ? 56 : 40}
-              avatarId={row.avatarId ?? null}
-            />
-            <span className="lb-pod-name">{row.username}</span>
-            <PlayerTitleLine titleId={titleByUser.get(row.userId) ?? null} align="center" />
-            <span className="sr-only">{`${row.wins} v · ${row.winrate}%`}</span>
-            <span className="lb-chips" aria-hidden>
-              <span className="lb-chip">{row.wins} v</span>
-              <span className="lb-chip">{row.winrate} %</span>
-              <span className="lb-chip">{row.villageGames} p.</span>
-              <span className="lb-chip">
-                <Icon name="sword" size={11} className="text-bronze" />
-                {row.degommages}
+              <span className="lb-socle" aria-hidden>
+                {ROMAN_RANKS[row.rank - 1]}
               </span>
-              {(row.currentStreak ?? 0) >= 2 ? (
-                <span className="lb-chip">Série : {row.currentStreak}</span>
-              ) : null}
-            </span>
-            <span className="lb-socle" aria-hidden>
-              {ROMAN_RANKS[row.rank - 1]}
-            </span>
-          </Link>
-        ))}
+            </Link>
+          )
+        })}
       </div>
     </Card>
   )

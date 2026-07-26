@@ -26,6 +26,12 @@ describe('seal catalog', () => {
     ])
   })
 
+  it('keeps a distinct condition per seal — the board prints it earned or not', () => {
+    const hints = SEALS.map((seal) => seal.hint)
+    expect(new Set(hints).size).toBe(SEALS.length)
+    expect(sealMeta('imperator')?.hint).toBe('Gagner une partie sans se faire dégommer')
+  })
+
   it('round-trips every id through sealMeta', () => {
     for (const id of SEAL_IDS) {
       expect(sealMeta(id)?.id).toBe(id)
