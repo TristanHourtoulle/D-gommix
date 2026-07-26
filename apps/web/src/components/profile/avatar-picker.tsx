@@ -46,14 +46,15 @@ export function AvatarPicker({ username, currentAvatarId }: AvatarPickerProps) {
     const selectedLabel =
       AVATARS.find((avatar) => avatar.id === selected)?.label ?? 'Aucun (initiale)'
     return (
-      <div className="flex items-center gap-3">
-        <PlayerAvatar username={username} size={56} avatarId={selected} />
-        <span className="flex-1 text-sm font-semibold" style={{ color: 'var(--ink)' }}>
-          {selectedLabel}
-        </span>
+      <div className="flex flex-col gap-3">
+        <div className="flex items-center gap-3">
+          <PlayerAvatar username={username} size={56} avatarId={selected} />
+          <span className="flex-1 text-sm font-semibold" style={{ color: 'var(--ink)' }}>
+            {selectedLabel}
+          </span>
+        </div>
         <Button
           variant="ghost"
-          fullWidth={false}
           onClick={() => {
             setOpen(true)
           }}

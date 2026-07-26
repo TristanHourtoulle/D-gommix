@@ -14,6 +14,9 @@ import { GameHistoryItem } from './game-history-item'
 import { InviteBanner } from './invite-banner'
 import { ResumeBanner } from './resume-banner'
 
+/** Home shows a teaser of the history; the full list lives on /parties. */
+const HOME_HISTORY_LIMIT = 4
+
 function plural(count: number, singular: string): string {
   return `${count} ${singular}${count > 1 ? 's' : ''}`
 }
@@ -87,7 +90,17 @@ export function HomeScreen({
       </Link>
 
       <section className="flex flex-col gap-2">
-        <p className="sec-label">Historique récent</p>
+        <div className="flex items-center justify-between">
+          <p className="sec-label">Historique récent</p>
+          {lastGames.length > 0 ? (
+            <Link
+              href="/parties"
+              className="text-xs font-semibold text-bronze underline underline-offset-2"
+            >
+              Tout voir
+            </Link>
+          ) : null}
+        </div>
         {lastGames.length === 0 ? (
           <EmptyState
             icon="flag"
@@ -95,7 +108,9 @@ export function HomeScreen({
             description="Lance ta première partie !"
           />
         ) : (
-          lastGames.map((game) => <GameHistoryItem key={game.id} game={game} />)
+          lastGames
+            .slice(0, HOME_HISTORY_LIMIT)
+            .map((game) => <GameHistoryItem key={game.id} game={game} />)
         )}
         {/* Sibling of the rows, never inside them: GameHistoryItem's root is a
             <Link>, and a <button> nested in an <a> is invalid HTML. Hidden while
