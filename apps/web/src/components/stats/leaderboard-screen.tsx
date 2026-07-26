@@ -13,6 +13,7 @@ import { CoteCard } from './cote-card'
 import { MonthStepper } from './month-stepper'
 import { PeriodSegmented } from './period-segmented'
 import { Podium } from './podium'
+import { ProphetsTile } from './prophets-tile'
 import { RankingTable } from './ranking-table'
 import { RecordsCard } from './records-card'
 import { RivalryTile } from './rivalry-tile'
@@ -109,6 +110,8 @@ export function LeaderboardScreen({ viewerId, initialData }: LeaderboardScreenPr
           {leaderboard.topDegommeur ? <TopDegommeurTile top={leaderboard.topDegommeur} /> : null}
 
           <SouffreDouleurTile peer={leaderboard.souffreDouleur ?? null} />
+
+          <ProphetsTile prophets={leaderboard.prophets} />
 
           <RivalryTile rivalry={leaderboard.rivalry} pairs={leaderboard.rivalryPairs} />
 
