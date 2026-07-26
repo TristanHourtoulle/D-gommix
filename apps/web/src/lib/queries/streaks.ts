@@ -50,3 +50,38 @@ export function computeLongestStreaks(
   }
   return longest
 }
+
+/**
+ * Players who ever won a village game immediately after `requiredLosses`
+ * consecutive losses — « Le Revenant ». Consumes the same newest-first list as
+ * the two streak functions (queryVillageResults orders by ended_at desc), so
+ * the per-player sequence is reversed to oldest-first before scanning: unlike a
+ * run of wins, « losses THEN a win » is direction-sensitive. Aborted games never
+ * reach this function (the caller filters on outcome), so they neither arm nor
+ * break a comeback.
+ */
+export function computeComebackWinners(
+  resultsNewestFirst: readonly StreakGameResult[],
+  requiredLosses: number
+): Set<string> {
+  const byUser = new Map<string, boolean[]>()
+  for (const result of resultsNewestFirst) {
+    const list = byUser.get(result.userId) ?? []
+    list.push(result.won)
+    byUser.set(result.userId, list)
+  }
+
+  const comebacks = new Set<string>()
+  for (const [userId, newestFirst] of byUser) {
+    let losses = 0
+    for (let i = newestFirst.length - 1; i >= 0; i -= 1) {
+      if (newestFirst[i] === true) {
+        if (losses >= requiredLosses) comebacks.add(userId)
+        losses = 0
+      } else {
+        losses += 1
+      }
+    }
+  }
+  return comebacks
+}
