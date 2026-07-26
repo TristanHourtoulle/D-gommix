@@ -64,8 +64,11 @@ async function finishedGameIdsFor(userId: string): Promise<string[]> {
   return rows.map((row) => row.id)
 }
 
-/** Finished, started games where any of the given members held a seat. */
-async function finishedGameIdsForMembers(memberIds: string[]): Promise<string[]> {
+/**
+ * Finished, started games where any of the given members held a seat.
+ * Exported for queries/titles.ts (plan 032).
+ */
+export async function finishedGameIdsForMembers(memberIds: string[]): Promise<string[]> {
   if (memberIds.length === 0) return []
   const rows = await db
     .selectDistinct({ id: games.id })
@@ -85,8 +88,9 @@ async function finishedGameIdsForMembers(memberIds: string[]): Promise<string[]>
 /**
  * The DEGOMMAGE and UNDO rows of the given games. The UNDO rows are what makes
  * the exclusion in `aggregatePairCounts` possible, so both types are needed.
+ * Exported for queries/titles.ts (plan 032).
  */
-async function loadRivalryEvents(gameIds: string[]): Promise<RivalryEventRow[]> {
+export async function loadRivalryEvents(gameIds: string[]): Promise<RivalryEventRow[]> {
   if (gameIds.length === 0) return []
 
   return db

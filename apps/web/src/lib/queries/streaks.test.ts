@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { computeCurrentStreaks, computeLongestStreaks } from './streaks'
+import { computeComebackWinners, computeCurrentStreaks, computeLongestStreaks } from './streaks'
 
 describe('computeCurrentStreaks', () => {
   it('returns an empty map for no games', () => {
@@ -108,5 +108,67 @@ describe('computeLongestStreaks', () => {
     ])
     expect(longest.get('a')).toBe(2)
     expect(longest.get('b')).toBe(1)
+  })
+})
+
+describe('computeComebackWinners', () => {
+  it('returns an empty set for no games', () => {
+    expect(computeComebackWinners([], 3).size).toBe(0)
+  })
+
+  it('flags a win that follows exactly three losses', () => {
+    // Newest first: the win is the most recent game, the three losses precede it.
+    const comebacks = computeComebackWinners(
+      [
+        { userId: 'a', won: true },
+        { userId: 'a', won: false },
+        { userId: 'a', won: false },
+        { userId: 'a', won: false },
+      ],
+      3
+    )
+    expect(comebacks.has('a')).toBe(true)
+  })
+
+  it('flags a win that follows more than three losses', () => {
+    const comebacks = computeComebackWinners(
+      [
+        { userId: 'a', won: true },
+        { userId: 'a', won: false },
+        { userId: 'a', won: false },
+        { userId: 'a', won: false },
+        { userId: 'a', won: false },
+      ],
+      3
+    )
+    expect(comebacks.has('a')).toBe(true)
+  })
+
+  it('does not flag a win that follows only two losses', () => {
+    // Direction-sensitive: the oldest win here comes BEFORE the losses.
+    const comebacks = computeComebackWinners(
+      [
+        { userId: 'a', won: true },
+        { userId: 'a', won: false },
+        { userId: 'a', won: false },
+        { userId: 'a', won: true },
+      ],
+      3
+    )
+    expect(comebacks.has('a')).toBe(false)
+  })
+
+  it('keeps players independent', () => {
+    const comebacks = computeComebackWinners(
+      [
+        { userId: 'a', won: true },
+        { userId: 'b', won: false },
+        { userId: 'b', won: false },
+        { userId: 'b', won: false },
+      ],
+      3
+    )
+    expect(comebacks.has('a')).toBe(false)
+    expect(comebacks.has('b')).toBe(false)
   })
 })

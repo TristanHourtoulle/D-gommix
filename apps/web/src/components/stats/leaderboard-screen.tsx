@@ -111,7 +111,7 @@ export function LeaderboardScreen({ viewerId, initialData }: LeaderboardScreenPr
 
           <RivalryTile rivalry={leaderboard.rivalry} pairs={leaderboard.rivalryPairs} />
 
-          <Podium rows={podiumRows} viewerId={viewerId} />
+          <Podium rows={podiumRows} viewerId={viewerId} titles={leaderboard.titles} />
 
           {leaderboard.records ? <RecordsCard records={leaderboard.records} /> : null}
 

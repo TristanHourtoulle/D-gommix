@@ -5,6 +5,7 @@ import { areFriends, getPlayerStats, getPublicUser } from '@/lib/queries/friends
 import { getDegommagesTaken, getHeadToHead } from '@/lib/queries/rivalries'
 import { getSharedGames } from '@/lib/queries/shared-games'
 import { getPlayerCharacterStats } from '@/lib/queries/stats'
+import { getTitleFor } from '@/lib/queries/titles'
 import { CHARACTER_META } from '@/lib/characters'
 import { CharacterBadge } from '@/components/ui/character-badge'
 import { EmptyState } from '@/components/ui/empty-state'
@@ -12,6 +13,7 @@ import { FriendProfileActions } from '@/components/friends/friend-profile-action
 import { GameHistoryItem } from '@/components/home/game-history-item'
 import { HeadToHeadCard } from '@/components/stats/head-to-head-card'
 import { PerCharacterBlock } from '@/components/stats/per-character-block'
+import { PlayerTitleLine } from '@/components/stats/player-title-line'
 import { RematchButton } from '@/components/rematch-button'
 import { PlayerAvatar } from '@/components/ui/player-avatar'
 import { SectionTitle } from '@/components/ui/section-title'
@@ -45,12 +47,13 @@ export default async function FriendProfilePage({ params }: FriendProfilePagePro
     )
   }
 
-  const [stats, headToHead, sharedResult, taken, perCharacter] = await Promise.all([
+  const [stats, headToHead, sharedResult, taken, perCharacter, title] = await Promise.all([
     getPlayerStats(userId),
     isSelf ? Promise.resolve(null) : getHeadToHead(me.id, userId),
     isSelf ? Promise.resolve(null) : getSharedGames(me.id, userId),
     getDegommagesTaken(userId),
     getPlayerCharacterStats(userId),
+    getTitleFor(me.id, userId),
   ])
   const sharedGames = sharedResult?.games ?? []
   const winrateLabel =
@@ -67,6 +70,7 @@ export default async function FriendProfilePage({ params }: FriendProfilePagePro
         <PlayerAvatar username={profile.username} size={44} avatarId={profile.avatarId} />
         <div className="min-w-0">
           <p className="m-0 truncate font-bold">{profile.username}</p>
+          <PlayerTitleLine titleId={title} />
           <p className="m-0 text-xs" style={{ color: 'var(--ink-faint)' }}>
             {stats.gamesPlayed} partie{stats.gamesPlayed > 1 ? 's' : ''} jouée
             {stats.gamesPlayed > 1 ? 's' : ''}

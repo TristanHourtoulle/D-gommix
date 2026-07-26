@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import {
   aggregatePairCounts,
+  aggregateTakenByGame,
   aggregateTakenCounts,
   pickFavoriteVictim,
   pickNemesis,
@@ -146,6 +147,62 @@ describe('aggregateTakenCounts', () => {
   it('returns an empty map when there are no degommages', () => {
     expect(aggregateTakenCounts([])).toEqual(new Map())
     expect(aggregateTakenCounts([undo('g1', 1, { targetSeq: 0 })])).toEqual(new Map())
+  })
+})
+
+describe('aggregateTakenByGame', () => {
+  it('groups suffered counts per game and per target', () => {
+    const rows = [
+      degommage('g1', 1, ME, 'obelix'),
+      degommage('g1', 2, 'asterix', 'obelix'),
+      degommage('g1', 3, 'obelix', ME),
+      degommage('g2', 1, ME, 'obelix'),
+    ]
+
+    expect(aggregateTakenByGame(rows)).toEqual(
+      new Map([
+        [
+          'g1',
+          new Map([
+            ['obelix', 2],
+            [ME, 1],
+          ]),
+        ],
+        ['g2', new Map([['obelix', 1]])],
+      ])
+    )
+  })
+
+  it('excludes a degommage cancelled by an UNDO targeting its seq', () => {
+    const rows = [
+      degommage('g1', 1, ME, 'obelix'),
+      degommage('g1', 2, ME, 'obelix'),
+      undo('g1', 3, { targetSeq: 2 }),
+    ]
+
+    expect(aggregateTakenByGame(rows)).toEqual(new Map([['g1', new Map([['obelix', 1]])]]))
+  })
+
+  it('scopes undo exclusion to its own game', () => {
+    const rows = [
+      degommage('g1', 1, ME, 'obelix'),
+      undo('g1', 2, { targetSeq: 1 }),
+      degommage('g2', 1, ME, 'obelix'),
+    ]
+
+    expect(aggregateTakenByGame(rows)).toEqual(new Map([['g2', new Map([['obelix', 1]])]]))
+  })
+
+  it('ignores self-degommages and rows with a null actor or target, and returns an empty map for no degommages', () => {
+    const rows = [
+      degommage('g1', 1, ME, ME),
+      degommage('g1', 2, null, ME),
+      degommage('g1', 3, ME, null),
+    ]
+
+    expect(aggregateTakenByGame(rows)).toEqual(new Map())
+    expect(aggregateTakenByGame([])).toEqual(new Map())
+    expect(aggregateTakenByGame([undo('g1', 1, { targetSeq: 0 })])).toEqual(new Map())
   })
 })
 

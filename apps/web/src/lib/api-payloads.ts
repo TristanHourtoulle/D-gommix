@@ -1,5 +1,6 @@
 import { z } from 'zod'
 import { CHARACTERS } from '@degommix/game-core'
+import { TITLE_IDS } from '@/lib/titles'
 import type { ActiveGame, HomeGame, HomeStats } from '@/lib/queries/home'
 import type { ViewerRank } from '@/lib/queries/stats'
 
@@ -143,6 +144,13 @@ const characterStatSchema = z.object({
   winrate: z.number().nullable(),
 })
 
+const titleIdSchema = z.enum(TITLE_IDS)
+
+const playerTitleSchema = z.object({
+  userId: z.string(),
+  title: titleIdSchema,
+})
+
 export const leaderboardPayloadSchema = z.object({
   rows: z.array(
     z.object({
@@ -176,6 +184,12 @@ export const leaderboardPayloadSchema = z.object({
   }),
   /** Optional for old PWA-cached SSR payloads (same convention as currentStreak). */
   souffreDouleur: rivalryPeerSchema.nullable().optional(),
+  /**
+   * « Titres gaulois » (plan 032): the worn title of every circle member who
+   * has one, all-time and never windowed by `?period=`. Optional for old
+   * PWA-cached SSR payloads (same convention as currentStreak).
+   */
+  titles: z.array(playerTitleSchema).optional(),
   /** Optional for old PWA-cached SSR payloads (same convention as currentStreak). */
   rivalryPairs: z.array(rivalryPairSchema).optional(),
   characterWinrates: z.array(

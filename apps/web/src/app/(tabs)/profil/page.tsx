@@ -10,16 +10,19 @@ import { AvatarPicker } from '@/components/profile/avatar-picker'
 import { ThemeSegmented } from '@/components/theme/theme-segmented'
 import { DevMenuGesture } from '@/components/dev/dev-menu-gesture'
 import { PerCharacterBlock } from '@/components/stats/per-character-block'
+import { PlayerTitleLine } from '@/components/stats/player-title-line'
 import { getAvatarId } from '@/lib/queries/profile'
 import { getPlayerCharacterStats } from '@/lib/queries/stats'
+import { getTitleFor } from '@/lib/queries/titles'
 
 export default async function ProfilePage() {
   const session = await requireSession()
   const { username, email } = session.user
   if (!username) redirect('/onboarding')
-  const [avatarId, perCharacter] = await Promise.all([
+  const [avatarId, perCharacter, title] = await Promise.all([
     getAvatarId(session.user.id),
     getPlayerCharacterStats(session.user.id),
+    getTitleFor(session.user.id, session.user.id),
   ])
 
   return (
@@ -40,6 +43,7 @@ export default async function ProfilePage() {
             <h1 className="s-title m-0" style={{ fontSize: '1.05rem' }}>
               {username}
             </h1>
+            <PlayerTitleLine titleId={title} />
             <p className="s-sub">Ta hutte</p>
           </div>
         </DevMenuGesture>

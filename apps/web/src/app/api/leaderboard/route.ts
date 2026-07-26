@@ -3,6 +3,7 @@ import { z } from 'zod'
 import { getLeaderboard, type LeaderboardRange } from '@/lib/queries/stats'
 import { getSeasonMeta } from '@/lib/queries/month-champions'
 import { getRivalryPairs, getRivalrySpotlight, getSouffreDouleur } from '@/lib/queries/rivalries'
+import { getCircleTitles } from '@/lib/queries/titles'
 import { currentParisMonthKey, monthWindowParis, startOfCurrentMonthParis } from '@/lib/season'
 import type { LeaderboardPayload } from '@/lib/api-payloads'
 import { getOnboardedApiSession } from '@/lib/session'
@@ -50,12 +51,13 @@ export async function GET(request: Request) {
     }
   }
 
-  const [leaderboard, rivalry, souffreDouleur, rivalryPairs, season] = await Promise.all([
+  const [leaderboard, rivalry, souffreDouleur, rivalryPairs, season, titles] = await Promise.all([
     getLeaderboard(session.user.id, range),
     getRivalrySpotlight(session.user.id),
     getSouffreDouleur(session.user.id),
     getRivalryPairs(session.user.id),
     getSeasonMeta(session.user.id),
+    getCircleTitles(session.user.id),
   ])
   const payload: LeaderboardPayload = {
     ...leaderboard,
@@ -63,6 +65,7 @@ export async function GET(request: Request) {
     souffreDouleur,
     rivalryPairs,
     season,
+    titles,
   }
   return NextResponse.json(payload, { headers: PRIVATE_HEADERS })
 }
