@@ -31,9 +31,11 @@ interface CoteLine {
  * All-time by construction and never windowed by the period toggle, hence the
  * explicit « depuis toujours » subtitle. A player below COTE_MIN_GAMES rated
  * games prints « — »: a rating built from one game is noise dressed as
- * precision. The threshold reads the fold's own count, never the row's
- * villageGames — that field IS windowed by `?period=`. When nobody clears the
- * threshold the whole card renders null, like RecordsCard with no lines.
+ * precision. The threshold reads the fold's own rated-game count, never the
+ * leaderboard row's own game tally — that one IS windowed by `?period=`, and
+ * using it would silently make this all-time card follow the month toggle.
+ * When nobody clears the threshold the whole card renders null, like
+ * RecordsCard with no lines.
  */
 export function CoteCard({ cotes, rows, viewerId }: CoteCardProps) {
   const byUser = new Map(cotes.map((entry) => [entry.userId, entry]))
