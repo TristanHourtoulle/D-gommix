@@ -99,9 +99,15 @@ describe('buildGameJournal', () => {
   })
 
   it('renders the exact sentences of THIS game for seqs 2 and 3 (golden)', () => {
+    // Re-pinned for the vague-2 catalog (2026-07-26): 44 → 80 sentences, and
+    // the per-tone weights retuned to hold the validated 60 / 15 / 10 / 15 mix,
+    // both move the weighted walk — so this game draws two other lines.
+    // Owner-approved retune, see apps/web/src/lib/degommage-messages.ts.
+    // Was: « Le sanglier pour Asterix, l’écurie pour Obelix » (seq 2) and
+    //      « Un pion d’Obelix décolle. Signé Asterix » (seq 3).
     const journal = buildGameJournal(GAME, full, NAME)
-    expect(journal[1]?.text).toBe('Le sanglier pour Asterix, l’écurie pour Obelix')
-    expect(journal[2]?.text).toBe('Un pion d’Obelix décolle. Signé Asterix')
+    expect(journal[1]?.text).toBe('Un pion d’Obelix mord la poussière. Merci Asterix')
+    expect(journal[2]?.text).toBe('Asterix baisse le pouce : un pion d’Obelix sort')
   })
 
   it('tells the very same log with other sentences in another game', () => {
@@ -129,7 +135,9 @@ describe('buildGameJournal', () => {
   it('keeps the sentence of an undone dégommage (UNDO never rewrites history)', () => {
     const journal = buildGameJournal(GAME, full, NAME)
     // seq 3 was undone by seq 4; its own line is still the seq-3 sentence.
-    expect(journal[2]?.text).toBe('Un pion d’Obelix décolle. Signé Asterix')
+    // Re-pinned with the vague-2 catalog (was « Un pion d’Obelix décolle.
+    // Signé Asterix » on the 44-sentence catalog).
+    expect(journal[2]?.text).toBe('Asterix baisse le pouce : un pion d’Obelix sort')
   })
 
   it('falls back to the elided factual sentence when a DEGOMMAGE has no ids', () => {

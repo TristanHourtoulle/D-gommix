@@ -18,16 +18,25 @@ function toneSum(tone: DegommageTone): number {
   return DEGOMMAGE_MESSAGES.filter((m) => m.tone === tone).reduce((s, m) => s + m.weight, 0)
 }
 
+// The vague-2 expansion (2026-07-26) took the catalog from 44 to 80 sentences:
+// +12 baffes, +8 toutatis, +8 rome, +8 chambrage, all owner-validated verbatim.
+const PER_TONE: Record<DegommageTone, number> = {
+  baffes: 23,
+  toutatis: 19,
+  rome: 19,
+  chambrage: 19,
+}
+
 describe('catalog shape', () => {
-  it('holds exactly 44 messages, 11 per tone', () => {
-    expect(DEGOMMAGE_MESSAGES).toHaveLength(44)
+  it('holds exactly 80 messages, 23 baffes and 19 per other tone', () => {
+    expect(DEGOMMAGE_MESSAGES).toHaveLength(80)
     for (const tone of DEGOMMAGE_TONES) {
-      expect(DEGOMMAGE_MESSAGES.filter((m) => m.tone === tone)).toHaveLength(11)
+      expect(DEGOMMAGE_MESSAGES.filter((m) => m.tone === tone)).toHaveLength(PER_TONE[tone])
     }
   })
 
-  it('holds exactly 10 « sans acteur » messages', () => {
-    expect(DEGOMMAGE_MESSAGES.filter((m) => m.sansActeur)).toHaveLength(10)
+  it('holds exactly 18 « sans acteur » messages', () => {
+    expect(DEGOMMAGE_MESSAGES.filter((m) => m.sansActeur)).toHaveLength(18)
   })
 
   it('flags sansActeur exactly when the template omits {acteur}', () => {
@@ -36,14 +45,26 @@ describe('catalog shape', () => {
     }
   })
 
-  it('always names the target', () => {
+  // The one owner-validated exception, from vague 2: the punchline lands on the
+  // striker alone. It is listed here on purpose, so any *other* target-less
+  // sentence still fails this test.
+  const WITHOUT_TARGET = ['Abraracourcix lui-même n’aurait pas osé. {acteur}, si']
+
+  it('always names the target, save the one validated exception', () => {
     for (const message of DEGOMMAGE_MESSAGES) {
+      if (WITHOUT_TARGET.includes(message.template)) continue
       expect(message.template).toContain('{cible}')
     }
   })
 
+  it('never leaves a sentence without a single player', () => {
+    for (const message of DEGOMMAGE_MESSAGES) {
+      expect(message.template.includes('{cible}') || message.template.includes('{acteur}')).toBe(true)
+    }
+  })
+
   it('has no duplicate template', () => {
-    expect(new Set(DEGOMMAGE_MESSAGES.map((m) => m.template)).size).toBe(44)
+    expect(new Set(DEGOMMAGE_MESSAGES.map((m) => m.template)).size).toBe(80)
   })
 
   it('gives « sans acteur » messages a strictly lower weight than their tone', () => {
@@ -65,39 +86,69 @@ describe('catalog shape', () => {
 })
 
 describe('tone budget', () => {
-  it('totals 484 weight units', () => {
-    expect(TOTAL_WEIGHT).toBe(484)
+  it('totals 690 weight units', () => {
+    expect(TOTAL_WEIGHT).toBe(690)
     expect(DEGOMMAGE_MESSAGES.reduce((s, m) => s + m.weight, 0)).toBe(TOTAL_WEIGHT)
   })
 
-  it('splits the budget 286 / 74 / 52 / 72', () => {
-    expect(toneSum('baffes')).toBe(286)
-    expect(toneSum('toutatis')).toBe(74)
-    expect(toneSum('rome')).toBe(52)
-    expect(toneSum('chambrage')).toBe(72)
+  it('splits the budget 414 / 101 / 70 / 105', () => {
+    // Vague 2 re-pin (was 286 / 74 / 52 / 72 over 484). The SHARES are what the
+    // owner validated, so growing the catalog by 12 baffes and 8 per other tone
+    // meant retuning the per-tone full weights 26/9/5/8 → 18/7/4/7 (sansActeur
+    // = floor(F / 2)); see the header of degommage-messages.ts for the search.
+    expect(toneSum('baffes')).toBe(414)
+    expect(toneSum('toutatis')).toBe(101)
+    expect(toneSum('rome')).toBe(70)
+    expect(toneSum('chambrage')).toBe(105)
   })
 
-  it('lands within one point of the validated 60 / 15 / 10 / 15 mix', () => {
+  it('holds the validated 60 / 15 / 10 / 15 mix within half a point', () => {
+    // Exact shares of the 18 / 7 / 4 / 7 tuple: 60.000 / 14.638 / 10.145 /
+    // 15.217 — worst deviation 0.362, the best any tuple of hand-sized integer
+    // weights reaches for this catalog. Tolerance tightened from 1 to 0.5.
     const share = (tone: DegommageTone): number => (100 * toneSum(tone)) / TOTAL_WEIGHT
-    expect(Math.abs(share('baffes') - 60)).toBeLessThan(1)
-    expect(Math.abs(share('toutatis') - 15)).toBeLessThan(1)
-    expect(Math.abs(share('rome') - 10)).toBeLessThan(1)
-    expect(Math.abs(share('chambrage') - 15)).toBeLessThan(1)
+    expect(Math.abs(share('baffes') - 60)).toBeLessThan(0.5)
+    expect(Math.abs(share('toutatis') - 15)).toBeLessThan(0.5)
+    expect(Math.abs(share('rome') - 10)).toBeLessThan(0.5)
+    expect(Math.abs(share('chambrage') - 15)).toBeLessThan(0.5)
+  })
+
+  it('keeps baffes dominant, rome rarest, and the two 15 % tones level', () => {
+    const share = (tone: DegommageTone): number => (100 * toneSum(tone)) / TOTAL_WEIGHT
+    for (const tone of ['toutatis', 'rome', 'chambrage'] as const) {
+      expect(toneSum('baffes')).toBeGreaterThan(toneSum(tone) * 3)
+    }
+    expect(Math.min(...DEGOMMAGE_TONES.map(toneSum))).toBe(toneSum('rome'))
+    // Both were validated at 15 %: neither register may quietly outgrow the other.
+    expect(Math.abs(share('toutatis') - share('chambrage'))).toBeLessThan(1)
   })
 })
 
 describe('length budget', () => {
-  it('renders every template in 60 characters or less with two 10-char names', () => {
+  // Vague 2 re-pin: the 44-sentence catalog fitted in 60 characters worst case.
+  // The owner-validated wave-2 sentences are longer — the ceiling is now 76
+  // (« Assurancetourix chantera la chute du pion de … »). The journal line
+  // wraps rather than truncates (components/live/live-journal.tsx), so this is
+  // a typographic guardrail, not a clipping risk; it still catches runaways.
+  it('renders every template in 76 characters or less with two 10-char names', () => {
     const over = DEGOMMAGE_MESSAGES.map((m) => renderDegommageTemplate(m.template, LONG, LONG))
-      .filter((text) => text.length > 60)
+      .filter((text) => text.length > 76)
     expect(over).toEqual([])
   })
 
-  it('keeps the longest worst case at 59 characters', () => {
+  it('keeps the longest worst case at 76 characters', () => {
     const longest = Math.max(
       ...DEGOMMAGE_MESSAGES.map((m) => renderDegommageTemplate(m.template, LONG, LONG).length)
     )
-    expect(longest).toBe(59)
+    expect(longest).toBe(76)
+  })
+
+  it('keeps the median sentence short — half the catalog stays under 60', () => {
+    const lengths = DEGOMMAGE_MESSAGES.map(
+      (m) => renderDegommageTemplate(m.template, LONG, LONG).length
+    ).sort((a, b) => a - b)
+    const median = lengths[Math.floor(lengths.length / 2)] ?? 0
+    expect(median).toBeLessThanOrEqual(60)
   })
 })
 
