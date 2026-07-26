@@ -24,10 +24,12 @@ import {
 } from './game-detail-journal'
 import type { StampId } from '@/lib/game-stamps'
 import { gameStarted, inList, isPhantomLobbyGame } from './game-filters'
+import { endedInWindow, type LeaderboardRange } from './leaderboard-range'
 import { getCircleRecords, queryVillageResults, type CircleRecords } from './records'
 import { computeCurrentStreaks } from './streaks'
 
 export type { GameAbortReason, JournalEntry } from './game-detail-journal'
+export type { LeaderboardRange } from './leaderboard-range'
 
 export interface LeaderboardRow {
   rank: number
@@ -87,21 +89,6 @@ export async function getCircleMemberIds(userId: string): Promise<string[]> {
   const ids = new Set<string>([userId])
   for (const pair of pairs) ids.add(pair.low === userId ? pair.high : pair.low)
   return [...ids]
-}
-
-export interface LeaderboardRange {
-  /** Count only games with `ended_at >= from`. Omit for all-time. */
-  from?: Date
-  /** Exclusive upper bound: `ended_at < to`. Omit for month-to-date/all-time. */
-  to?: Date
-}
-
-/** `ended_at` window filters for a leaderboard range (empty for all-time). */
-function endedInWindow(range: LeaderboardRange) {
-  return [
-    ...(range.from === undefined ? [] : [sql`${games.endedAt} >= ${range.from}`]),
-    ...(range.to === undefined ? [] : [sql`${games.endedAt} < ${range.to}`]),
-  ]
 }
 
 /** One circle member's aggregate line, before ranks are assigned. */
