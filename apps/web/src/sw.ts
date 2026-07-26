@@ -65,6 +65,32 @@ const runtimeCaching: RuntimeCaching[] = [
     }),
   },
   {
+    // The samples are fetched by `fetch()` for `decodeAudioData`, whose
+    // `Request.destination` is "" — not "audio" — so the media rule above
+    // cannot claim them and they would fall through to NetworkOnly. Matching on
+    // the path is what keeps them out of the catch-all. They are immutable
+    // build-time assets, hence CacheFirst.
+    //
+    // In practice this rule is a SAFETY NET, not the live path: `@serwist/next`
+    // does put `public/` files in `__SW_MANIFEST`, so `/sounds/*.m4a` is
+    // precached and the precache route answers first (verified offline — the
+    // five samples resolve at full length with the network cut, out of
+    // `serwist-precache-v2`, and no `arena-sounds` cache is ever created).
+    // Keep it anyway: if precaching of `public/` ever stops, this is all that
+    // stands between the samples and the NetworkOnly catch-all.
+    matcher: ({ sameOrigin, url: { pathname } }) => sameOrigin && pathname.startsWith('/sounds/'),
+    handler: new CacheFirst({
+      cacheName: 'arena-sounds',
+      plugins: [
+        new ExpirationPlugin({
+          maxEntries: 8,
+          maxAgeSeconds: ONE_YEAR_IN_SECONDS,
+          maxAgeFrom: 'last-used',
+        }),
+      ],
+    }),
+  },
+  {
     matcher: () => true,
     handler: networkOnly,
   },

@@ -1,0 +1,32 @@
+Provenance of the arena samples (apps/web/public/sounds/)
+=========================================================
+
+ouch-1.m4a, ouch-2.m4a, ouch-3.m4a — OWNER-SUPPLIED
+  Provided by the project owner as three MP3 files ("Ouch Sound Effect.mp3",
+  "Ouch Sound Effect (1).mp3", "Ouch Sound Effect (2).mp3"), in that order.
+  The owner sourced them himself; no licence was recorded with the hand-off, so
+  the rights question is the owner's to answer, not this repository's.
+
+  Treatment applied to each, identical across the three:
+    afconvert -f WAVE -d LEI16@44100 -c 1 in.mp3 raw.wav
+    sox raw.wav trim.wav silence 1 0.02 1.5% reverse silence 1 0.02 1.5% reverse
+    sox trim.wav proc.wav trim 0 1.0 gain -n -3 fade t 0.005 0 0.15
+    sox proc.wav final.wav vol <per-file>      # RMS match, see below
+    afconvert -f m4af -d aac -b 96000 final.wav ouch-N.m4a
+
+  That is: decoded to mono 44.1 kHz, leading and trailing silence trimmed at a
+  1.5% threshold (the sources have a noise floor a 0.5% threshold left in
+  place — the first file carries ~1.1 s of dead air before the yelp), capped at
+  1.0 s with a 150 ms fade-out so a reverb tail cannot overlap the next hit,
+  then RMS-matched to 0.14 with a -1 dBFS peak ceiling so the per-hit draw does
+  not jump in loudness. Encoded AAC-LC ~96 kbps mono. All source metadata is
+  dropped by the re-encode.
+
+  Resulting per-file gain / duration:
+    ouch-1  x1.25857  0.622 s
+    ouch-2  x0.85968  0.641 s
+    ouch-3  x0.58458  1.000 s
+
+paf.m4a, fanfare.m4a — GENERATED, no third-party material
+  Synthesised from arithmetic by ../../scripts/generate-sounds.mjs
+  (run: pnpm --filter @degommix/web sounds). Licence: this repository's.

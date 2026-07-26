@@ -1,11 +1,17 @@
 'use client'
 
 import Link from 'next/link'
-import { useState } from 'react'
+import { useEffect, useState, useSyncExternalStore } from 'react'
 import { Icon } from '@/components/icons'
 import { hitByTarget } from '@/components/live/hit-fx'
 import { OpponentCard } from '@/components/live/opponent-card'
 import { Summary } from '@/components/live/summary'
+import { armAudioUnlock, playArenaSound } from '@/components/sound/sound-player'
+import {
+  getSoundServerSnapshot,
+  getSoundSnapshot,
+  subscribeSound,
+} from '@/components/sound/sound-preference'
 import { Button } from '@/components/ui/button'
 import { Card } from '@/components/ui/card'
 import { QueryProvider } from '@/lib/query-client'
@@ -40,6 +46,15 @@ export function Playground() {
   const [hitCount, setHitCount] = useState(0)
   const [stage, setStage] = useState<Stage | null>(null)
   const [runId, setRunId] = useState(0)
+
+  // Arms the iOS unlock so the very first preview press already makes a sound.
+  // Gated on the preference like the arena is: « Muet » must download nothing,
+  // even here.
+  const sound = useSyncExternalStore(subscribeSound, getSoundSnapshot, getSoundServerSnapshot)
+  useEffect(() => {
+    if (sound === 'off') return
+    return armAudioUnlock()
+  }, [sound])
 
   // Growing the log by one entry flips the hero's hit parity, which flips
   // `data-hit` on the card and restarts the CSS combo with the next onomatopée.
@@ -128,6 +143,33 @@ export function Playground() {
             </Button>
             <p className="helper-text m-0">
               Onomatopée : {hits[HERO_ID]?.word ?? '—'} · coup {hitCount}/{DEMO_LOG.length}
+            </p>
+          </Card>
+        </section>
+
+        <section className="flex flex-col gap-2">
+          <p className="sec-label">Sons</p>
+          <Card className="flex flex-col gap-3 p-4">
+            <Button variant="ghost" onClick={() => playArenaSound('ouch-1')}>
+              Ouch 1
+            </Button>
+            <Button variant="ghost" onClick={() => playArenaSound('ouch-2')}>
+              Ouch 2
+            </Button>
+            <Button variant="ghost" onClick={() => playArenaSound('ouch-3')}>
+              Ouch 3
+            </Button>
+            <Button variant="ghost" onClick={() => playArenaSound('paf')}>
+              PAF
+            </Button>
+            <Button variant="ghost" onClick={() => playArenaSound('fanfare')}>
+              Fanfare
+            </Button>
+            <p className="helper-text m-0">
+              En partie, le « ouch » est tiré parmi les trois à chaque dégommage — le même sur
+              tous les téléphones pour un coup donné. Il faut avoir activé « Sons » dans Ta
+              hutte : sans ça rien n’est téléchargé, donc rien ne sort. Sur iPhone, le bouton
+              silencieux coupe tout.
             </p>
           </Card>
         </section>
