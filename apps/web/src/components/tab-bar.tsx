@@ -5,7 +5,7 @@ import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { QueryClientContext } from '@tanstack/react-query'
 import { Icon, type IconName } from '@/components/icons'
-import { useInvitesCount } from '@/hooks/use-tab-data'
+import { useFriendRequestsCount, useInvitesCount } from '@/hooks/use-tab-data'
 
 interface Tab {
   href: string
@@ -61,6 +61,26 @@ function InvitesBadgeContent() {
   )
 }
 
+/** Pending friend-requests badge for the Tribu tab; same guard as above. */
+function FriendRequestsBadge() {
+  const client = useContext(QueryClientContext)
+  if (!client) return null
+  return <FriendRequestsBadgeContent />
+}
+
+function FriendRequestsBadgeContent() {
+  const requestCount = useFriendRequestsCount()
+  if (requestCount === 0) return null
+  return (
+    <span
+      className="tab-badge"
+      aria-label={`${requestCount} demande${requestCount > 1 ? 's' : ''} d'ami en attente`}
+    >
+      {requestCount}
+    </span>
+  )
+}
+
 /** Floating liquid-glass bottom tab bar with a sliding water-bubble indicator. */
 export function TabBar() {
   const pathname = usePathname()
@@ -88,6 +108,7 @@ export function TabBar() {
             <Icon name={tab.icon} size={22} strokeWidth={index === active ? 2.2 : 1.8} />
             <span className="tab-label">{tab.label}</span>
             {tab.href === '/jouer' ? <InvitesBadge /> : null}
+            {tab.href === '/amis' ? <FriendRequestsBadge /> : null}
           </Link>
         ))}
       </div>

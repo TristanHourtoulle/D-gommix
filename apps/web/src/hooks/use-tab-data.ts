@@ -105,6 +105,20 @@ export function useFriendsSnapshot(): FriendsPayload | undefined {
   return data
 }
 
+/**
+ * Pending friend-request count for the Tribu tab badge. Same query key as
+ * the Amis/Arène screens, so it rides their SSR-seeded cache and every
+ * `friends:event` invalidation — it only fetches `/api/friends` itself on a
+ * cold cache (a hard load landing on a tab that does not seed it).
+ */
+export function useFriendRequestsCount(): number {
+  const { data } = useQuery({
+    queryKey: queryKeys.friends,
+    queryFn: () => fetchPayload('/api/friends', friendsPayloadSchema),
+  })
+  return data?.received.length ?? 0
+}
+
 export type LeaderboardPeriod = 'all' | 'month'
 
 /**
