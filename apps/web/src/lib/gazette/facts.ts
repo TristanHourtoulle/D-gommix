@@ -40,7 +40,7 @@ export const GAZETTE_FAMILIES = [
 ] as const
 export type GazetteFamily = (typeof GAZETTE_FAMILIES)[number]
 
-/** A moment stamp fed in by plan 030, when that module exists. */
+/** A moment stamp (plan 030), as the gazette names it. */
 export interface GazetteStamp {
   readonly id: string
   readonly label: string
@@ -89,7 +89,7 @@ export interface GazetteFacts {
    * frozen once the game is over. Null on a tie or with no prior history.
    */
   readonly titleHolder: GazetteCount | null
-  /** Plan 030 stamps; empty when that module does not exist. */
+  /** Plan 030 stamps, fed in by the gazette route; empty when the game earned none. */
   readonly stamps: readonly GazetteStamp[]
 }
 

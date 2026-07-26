@@ -1,8 +1,10 @@
 import { notFound, redirect } from 'next/navigation'
 import { GazetteParchment } from '@/components/stats/gazette-parchment'
+import { STAMP_META } from '@/lib/game-stamps'
+import type { GazetteStamp } from '@/lib/gazette/facts'
 import { buildGazette } from '@/lib/gazette/render'
 import { getTitleHolder } from '@/lib/queries/gazette'
-import { getGameDetail } from '@/lib/queries/stats'
+import { getGameDetail, type GameDetail } from '@/lib/queries/stats'
 import { requireOnboardedSession } from '@/lib/session'
 
 export const dynamic = 'force-dynamic'
@@ -11,6 +13,29 @@ const UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{
 
 interface GazettePageProps {
   params: Promise<{ gameId: string }>
+}
+
+/**
+ * Plan 030's moment stamps, as the gazette names them. Chronological: the
+ * journal's line stamps in `seq` order, then the end-of-game one, which is
+ * exactly when the table saw them. Nothing is detected here — `getGameDetail`
+ * already derived both from the same log, so the parchment can only ever stamp
+ * what the archive stamps.
+ */
+function gazetteStamps(detail: GameDetail): GazetteStamp[] {
+  const stamps: GazetteStamp[] = detail.journal.flatMap((entry) =>
+    entry.stamp === null
+      ? []
+      : [{ id: entry.stamp, label: STAMP_META[entry.stamp].label, userId: entry.actorId }]
+  )
+  if (detail.summaryStamp !== null) {
+    stamps.push({
+      id: detail.summaryStamp,
+      label: STAMP_META[detail.summaryStamp].label,
+      userId: detail.winner?.userId ?? null,
+    })
+  }
+  return stamps
 }
 
 /**
@@ -32,9 +57,7 @@ export default async function GazettePage({ params }: GazettePageProps) {
   // players at the same table must read the same parchment, and a past game's
   // gazette must never rewrite itself when somebody plays a new game.
   const titleHolder = await getTitleHolder(detail.players, detail.endedAt)
-  // Plan 030's moment stamps do not exist yet; the stamps brief family and any
-  // stamp-bearing template degrade out on their own until they do.
-  const facts = { ...detail.gazetteFacts, titleHolder, stamps: [] }
+  const facts = { ...detail.gazetteFacts, titleHolder, stamps: gazetteStamps(detail) }
   const gazette = buildGazette(detail.id, facts)
 
   return (

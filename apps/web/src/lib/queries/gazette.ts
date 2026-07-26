@@ -35,7 +35,10 @@ export async function getTitleHolder(
         inList(gamePlayers.userId, ids),
         eq(games.status, 'finished'),
         gameStarted,
-        sql`${games.endedAt} < ${before}`
+        // `.toISOString()`, not the Date: a value interpolated in a raw `sql`
+        // fragment bypasses the column's encoder and reaches postgres-js
+        // unmapped, which rejects a Date instance (ERR_INVALID_ARG_TYPE).
+        sql`${games.endedAt} < ${before.toISOString()}`
       )
     )
     .groupBy(gamePlayers.userId)
