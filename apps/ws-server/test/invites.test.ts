@@ -145,13 +145,45 @@ describe('durable invitations', () => {
     expect(state.players.map((player) => player.userId)).toEqual(['u1'])
   })
 
-  it('a joined seat still blocks lobby:create', async () => {
+  it('a joined seat in an active game still blocks lobby:create', async () => {
     const { gameId } = await inviteU2()
     const s2 = await ts.connectAs('u2')
     expectOk(await emitAck(s2, 'lobby:respond_invite', { gameId, accept: true }))
+    await ts.db.update(games).set({ status: 'active' }).where(eq(games.id, gameId))
 
     const second = await emitAck(s2, 'lobby:create', { format: 2 })
     expect(second).toMatchObject({ ok: false, code: 'ALREADY_IN_GAME' })
+  })
+
+  it('inviting a friend parked in a never-started lobby succeeds and accepting evacuates it', async () => {
+    // u2 parks itself: creates a lobby, then "leaves" via the tab bar (no
+    // lobby:leave ever reaches the server).
+    const s2 = await ts.connectAs('u2')
+    const parked = expectOk(await emitAck<{ gameId: string }>(s2, 'lobby:create', { format: 2 }))
+
+    const { s1, gameId } = await openLobby()
+    const received = waitForEvent<InviteReceived>(s2, 'invite:received')
+    expectOk(await emitAck(s1, 'lobby:invite', { gameId, friendId: 'u2' }))
+    expect((await received).gameId).toBe(gameId)
+
+    // Accepting auto-leaves the stale parked seat and dissolves its lobby.
+    expectOk(await emitAck(s2, 'lobby:respond_invite', { gameId, accept: true }))
+    expect(await seatStatus(gameId, 'u2')).toBe('joined')
+    expect(await seatStatus(parked.gameId, 'u2')).toBe('left')
+    const [parkedGame] = await ts.db.select().from(games).where(eq(games.id, parked.gameId))
+    expect(parkedGame?.status).toBe('finished')
+    expect(parkedGame?.outcome).toBe('aborted')
+  })
+
+  it('inviting a friend joined in an active game still fails', async () => {
+    const s2 = await ts.connectAs('u2')
+    const parked = expectOk(await emitAck<{ gameId: string }>(s2, 'lobby:create', { format: 2 }))
+    await ts.db.update(games).set({ status: 'active' }).where(eq(games.id, parked.gameId))
+
+    const { s1, gameId } = await openLobby()
+    const ack = await emitAck(s1, 'lobby:invite', { gameId, friendId: 'u2' })
+    expect(ack).toMatchObject({ ok: false, code: 'ALREADY_IN_GAME' })
+    expect(await seatStatus(gameId, 'u2')).toBeUndefined()
   })
 
   it('accepting one invitation auto-declines the others and cancels them live', async () => {
@@ -172,12 +204,14 @@ describe('durable invitations', () => {
     expect(await seatStatus(createdB.gameId, 'u2')).toBe('declined')
   })
 
-  it('a joined seat elsewhere blocks accepting a stale invitation', async () => {
+  it('a joined seat in an active game blocks accepting a stale invitation', async () => {
     const { gameId } = await inviteU2()
     const s2 = await ts.connectAs('u2')
     // Creating a lobby auto-declines the pending invitation, so restore the
-    // pre-fix stale state: an `invited` seat surviving while u2 sits `joined`.
-    expectOk(await emitAck(s2, 'lobby:create', { format: 2 }))
+    // pre-fix stale state: an `invited` seat surviving while u2 sits `joined`
+    // in a game that has since started.
+    const created = expectOk(await emitAck<{ gameId: string }>(s2, 'lobby:create', { format: 2 }))
+    await ts.db.update(games).set({ status: 'active' }).where(eq(games.id, created.gameId))
     await ts.db
       .update(gamePlayers)
       .set({ status: 'invited' })

@@ -99,8 +99,11 @@ export function registerLobbyHandlers(socket: AppSocket, ctx: AppContext): void 
         .from(friendships)
         .where(and(eq(friendships.userLow, low), eq(friendships.userHigh, high)))
       if (!friendship) throw new CommandError('INVALID_TARGET', 'not a friend')
+      // Only a seat in an ACTIVE game blocks the invitation: a `joined` seat
+      // parked in a never-started lobby is evacuated when the friend accepts
+      // (assertNotJoinedElsewhere in `lobby:respond_invite`).
       const friendGames = await findActiveMemberships(db, friendId)
-      if (friendGames.some((m) => m.player.status === 'joined')) {
+      if (friendGames.some((m) => m.player.status === 'joined' && m.game.status === 'active')) {
         throw new CommandError('ALREADY_IN_GAME', 'friend already has an active game')
       }
       const seats = await listSeats(db, gameId)

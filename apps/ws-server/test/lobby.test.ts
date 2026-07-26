@@ -108,11 +108,20 @@ describe('lobby flow', () => {
     expect(ack).toMatchObject({ ok: false, code: 'FORMAT_INCOMPATIBLE' })
   })
 
-  it('refuses lobby:create while already in a lobby', async () => {
+  it('lobby:create evacuates a stale never-started lobby instead of refusing', async () => {
     const s1 = await ts.connectAs('u1')
-    expectOk(await emitAck(s1, 'lobby:create', { format: 2 }))
-    const second = await emitAck(s1, 'lobby:create', { format: 2 })
-    expect(second).toMatchObject({ ok: false, code: 'ALREADY_IN_GAME' })
+    const first = expectOk(
+      await emitAck<{ gameId: string }>(s1, 'lobby:create', { format: 2 })
+    )
+    const second = expectOk(
+      await emitAck<{ gameId: string }>(s1, 'lobby:create', { format: 2 })
+    )
+    expect(second.gameId).not.toBe(first.gameId)
+
+    // The abandoned lobby is dissolved: seat left, code burned forever.
+    const [firstGame] = await ts.db.select().from(games).where(eq(games.id, first.gameId))
+    expect(firstGame?.status).toBe('finished')
+    expect(firstGame?.outcome).toBe('aborted')
   })
 
   it('burns the code when the last player leaves (dissolved lobby)', async () => {

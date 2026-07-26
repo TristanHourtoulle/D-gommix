@@ -18,9 +18,11 @@ function toGameFormat(value: number): GameFormat {
  * Invitations still awaiting an answer: `invited` seats of the user in games
  * that are still open lobbies. Newest first — the banner order of the Accueil.
  *
- * A viewer already seated (`joined`) in a non-finished game sees no invitations
- * at all: they cannot act on them (accepting throws ALREADY_IN_GAME), so the
- * banner would be dead weight. Defense in depth over the ws-server guards.
+ * A viewer already seated (`joined`) in an ACTIVE game sees no invitations at
+ * all: they cannot act on them (accepting throws ALREADY_IN_GAME), so the
+ * banner would be dead weight. A seat parked in a never-started lobby does not
+ * hide them — accepting evacuates that stale seat server-side. Defense in
+ * depth over the ws-server guards.
  */
 export async function getPendingInvites(userId: string): Promise<PendingInvite[]> {
   const [seated] = await db
@@ -31,7 +33,7 @@ export async function getPendingInvites(userId: string): Promise<PendingInvite[]
       and(
         eq(gamePlayers.userId, userId),
         eq(gamePlayers.status, 'joined'),
-        sql`${games.status} <> 'finished'`,
+        eq(games.status, 'active'),
       ),
     )
     .limit(1)

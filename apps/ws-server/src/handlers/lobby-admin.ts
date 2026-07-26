@@ -6,7 +6,7 @@ import { CommandError, isUniqueViolation, OK, withAck } from '../ack'
 import type { AppContext } from '../context'
 import { transferHost } from '../host-transfer'
 import { broadcastLobbyState } from '../lobby-state'
-import { assertLobby, getGameOrThrow, getSeat, listSeats } from '../lobby-shared'
+import { assertLobby, dissolveLobby, getGameOrThrow, getSeat, listSeats } from '../lobby-shared'
 import type { AppSocket } from '../socket-types'
 
 const pickSchema = z.object({ gameId: z.uuid(), character: z.enum(CHARACTERS) })
@@ -99,17 +99,7 @@ export function registerLobbyAdminHandlers(socket: AppSocket, ctx: AppContext): 
         const joined = remaining.filter((s) => s.status === 'joined')
         if (joined.length === 0) {
           // Last player out: dissolve the lobby, the code is burned forever.
-          await db
-            .update(games)
-            .set({ status: 'finished', outcome: 'aborted', endedAt: new Date() })
-            .where(eq(games.id, gameId))
-          // Pending invitees keep their seat row, but the finished game is
-          // already excluded from findActiveMemberships: only the live push
-          // was missing to retire their banner.
-          for (const pending of remaining) {
-            if (pending.status !== 'invited') continue
-            io.to(`user:${pending.userId}`).emit('invite:canceled', { gameId })
-          }
+          await dissolveLobby(db, io, gameId, remaining)
           return OK
         }
         await transferHost(db, io, gameId, userId, (id) => presence.isOnline(id))

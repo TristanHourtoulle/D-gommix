@@ -1,6 +1,7 @@
 import { requireOnboardedSession } from '@/lib/session'
 import { QueryProvider } from '@/lib/query-client'
 import { ConnectionBanner } from '@/components/connection-banner'
+import { InviteEventsBridge } from '@/components/invite-events-bridge'
 import { SocketProvider } from '@/components/socket-provider'
 import { TabBar } from '@/components/tab-bar'
 
@@ -12,6 +13,7 @@ export default async function TabsLayout({
   return (
     <QueryProvider>
       <SocketProvider>
+        <InviteEventsBridge />
         <ConnectionBanner />
         <div className="tabs-content">{children}</div>
         <TabBar />
