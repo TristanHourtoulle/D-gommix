@@ -86,38 +86,41 @@ describe('catalog shape', () => {
 })
 
 describe('tone budget', () => {
-  it('totals 939 weight units', () => {
-    expect(TOTAL_WEIGHT).toBe(939)
+  it('totals 690 weight units', () => {
+    expect(TOTAL_WEIGHT).toBe(690)
     expect(DEGOMMAGE_MESSAGES.reduce((s, m) => s + m.weight, 0)).toBe(TOTAL_WEIGHT)
   })
 
-  it('splits the budget 598 / 131 / 86 / 124', () => {
-    // Vague 2 re-pin: the per-template weights are unchanged (26 / 9 / 5 / 8,
-    // halved for « sans acteur »), so each tone's budget simply grew with its
-    // new sentences — 286→598, 74→131, 52→86, 72→124.
-    expect(toneSum('baffes')).toBe(598)
-    expect(toneSum('toutatis')).toBe(131)
-    expect(toneSum('rome')).toBe(86)
-    expect(toneSum('chambrage')).toBe(124)
+  it('splits the budget 414 / 101 / 70 / 105', () => {
+    // Vague 2 re-pin (was 286 / 74 / 52 / 72 over 484). The SHARES are what the
+    // owner validated, so growing the catalog by 12 baffes and 8 per other tone
+    // meant retuning the per-tone full weights 26/9/5/8 → 18/7/4/7 (sansActeur
+    // = floor(F / 2)); see the header of degommage-messages.ts for the search.
+    expect(toneSum('baffes')).toBe(414)
+    expect(toneSum('toutatis')).toBe(101)
+    expect(toneSum('rome')).toBe(70)
+    expect(toneSum('chambrage')).toBe(105)
   })
 
-  it('lands within one point of the post-vague-2 64 / 14 / 9 / 13 mix', () => {
-    // The owner validated 60 / 15 / 10 / 15 on the 44-sentence catalog and, in
-    // vague 2, 36 new sentences skewed toward baffes (12 vs 8) at unchanged
-    // per-template weights. Baffes therefore gained ~4 points. Coming back to
-    // 60 / 15 / 10 / 15 requires retuning the per-tone weights — an owner call,
-    // deliberately NOT made here, so this pin records the real mix.
+  it('holds the validated 60 / 15 / 10 / 15 mix within half a point', () => {
+    // Exact shares of the 18 / 7 / 4 / 7 tuple: 60.000 / 14.638 / 10.145 /
+    // 15.217 — worst deviation 0.362, the best any tuple of hand-sized integer
+    // weights reaches for this catalog. Tolerance tightened from 1 to 0.5.
     const share = (tone: DegommageTone): number => (100 * toneSum(tone)) / TOTAL_WEIGHT
-    expect(Math.abs(share('baffes') - 64)).toBeLessThan(1)
-    expect(Math.abs(share('toutatis') - 14)).toBeLessThan(1)
-    expect(Math.abs(share('rome') - 9)).toBeLessThan(1)
-    expect(Math.abs(share('chambrage') - 13)).toBeLessThan(1)
+    expect(Math.abs(share('baffes') - 60)).toBeLessThan(0.5)
+    expect(Math.abs(share('toutatis') - 15)).toBeLessThan(0.5)
+    expect(Math.abs(share('rome') - 10)).toBeLessThan(0.5)
+    expect(Math.abs(share('chambrage') - 15)).toBeLessThan(0.5)
   })
 
-  it('keeps the tone ranking baffes ≫ toutatis > chambrage > rome', () => {
-    expect(toneSum('baffes')).toBeGreaterThan(toneSum('toutatis') * 3)
-    expect(toneSum('toutatis')).toBeGreaterThan(toneSum('chambrage'))
-    expect(toneSum('chambrage')).toBeGreaterThan(toneSum('rome'))
+  it('keeps baffes dominant, rome rarest, and the two 15 % tones level', () => {
+    const share = (tone: DegommageTone): number => (100 * toneSum(tone)) / TOTAL_WEIGHT
+    for (const tone of ['toutatis', 'rome', 'chambrage'] as const) {
+      expect(toneSum('baffes')).toBeGreaterThan(toneSum(tone) * 3)
+    }
+    expect(Math.min(...DEGOMMAGE_TONES.map(toneSum))).toBe(toneSum('rome'))
+    // Both were validated at 15 %: neither register may quietly outgrow the other.
+    expect(Math.abs(share('toutatis') - share('chambrage'))).toBeLessThan(1)
   })
 })
 
