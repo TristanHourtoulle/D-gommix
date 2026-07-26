@@ -35,6 +35,11 @@ found during shipping: PR #74 (Date bounds in raw sql fragments — classement
 month views 500) and PR #75 (seal career queries bounded by the replayed game;
 prod seals re-backfilled per runbook).
 
+Plans 039–044 = the 2026-07-26 round 6: seals wave 2 (S1-S10) plus the owner's
+R-verdict (R1 optionnelle, R5, R6, R8, R10; R3 deferred « pas maintenant »;
+R2/R4/R7/R9 rejected). Execution: 039 in flight; 040/043 independent; live
+chain merges serialized 041 → 044 → 042.
+
 ## Execution order & status
 
 | Plan | Title | Priority | Effort | Depends on | Status |
@@ -77,6 +82,12 @@ prod seals re-backfilled per runbook).
 | 036 | L'Almanach des stats absurdes — page parodique liée aux Lauriers | P3 | M | — | DONE (merged `3fec223` as PR #66, SQL exercised against a seeded DB) |
 | 037 | Bruitages d'arène — opt-in, Web Audio, 3 samples | P3 | S-M | — (execute after 029/030 on live files) | DONE (merged `1d32b9f` as PR #73, owner-supplied ouch ×3 drawn per hit; LISTENING PASS = owner's in prod — sounds OFF by default) |
 | 038 | Simulation de partie (mode dev) — timeline seedée dans le vrai réducteur | P2 | M | — (EXECUTE FIRST: wave 0) | DONE (merged `3a0112f` as PR #70, executed first as wave 0; zero-persistence proven by network trace) |
+| 039 | Sceaux vague 2 (S1–S10) | P2 | L | — | IN PROGRESS (executor running) |
+| 040 | « L'Oracle du village » — optional secret pre-game prediction, revealed and scored at the Banquet | P2 | M | — (carries migration 0006) | TODO |
+| 041 | « Tableau des augures » — live, purely-derived stats panel on the game screen | P2 | M | — (live chain: merges first, before 044 → 042) | TODO |
+| 042 | Coups signés — the dégommage animation takes the hitter's character | P2 | M | — (live chain: merges last, after 041 → 044) | TODO |
+| 043 | « La Cote du guerrier » — an Elo-like rating in sesterces, recomputed at read time | P2 | M-L | — | TODO |
+| 044 | Le Barde commente — ambient Assurancetourix lines at game milestones, in the live journal only | P3 | S-M | — (live chain: merges after 041, before 042) | TODO |
 
 Status values: TODO | IN PROGRESS | DONE | BLOCKED (with one-line reason) | REJECTED (with one-line rationale — finding fixed independently or approach abandoned)
 
@@ -135,6 +146,15 @@ Status values: TODO | IN PROGRESS | DONE | BLOCKED (with one-line reason) | REJE
 - **033 introduces migration `0005`.** Any other plan that needs a migration
   must regenerate after it so the Drizzle journal stays linear.
 
+- **041/042/044 touch live-screen and game-stamps-adjacent files** — merge
+  order 041 → 044 → 042, later ones rebase on whatever landed first.
+- **039's parity test touches `game-stamps.test.ts`** (rebase vs 041,
+  whichever lands second).
+- **040 carries migration `0006`** — no other round-6 plan may generate one;
+  any that needs a migration regenerates after 040 so the Drizzle journal
+  stays linear.
+- **043 has zero overlap** with the rest of round 6 — parallel-safe.
+
 ## Findings considered and rejected
 
 - "local `main` behind `origin/main` is a worktree artefact, not a finding"
@@ -160,3 +180,6 @@ Status values: TODO | IN PROGRESS | DONE | BLOCKED (with one-line reason) | REJE
   length 1`) — verified NOT caused by any round-5 diff (3× clean runs on main
   and branch); left as a known flake, fix = per-suite throwaway DBs if it
   worsens."
+- "Round 6: R2 Serment, R4 Cri de guerre, R7 Album, R9 Jeux du cirque —
+  owner-rejected 2026-07-26; R3 Vendetta deferred « pas maintenant »
+  (re-proposable)."
