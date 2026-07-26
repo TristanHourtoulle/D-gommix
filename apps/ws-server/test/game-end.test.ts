@@ -4,7 +4,13 @@ import { migrateTestDb } from '@degommix/db/test-utils'
 import type { GameEvent } from '@degommix/game-core'
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest'
 import { startGameWith, sendCommand } from './flows'
-import { collectEvents, expectOk, startTestServer, type TestServer } from './harness'
+import {
+  collectEvents,
+  expectOk,
+  startTestServer,
+  waitForEvent,
+  type TestServer,
+} from './harness'
 
 describe('undo and end-of-game flows', () => {
   let ts: TestServer
@@ -182,6 +188,29 @@ describe('undo and end-of-game flows', () => {
     expect(game?.status).toBe('finished')
     expect(game?.outcome).toBe('aborted')
     expect(game?.winnerId).toBeNull()
+  })
+
+  it('emits stats:invalidate to every seated player user room on finish', async () => {
+    const { gameId, sockets } = await startGameWith(ts, ['u1', 'u2', 'u3'])
+    const s1 = sockets.get('u1')
+    const s2 = sockets.get('u2')
+    const s3 = sockets.get('u3')
+    if (!s1 || !s2 || !s3) throw new Error('missing sockets')
+
+    // Attached before the trigger: the emit lands in the same tick as finish.
+    const invalidations = Promise.all([
+      waitForEvent(s1, 'stats:invalidate'),
+      waitForEvent(s2, 'stats:invalidate'),
+      waitForEvent(s3, 'stats:invalidate'),
+    ])
+    expectOk(
+      await sendCommand(s1, gameId, { type: 'request_end', kind: 'village', winnerId: 'u2' })
+    )
+
+    const payloads = await invalidations
+    for (const payload of payloads) {
+      expect(payload).toEqual({ scope: 'game_finished' })
+    }
   })
 
   it('rejects any command after closure with GAME_FINISHED', async () => {

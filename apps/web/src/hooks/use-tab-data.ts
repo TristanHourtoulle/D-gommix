@@ -15,6 +15,15 @@ import {
 } from '@/lib/api-payloads'
 import { queryKeys } from '@/lib/query-keys'
 
+/**
+ * The SSR payload is stamped as already stale (`initialDataUpdatedAt: 0`):
+ * without it TanStack Query timestamps `initialData` at mount time, so a
+ * replayed RSC payload (Router Cache) or a remount within `staleTime` would
+ * paint pre-game numbers and never refetch. With it the first paint is still
+ * instant from `initialData`, but a background refetch always revalidates.
+ */
+const STALE_INITIAL_DATA = { initialDataUpdatedAt: 0 } as const
+
 /** Fetches a tab payload and validates its shape before it reaches the cache. */
 async function fetchPayload<T>(url: string, schema: ZodType<T>): Promise<T> {
   const response = await fetch(url, { credentials: 'same-origin' })
@@ -35,6 +44,7 @@ export function useFriendsData(
     queryKey: queryKeys.friends,
     queryFn: () => fetchPayload('/api/friends', friendsPayloadSchema),
     initialData,
+    ...STALE_INITIAL_DATA,
   })
 }
 
@@ -44,6 +54,7 @@ export function useHomeData(initialData: HomePayload): DefinedUseQueryResult<Hom
     queryKey: queryKeys.home,
     queryFn: () => fetchPayload('/api/home', homePayloadSchema),
     initialData,
+    ...STALE_INITIAL_DATA,
   })
 }
 
@@ -55,6 +66,7 @@ export function useInvitesData(
     queryKey: queryKeys.invites,
     queryFn: () => fetchPayload('/api/invites', invitesPayloadSchema),
     initialData,
+    ...STALE_INITIAL_DATA,
   })
 }
 
@@ -66,6 +78,7 @@ export function useLeaderboardData(
     queryKey: queryKeys.leaderboard,
     queryFn: () => fetchPayload('/api/leaderboard', leaderboardPayloadSchema),
     initialData,
+    ...STALE_INITIAL_DATA,
   })
 }
 

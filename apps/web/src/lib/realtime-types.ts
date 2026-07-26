@@ -67,6 +67,15 @@ export interface KickedPayload {
   gameId: string
 }
 
+/**
+ * Server-side hint that persisted stats changed and the tab payloads
+ * (home, leaderboard) must be revalidated. Carries no data on purpose:
+ * clients refetch through their session-authenticated endpoints.
+ */
+export interface StatsInvalidatePayload {
+  scope: 'game_finished'
+}
+
 /** Broadcasts pushed by the ws-server (rooms `user:{id}` / `game:{id}`). */
 export interface ServerToClientEvents {
   'game:event': (event: GameEvent) => void
@@ -78,6 +87,7 @@ export interface ServerToClientEvents {
   'invite:canceled': (payload: InviteCanceledPayload) => void
   'friends:event': (payload: FriendsEventPayload) => void
   'presence:update': (payload: PresenceUpdatePayload) => void
+  'stats:invalidate': (payload: StatsInvalidatePayload) => void
 }
 
 /** Client → server commands: event name → payload and ack result shapes. */

@@ -70,7 +70,13 @@ export function createWsServer(deps: WsServerDeps): WsServer {
     io,
     onFinished: (gameId, state) => {
       hostTransfer.clearGame(gameId)
-      for (const userId of state.seats) void presence.setInGame(userId, false)
+      for (const userId of state.seats) {
+        void presence.setInGame(userId, false)
+        // Pushed to the user room (not the game room): every tab of every
+        // seated player refreshes its stats payloads, even the ones not on
+        // the live screen when the game closed.
+        io.to(`user:${userId}`).emit('stats:invalidate', { scope: 'game_finished' })
+      }
     },
   })
   const zombie = createZombieJob({

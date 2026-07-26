@@ -3,6 +3,7 @@ import { QueryProvider } from '@/lib/query-client'
 import { ConnectionBanner } from '@/components/connection-banner'
 import { InviteEventsBridge } from '@/components/invite-events-bridge'
 import { SocketProvider } from '@/components/socket-provider'
+import { StatsEventsBridge } from '@/components/stats-events-bridge'
 import { TabBar } from '@/components/tab-bar'
 
 export default async function TabsLayout({
@@ -14,6 +15,7 @@ export default async function TabsLayout({
     <QueryProvider>
       <SocketProvider>
         <InviteEventsBridge />
+        <StatsEventsBridge />
         <ConnectionBanner />
         <div className="tabs-content">{children}</div>
         <TabBar />
