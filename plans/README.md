@@ -12,6 +12,10 @@ The verification baseline already exists in the repo and every plan reuses it �
 `pnpm exec turbo run test --concurrency=1`), and `pnpm test:e2e` for the
 Playwright happy path. No plan asks you to add test infrastructure.
 
+Plans 018–020 were added by the 2026-07-26 `/improve next` round (planned at
+commit `8890290`), owner-selected from that audit's candidates. The same
+verification baseline applies.
+
 ## Execution order & status
 
 | Plan | Title | Priority | Effort | Depends on | Status |
@@ -33,6 +37,9 @@ Playwright happy path. No plan asks you to add test infrastructure.
 | 015  | Lexique gaulois — owner-validated UI lexicon | — | — | — | DONE (merged `d4ccd5e`, E2E validated 2026-07-25 (wave-4 combined run 6/6)) |
 | 016  | Splash « Le déroulé » — once-per-session opening sequence | P2 | M | — | DONE (merged `1fb4f76`, E2E validated 2026-07-25 (wave-4 combined run 6/6)) |
 | 017  | Logo « Le pion couronné » — vector sources + regenerated PWA icon set | P2 | M | — (step 6 optional, needs 016) | DONE (merged `19fafd4`, pixel-verified icon masking 2026-07-25) |
+| 018  | Face à face : pair win record on the head-to-head card | P2 | S (M with optional step 5) | — (builds on 003, 006) | TODO |
+| 019  | Leaderboard season window (month-to-date) + win-streak chips | P2 | M | — | TODO |
+| 020  | Crash floor: French error boundaries + client-error reporting to Railway logs | P1 | M | — | TODO |
 
 Status values: TODO | IN PROGRESS | DONE | BLOCKED (with one-line reason) | REJECTED (with one-line rationale — finding fixed independently or approach abandoned)
 
@@ -57,6 +64,11 @@ Status values: TODO | IN PROGRESS | DONE | BLOCKED (with one-line reason) | REJE
   not sufficient evidence, because the behaviour it changes was derived from a
   physical playtest.
 
+- **018's optional step 5 and 019 both touch the leaderboard payload and
+  screen** (`api-payloads.ts`, the `/api/leaderboard` route, the classement
+  components). They are independent in data terms but overlap in payload shape
+  and layout — whichever lands second rebases on the first rather than
+  re-deciding the payload or the screen structure. 020 is independent of both.
 - **017's step 6 is the only part that needs 016.** Everything else in 017
   (vector sources, regenerated icon set, README swap) is independent and
   shippable now; step 6 — the monochrome emblem fading in above the engraved
@@ -73,3 +85,7 @@ Status values: TODO | IN PROGRESS | DONE | BLOCKED (with one-line reason) | REJE
 - "V2 backlog items (local single-phone mode, Web Push, account recovery) were
   deliberately not re-proposed — `SPECS.md` §7 records them; plan 001 is the
   Web Push prerequisite"
+- "2026-07-26 `/improve next` round: the owner reviewed the candidates and
+  explicitly did NOT select Postgres backups verification, the deploy-path
+  verification gate, récap sharing, or local single-phone mode — do not
+  re-propose these in a future audit without new evidence"
