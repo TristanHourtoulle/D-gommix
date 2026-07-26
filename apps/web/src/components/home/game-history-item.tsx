@@ -95,7 +95,8 @@ export function GameHistoryItem({ game, action }: GameHistoryItemProps) {
         >
           {content}
         </Link>
-        {action}
+        {/* Neutralizes `.cta.auto`'s own align-self so the key stays centered. */}
+        <span className="flex shrink-0">{action}</span>
       </div>
     )
   }

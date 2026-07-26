@@ -291,15 +291,18 @@ function FriendInviteRow({
           {lastSeenLabel !== null ? `vu ${lastSeenLabel}` : PRESENCE_LABEL[presence]}
         </span>
       </span>
-      <Button
-        variant="ghost"
-        size="sm"
-        fullWidth={false}
-        disabled={presence === 'in_game' || busy}
-        onClick={onInvite}
-      >
-        Inviter
-      </Button>
+      {/* Wrapper neutralizes `.cta.auto`'s align-self so the key stays centered. */}
+      <span className="flex shrink-0">
+        <Button
+          variant="ghost"
+          size="sm"
+          fullWidth={false}
+          disabled={presence === 'in_game' || busy}
+          onClick={onInvite}
+        >
+          Inviter
+        </Button>
+      </span>
     </div>
   )
 }

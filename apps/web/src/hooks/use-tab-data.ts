@@ -76,6 +76,20 @@ export function useInvitesData(
   })
 }
 
+/**
+ * Pending-invitations count for the tab-bar badge. Same query key as the
+ * screens, so the badge rides the cache they seed and every ws invalidation
+ * — it only triggers its own `/api/invites` fetch on a cold cache (a hard
+ * load landing outside Accueil/Arène).
+ */
+export function useInvitesCount(): number {
+  const { data } = useQuery({
+    queryKey: queryKeys.invites,
+    queryFn: () => fetchPayload('/api/invites', invitesPayloadSchema),
+  })
+  return data?.invites.length ?? 0
+}
+
 export type LeaderboardPeriod = 'all' | 'month'
 
 /**

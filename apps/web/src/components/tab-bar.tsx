@@ -3,6 +3,7 @@
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { Icon, type IconName } from '@/components/icons'
+import { useInvitesCount } from '@/hooks/use-tab-data'
 
 interface Tab {
   href: string
@@ -38,6 +39,7 @@ function activeIndex(pathname: string): number {
 export function TabBar() {
   const pathname = usePathname()
   const active = activeIndex(pathname)
+  const inviteCount = useInvitesCount()
 
   return (
     <nav className="tabbar-zone" aria-label="Navigation principale">
@@ -60,6 +62,14 @@ export function TabBar() {
           >
             <Icon name={tab.icon} size={22} strokeWidth={index === active ? 2.2 : 1.8} />
             <span className="tab-label">{tab.label}</span>
+            {tab.href === '/jouer' && inviteCount > 0 ? (
+              <span
+                className="tab-badge"
+                aria-label={`${inviteCount} invitation${inviteCount > 1 ? 's' : ''} en attente`}
+              >
+                {inviteCount}
+              </span>
+            ) : null}
           </Link>
         ))}
       </div>
